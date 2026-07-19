@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My Offline Apps</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --bg: #f2f2f2;
+    --card-bg: rgba(255,255,255,0.85);
+    --text: #333;
+    --accent: #2A7B9B;
+  }
+  body.dark {
+    --bg: #121212;
+    --card-bg: rgba(30,30,30,0.7);
+    --text: #f5f5f5;
+    --accent: #4FC3F7;
+  }
+  body {
+    font-family: 'Avenir', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+    transition: background 0.4s, color 0.4s;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  h1 {
+    color: var(--accent);
+    text-align: center;
+    font-size: 2rem;
+    flex: 1;
+  }
+  button.theme-toggle {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+  }
+  button.theme-toggle:hover {
+    background: #1b596f;
+  }
+  .search-bar {
+    margin: 0 auto 20px;
+    max-width: 400px;
+    display: flex;
+  }
+  .search-bar input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  }
+  .category {
+    margin-top: 30px;
+    border-radius: 15px;
+    padding: 15px;
+    animation: fadeIn 0.8s ease forwards;
+    background-size: 200% 200%;
+    animation: gradientMove 6s ease infinite;
+  }
+  .category:nth-child(3) {
+    background: linear-gradient(120deg, #FFD700, #FF8C00, #FFA500);
+  }
+  .category:nth-child(4) {
+    background: linear-gradient(120deg, #7B68EE, #6A5ACD, #483D8B);
+  }
+  h2 {
+    color: #fff;
+    margin-bottom: 10px;
+    font-size: 1.4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  h2 span {
+    display: inline-block;
+    animation: slideIn 1s ease forwards;
+  }
+  .apps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+  }
+  .app-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    transform: translateY(0);
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .app-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.2);
+  }
+  /* Icon styling to reduce white edges */
+  .app-card img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    background: transparent;
+    border-radius: 12px;
+    mix-blend-mode: multiply; /* blends white out */
+  }
+  .app-name {
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 0.95rem;
+  }
+  @keyframes fadeIn {
+    from {opacity: 0; transform: translateY(15px);}
+    to {opacity: 1; transform: translateY(0);}
+  }
+  @keyframes slideIn {
+    from {transform: translateX(-100%);}
+    to {transform: translateX(0);}
+  }
+  @keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>My Offline Apps</h1>
+  <button class="theme-toggle">Toggle Theme</button>
+</header>
+
+<div class="search-bar">
+  <input type="text" id="search" placeholder="Search apps...">
+</div>
+
+<!-- Category 1 -->
+<div class="category">
+  <h2><span>Quick Help Tools</span></h2>
+  <div class="apps-grid">
+    <a class="app-card" href="tools/Utility_Zip_and_Excel_Cosolidator/index.html">
+      <img src="Icon/excel.png" alt="excel">
+      <div class="app-name">Merge Excels</div>
+    </a>
+    <a class="app-card" href="tools/Universal_File_Compressor/index.html">
+      <img src="Icon/PDF.png" alt="excel">
+      <div class="app-name">Compress Image or PDF Files</div>
+    </a>
+    
+  </div>
+</div>
+
+<!-- Category 2 -->
+<div class="category">
+  <h2><span>Data Summary / Analytics Tools</span></h2>
+  <div class="apps-grid">
+    <a class="app-card" href="tools/Motorola _Open_Calls_Tracker/index.html">
+      <img src="Icon/Motorola.png" alt="Notes">
+      <div class="app-name">Motorola<br>Open Calls Dashboard</div>
+    </a>
+    <a class="app-card" href="tools/Motorola_ASP_CWH_TO_CCI_Shipment_Tracking/index.html">
+      <img src="Icon/Motorola.png" alt="Notes">
+      <div class="app-name">Motorola<br>ASP CWH to CCI Shipments Tracker</div>
+    </a>
+    <a class="app-card" href="tools/Motorola_Defective_Tracking/index.html">
+      <img src="Icon/Motorola.png" alt="Notes">
+      <div class="app-name">Motorola<br>Defective Status Tracker</div>
+    </a>
+    <a class="app-card" href="tools/Motorola_OTD_Performance_Dashboard/index.html">
+      <img src="Icon/Motorola.png" alt="Notes">
+      <div class="app-name">Motorola<br>OTD Performance Dashboard</div>
+    </a>
+    
+             
+  </div>
+</div>
+
+
+<script>
+  // Theme toggle
+  document.querySelector('.theme-toggle').addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+  });
+
+  // Search filter
+  document.getElementById('search').addEventListener('input', function() {
+    const term = this.value.toLowerCase();
+    document.querySelectorAll('.app-card').forEach(card => {
+      const name = card.innerText.toLowerCase();
+      card.style.display = name.includes(term) ? '' : 'none';
+    });
+  });
+</script>
+
+</body>
+</html>

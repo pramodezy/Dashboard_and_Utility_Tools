@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universal File Compressor & Converter</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/browser-image-compression/2.0.2/browser-image-compression.min.js"></script>
+<style>
+:root {
+  --bg-primary: #0a0b14;
+  --bg-secondary: #0f1020;
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.07);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-border-strong: rgba(139,92,246,0.35);
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #6d28d9;
+  --accent-glow: rgba(139,92,246,0.25);
+  --accent-bright: #a78bfa;
+  --accent-electric: #c4b5fd;
+  --text-primary: #f1f0f5;
+  --text-secondary: #9d9bb5;
+  --text-muted: #5c5a72;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.4);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"] {
+  --bg-primary: #f4f3fa;
+  --bg-secondary: #eceaf7;
+  --bg-card: rgba(255,255,255,0.75);
+  --bg-card-hover: rgba(255,255,255,0.92);
+  --glass-border: rgba(139,92,246,0.15);
+  --glass-border-strong: rgba(109,40,217,0.35);
+  --text-primary: #1a1830;
+  --text-secondary: #4a4568;
+  --text-muted: #8a88a0;
+  --shadow-card: 0 8px 32px rgba(109,40,217,0.1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(139,92,246,0.12), transparent 34rem),
+    radial-gradient(circle at 0% 100%, rgba(59,130,246,0.10), transparent 32rem),
+    var(--bg-primary);
+  color:var(--text-primary);
+  min-height:100vh;
+  overflow-x:hidden;
+  transition:background var(--transition),color var(--transition);
+}
+
+/* Layout */
+.app-wrapper{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 20px;}
+/* Header */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 0;border-bottom:1px solid var(--glass-border);
+  position:sticky;top:0;z-index:100;
+  background:var(--bg-primary);
+}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.logo-icon{
+  width:40px;height:40px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent-primary),#3b82f6);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  box-shadow:0 0 20px var(--accent-glow);
+}
+.logo-text{font-size:1.1rem;font-weight:700;color:var(--text-primary);}
+.logo-text span{color:var(--accent-bright);}
+.header-actions{display:flex;align-items:center;gap:12px;}
+.btn-icon{
+  width:38px;height:38px;border-radius:var(--radius-sm);
+  border:1px solid var(--glass-border);background:var(--bg-card);
+  color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all var(--transition);font-size:16px;
+}
+.btn-icon:hover{background:var(--bg-card-hover);color:var(--accent-bright);border-color:var(--glass-border-strong);}
+
+/* KPI Bar */
+.kpi-bar{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
+  padding:24px 0 20px;
+}
+.kpi-card{
+  background:var(--bg-card);border:1px solid var(--glass-border);
+  border-radius:var(--radius-md);padding:18px 20px;
+  transition:border-color var(--transition),transform var(--transition),background var(--transition);
+  position:relative;overflow:hidden;
+  contain:layout style;
+}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--accent-primary),transparent);
+}
+.kpi-card:hover{border-color:var(--glass-border-strong);transform:translateY(-2px);}
+.kpi-label{font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:8px;}
+.kpi-value{font-size:1.6rem;font-weight:800;color:var(--text-primary);line-height:1;}
+.kpi-sub{font-size:0.75rem;color:var(--text-secondary);margin-top:6px;}
+.kpi-badge{
+  display:inline-flex;align-items:center;gap:4px;font-size:0.72rem;font-weight:600;
+  padding:2px 8px;border-radius:20px;margin-top:6px;
+}
+.kpi-badge.success{background:rgba(16,185,129,0.15);color:var(--success);}
+.kpi-badge.neutral{background:rgba(139,92,246,0.15);color:var(--accent-bright);}
+
+/* Main Grid */
+.main-grid{display:grid;grid-template-columns:1fr 360px;gap:20px;padding-bottom:40px;}
+.panel-left{display:flex;flex-direction:column;gap:16px;}
+.panel-right{display:flex;flex-direction:column;gap:16px;}
+
+/* Glass Card */
+.glass-card{
+  background:var(--bg-card);border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);padding:24px;
+  box-shadow:var(--shadow-card);
+  contain:layout style;
+}
+.section-title{
+  font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;
+  color:var(--text-muted);margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.section-title::after{content:'';flex:1;height:1px;background:var(--glass-border);}
+
+/* Drop Zone */
+.drop-zone{
+  border:2px dashed var(--glass-border);border-radius:var(--radius-lg);
+  padding:48px 32px;text-align:center;cursor:pointer;
+  transition:all var(--transition);position:relative;overflow:hidden;
+}
+.drop-zone.drag-over{
+  border-color:var(--accent-primary);background:rgba(139,92,246,0.06);
+  box-shadow:0 0 30px rgba(139,92,246,0.15);
+}
+.drop-zone-icon{font-size:3rem;margin-bottom:16px;display:block;}
+.drop-zone-title{font-size:1.1rem;font-weight:700;margin-bottom:8px;}
+.drop-zone-sub{font-size:0.82rem;color:var(--text-secondary);}
+.drop-zone-formats{
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:16px;
+}
+.format-badge{
+  padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:700;
+  background:var(--bg-card-hover);border:1px solid var(--glass-border);color:var(--text-secondary);
+}
+#fileInput{display:none;}
+.btn-browse{
+  margin-top:20px;padding:10px 28px;border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  color:#fff;font-weight:700;font-size:0.85rem;border:none;cursor:pointer;
+  transition:all var(--transition);box-shadow:0 4px 16px var(--accent-glow);
+}
+.btn-browse:hover{transform:translateY(-1px);box-shadow:0 6px 24px var(--accent-glow);}
+
+/* File List */
+.file-list{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;}
+.file-list::-webkit-scrollbar{width:4px;}
+.file-list::-webkit-scrollbar-thumb{background:var(--glass-border-strong);border-radius:4px;}
+.file-item{
+  display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;
+  background:var(--bg-card-hover);border:1px solid var(--glass-border);
+  border-radius:var(--radius-md);padding:12px 16px;
+  transition:all var(--transition);cursor:grab;
+}
+.file-item:active{cursor:grabbing;}
+.file-item.dragging{opacity:0.4;border:2px dashed var(--accent-primary);}
+.file-item.drag-target{border-color:var(--accent-primary);background:rgba(139,92,246,0.08);}
+.file-thumb{
+  width:44px;height:44px;border-radius:var(--radius-sm);object-fit:cover;
+  background:var(--bg-card);border:1px solid var(--glass-border);
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  flex-shrink:0;overflow:hidden;
+}
+.file-thumb img{width:100%;height:100%;object-fit:cover;}
+.file-meta{min-width:0;}
+.file-name{font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary);}
+.file-info{font-size:0.72rem;color:var(--text-secondary);margin-top:3px;}
+.file-status{
+  font-size:0.7rem;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;
+}
+.file-status.pending{background:rgba(245,158,11,0.15);color:var(--warning);}
+.file-status.processing{background:rgba(59,130,246,0.15);color:var(--info);}
+.file-status.done{background:rgba(16,185,129,0.15);color:var(--success);}
+.file-status.error{background:rgba(239,68,68,0.15);color:var(--danger);}
+.btn-remove{
+  width:28px;height:28px;border-radius:6px;border:1px solid var(--glass-border);
+  background:transparent;color:var(--text-muted);cursor:pointer;font-size:14px;
+  transition:all var(--transition);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.btn-remove:hover{background:rgba(239,68,68,0.15);color:var(--danger);border-color:rgba(239,68,68,0.3);}
+.file-progress{
+  grid-column:1/-1;height:3px;background:var(--glass-border);border-radius:4px;overflow:hidden;
+  display:none;
+}
+.file-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent-primary),#3b82f6);border-radius:4px;width:0%;transition:width 0.3s ease;}
+
+/* Compression Profiles */
+.profiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.profile-btn{
+  padding:14px 12px;border-radius:var(--radius-md);border:2px solid var(--glass-border);
+  background:var(--bg-card);cursor:pointer;text-align:left;transition:all var(--transition);
+}
+.profile-btn:hover{border-color:var(--glass-border-strong);background:var(--bg-card-hover);}
+.profile-btn.active{
+  border-color:var(--accent-primary);background:rgba(139,92,246,0.1);
+  box-shadow:0 0 16px rgba(139,92,246,0.15);
+}
+.profile-name{font-size:0.82rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;}
+.profile-desc{font-size:0.7rem;color:var(--text-secondary);}
+.profile-ratio{
+  font-size:0.68rem;font-weight:700;color:var(--accent-bright);
+  margin-top:6px;display:flex;align-items:center;gap:4px;
+}
+.quality-bar{height:4px;border-radius:4px;background:var(--glass-border);margin-top:8px;overflow:hidden;}
+.quality-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#10b981,#8b5cf6);}
+
+/* Controls */
+.control-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.control-label{font-size:0.78rem;font-weight:600;color:var(--text-secondary);}
+.control-select,.control-input{
+  width:100%;padding:10px 14px;border-radius:var(--radius-sm);
+  border:1px solid var(--glass-border);background:var(--bg-card);
+  color:var(--text-primary);font-size:0.85rem;outline:none;
+  transition:all var(--transition);
+}
+.control-select:focus,.control-input:focus{border-color:var(--glass-border-strong);}
+.control-select option{background:var(--bg-secondary);}
+.control-row-inline{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* Naming options */
+.naming-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.naming-opt{
+  padding:10px;border-radius:var(--radius-sm);border:1px solid var(--glass-border);
+  background:var(--bg-card);cursor:pointer;text-align:center;font-size:0.75rem;
+  font-weight:600;color:var(--text-secondary);transition:all var(--transition);
+}
+.naming-opt:hover{border-color:var(--glass-border-strong);color:var(--text-primary);}
+.naming-opt.active{border-color:var(--accent-primary);color:var(--accent-bright);background:rgba(139,92,246,0.08);}
+.naming-input-row{display:flex;gap:8px;margin-top:8px;}
+
+/* Action Buttons */
+.btn{
+  padding:12px 24px;border-radius:var(--radius-sm);font-weight:700;
+  font-size:0.85rem;border:none;cursor:pointer;transition:all var(--transition);
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary));
+  color:#fff;box-shadow:0 4px 16px var(--accent-glow);
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px var(--accent-glow);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.btn-secondary{
+  background:var(--bg-card-hover);border:1px solid var(--glass-border);color:var(--text-primary);
+}
+.btn-secondary:hover{border-color:var(--glass-border-strong);}
+.btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff;}
+.btn-success:hover{transform:translateY(-1px);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+.btn-full{width:100%;justify-content:center;}
+
+/* Progress */
+.global-progress{
+  background:var(--bg-card);border:1px solid var(--glass-border);border-radius:var(--radius-md);
+  padding:16px;display:none;
+}
+.progress-label{font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px;display:flex;justify-content:space-between;}
+.progress-track{height:8px;background:var(--glass-border);border-radius:8px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--accent-primary),#3b82f6,#10b981);transition:width 0.4s ease;background-size:200% 100%;animation:progressShimmer 2s linear infinite;}
+@keyframes progressShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Before/After Comparison */
+.comparison-wrap{position:relative;border-radius:var(--radius-md);overflow:hidden;aspect-ratio:16/9;background:var(--bg-card);display:none;}
+.comparison-wrap.active{display:block;}
+.comparison-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;}
+.comparison-after{clip-path:inset(0 50% 0 0);}
+.comparison-slider{
+  position:absolute;top:0;bottom:0;width:3px;background:var(--accent-primary);
+  left:50%;transform:translateX(-50%);cursor:ew-resize;z-index:10;
+}
+.comparison-slider::before{
+  content:'◀ ▶';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:var(--accent-primary);color:#fff;padding:6px 10px;border-radius:20px;font-size:12px;
+  white-space:nowrap;
+}
+.comparison-label{
+  position:absolute;top:12px;font-size:0.7rem;font-weight:800;
+  padding:4px 10px;border-radius:20px;background:rgba(0,0,0,0.6);color:#fff;
+}
+.comparison-label.left{left:12px;}
+.comparison-label.right{right:12px;}
+
+/* PDF Reorder */
+.pdf-order-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;}
+.pdf-order-item{
+  display:flex;align-items:center;gap:10px;padding:10px;
+  background:var(--bg-card-hover);border:1px solid var(--glass-border);
+  border-radius:var(--radius-sm);cursor:grab;
+}
+.pdf-order-item:active{cursor:grabbing;}
+.pdf-order-num{
+  width:24px;height:24px;border-radius:6px;background:rgba(139,92,246,0.2);
+  color:var(--accent-bright);font-weight:800;font-size:0.75rem;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.pdf-order-thumb{
+  width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid var(--glass-border);flex-shrink:0;
+}
+.pdf-order-name{font-size:0.78rem;font-weight:600;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.drag-handle{color:var(--text-muted);font-size:14px;cursor:grab;flex-shrink:0;}
+
+/* Toast */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast{
+  padding:12px 20px;border-radius:var(--radius-md);font-size:0.82rem;font-weight:600;
+  border:1px solid var(--glass-border);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:toastIn 0.3s ease;
+  display:flex;align-items:center;gap:10px;min-width:260px;max-width:360px;
+}
+@keyframes toastIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes toastOut{to{transform:translateY(20px);opacity:0}}
+.toast.success{background:rgba(16,185,129,0.15);color:var(--success);}
+.toast.error{background:rgba(239,68,68,0.15);color:var(--danger);}
+.toast.info{background:rgba(139,92,246,0.15);color:var(--accent-bright);}
+.toast.warning{background:rgba(245,158,11,0.15);color:var(--warning);}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;background:var(--bg-card);border-radius:var(--radius-sm);padding:4px;margin-bottom:16px;}
+.tab{
+  flex:1;padding:8px;border-radius:6px;border:none;background:transparent;
+  color:var(--text-secondary);font-size:0.78rem;font-weight:700;cursor:pointer;
+  transition:all var(--transition);text-align:center;
+}
+.tab.active{background:var(--accent-primary);color:#fff;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px;color:var(--text-muted);}
+.empty-state-icon{font-size:2.5rem;margin-bottom:12px;}
+.empty-state p{font-size:0.85rem;}
+
+/* Savings Banner */
+.savings-banner{
+  background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(139,92,246,0.12));
+  border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-md);
+  padding:16px 20px;display:none;
+}
+.savings-banner.show{display:flex;align-items:center;gap:16px;}
+.savings-icon{font-size:2rem;}
+.savings-text{flex:1;}
+.savings-main{font-size:1.1rem;font-weight:800;color:var(--text-primary);}
+.savings-sub{font-size:0.78rem;color:var(--text-secondary);margin-top:3px;}
+
+/* Export section */
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.export-card{
+  padding:16px;border-radius:var(--radius-md);border:1px solid var(--glass-border);
+  background:var(--bg-card-hover);cursor:pointer;transition:all var(--transition);text-align:center;
+}
+.export-card:hover{border-color:var(--glass-border-strong);transform:translateY(-2px);}
+.export-card-icon{font-size:1.8rem;margin-bottom:8px;}
+.export-card-label{font-size:0.78rem;font-weight:700;color:var(--text-primary);}
+.export-card-sub{font-size:0.68rem;color:var(--text-secondary);margin-top:3px;}
+
+/* Responsive */
+@media(max-width:1024px){
+  .main-grid{grid-template-columns:1fr;}
+  .panel-right{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+}
+@media(max-width:768px){
+  .kpi-bar{grid-template-columns:repeat(2,1fr);}
+  .profiles-grid{grid-template-columns:1fr;}
+  .panel-right{grid-template-columns:1fr;}
+  .export-grid{grid-template-columns:1fr;}
+  header{flex-wrap:wrap;gap:10px;}
+}
+@media(max-width:480px){
+  .kpi-bar{grid-template-columns:1fr 1fr;}
+  .app-wrapper{padding:0 12px;}
+  .glass-card{padding:16px;}
+  .main-grid{gap:12px;}
+}
+</style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="app-wrapper">
+  <!-- Header -->
+  <header>
+    <a class="logo" href="#">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">Universal<span> Compressor</span></span>
+    </a>
+    <div class="header-actions">
+      <button class="btn-icon" id="themeToggle" title="Toggle theme">🌙</button>
+      <button class="btn btn-secondary" id="clearAllBtn" style="padding:8px 16px;font-size:0.78rem;">Clear All</button>
+    </div>
+  </header>
+
+  <!-- KPI Bar -->
+  <div class="kpi-bar">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Files</div>
+      <div class="kpi-value" id="kpiFiles">0</div>
+      <div class="kpi-sub" id="kpiFilesSub">No files loaded</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Original Size</div>
+      <div class="kpi-value" id="kpiOriginal">0 B</div>
+      <div class="kpi-sub">Total input</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Output Size</div>
+      <div class="kpi-value" id="kpiOutput">—</div>
+      <div class="kpi-sub" id="kpiOutputSub">After compression</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Space Saved</div>
+      <div class="kpi-value" id="kpiSaved">—</div>
+      <span class="kpi-badge success" id="kpiBadge" style="display:none">↓ <span id="kpiPct">0</span>%</span>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+    <!-- LEFT PANEL -->
+    <div class="panel-left">
+      <!-- Drop Zone -->
+      <div class="glass-card" style="padding:0">
+        <div class="drop-zone" id="dropZone">
+          <span class="drop-zone-icon">📂</span>
+          <div class="drop-zone-title">Drop images here or browse files</div>
+          <div class="drop-zone-sub">Batch upload supported — up to 100+ files at once</div>
+          <div class="drop-zone-formats">
+            <span class="format-badge">JPG</span>
+            <span class="format-badge">JPEG</span>
+            <span class="format-badge">PNG</span>
+            <span class="format-badge">WEBP</span>
+            <span class="format-badge">BMP</span>
+            <span class="format-badge">GIF</span>
+          </div>
+          <button class="btn-browse" id="browseBtn" type="button">Browse Files</button>
+          <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,image/jpeg,image/png,image/webp,image/bmp,image/gif">
+        </div>
+      </div>
+
+      <!-- Global Progress -->
+      <div class="global-progress glass-card" id="globalProgress">
+        <div class="progress-label">
+          <span id="progressLabel">Processing...</span>
+          <span id="progressCount">0 / 0</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      </div>
+
+      <!-- File List -->
+      <div class="glass-card" id="fileListCard" style="display:none">
+        <div class="section-title">Uploaded Files</div>
+        <div class="file-list" id="fileList"></div>
+      </div>
+
+      <!-- Savings Banner -->
+      <div class="savings-banner" id="savingsBanner">
+        <div class="savings-icon">🎉</div>
+        <div class="savings-text">
+          <div class="savings-main" id="savingsMain">Processing complete!</div>
+          <div class="savings-sub" id="savingsSub"></div>
+        </div>
+      </div>
+
+      <!-- Before / After -->
+      <div class="glass-card" id="comparisonCard" style="display:none">
+        <div class="section-title">Before / After Preview</div>
+        <div class="comparison-wrap" id="comparisonWrap">
+          <img class="comparison-img" id="beforeImg" src="" alt="Before">
+          <img class="comparison-img comparison-after" id="afterImg" src="" alt="After">
+          <div class="comparison-slider" id="comparisonSlider"></div>
+          <div class="comparison-label left">ORIGINAL</div>
+          <div class="comparison-label right">COMPRESSED</div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:16px;font-size:0.78rem;color:var(--text-secondary);">
+          <span>Before: <strong id="beforeSize">—</strong></span>
+          <span>After: <strong id="afterSize">—</strong></span>
+          <span>Saved: <strong id="savedPct" style="color:var(--success)">—</strong></span>
+        </div>
+      </div>
+
+      <!-- PDF Order -->
+      <div class="glass-card" id="pdfOrderCard" style="display:none">
+        <div class="section-title">PDF Page Order</div>
+        <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:12px;">Drag to reorder images before generating PDF</div>
+        <div class="pdf-order-list" id="pdfOrderList"></div>
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn btn-primary" id="generatePdfBtn">⬇ Generate PDF</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="panel-right">
+
+      <!-- Compression Profiles -->
+      <div class="glass-card">
+        <div class="section-title">Compression Profile</div>
+        <div class="profiles-grid" id="profilesGrid">
+          <button class="profile-btn active" data-profile="bestquality">
+            <div class="profile-name">🏆 Best Quality</div>
+            <div class="profile-desc">Visually lossless</div>
+            <div class="quality-bar"><div class="quality-bar-fill" style="width:95%"></div></div>
+            <div class="profile-ratio">~10% reduction</div>
+          </button>
+          <button class="profile-btn" data-profile="highquality">
+            <div class="profile-name">✨ High Quality</div>
+            <div class="profile-desc">Minimal loss</div>
+            <div class="quality-bar"><div class="quality-bar-fill" style="width:78%"></div></div>
+            <div class="profile-ratio">~30% reduction</div>
+          </button>
+          <button class="profile-btn" data-profile="balanced">
+            <div class="profile-name">⚖️ Balanced</div>
+            <div class="profile-desc">Size vs quality</div>
+            <div class="quality-bar"><div class="quality-bar-fill" style="width:60%"></div></div>
+            <div class="profile-ratio">~50% reduction</div>
+          </button>
+          <button class="profile-btn" data-profile="compact">
+            <div class="profile-name">📦 Compact</div>
+            <div class="profile-desc">Smaller footprint</div>
+            <div class="quality-bar"><div class="quality-bar-fill" style="width:40%"></div></div>
+            <div class="profile-ratio">~65% reduction</div>
+          </button>
+          <button class="profile-btn" data-profile="maximum" style="grid-column:1/-1">
+            <div class="profile-name">🗜️ Maximum Compression</div>
+            <div class="profile-desc">Smallest file size, noticeable loss acceptable</div>
+            <div class="quality-bar"><div class="quality-bar-fill" style="width:20%"></div></div>
+            <div class="profile-ratio">~80% reduction</div>
+          </button>
+        </div>
+        <div style="margin-top:12px;padding:10px;border-radius:var(--radius-sm);background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.2);">
+          <div style="font-size:0.72rem;color:var(--text-secondary);">Estimated output</div>
+          <div style="font-size:1.1rem;font-weight:800;color:var(--accent-bright)" id="estimatedOutput">— KB</div>
+        </div>
+      </div>
+
+      <!-- Output Format -->
+      <div class="glass-card">
+        <div class="section-title">Output Format</div>
+        <div class="tabs" id="formatTabs">
+          <button class="tab active" data-tab="image">Image</button>
+          <button class="tab" data-tab="pdf">PDF</button>
+        </div>
+        <div class="tab-panel active" id="tab-image">
+          <div class="control-row">
+            <label class="control-label">Convert to</label>
+            <select class="control-select" id="outputFormat">
+              <option value="original">Keep original format</option>
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WEBP</option>
+            </select>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-pdf">
+          <div class="control-row">
+            <label class="control-label">PDF Mode</label>
+            <select class="control-select" id="pdfMode">
+              <option value="single-to-single">Single image → PDF</option>
+              <option value="multi-to-one">Multiple images → One PDF</option>
+              <option value="multi-to-multi">Each image → Separate PDF</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary btn-full" id="preparePdfBtn" style="margin-top:8px">Prepare PDF Order →</button>
+        </div>
+      </div>
+
+      <!-- File Naming -->
+      <div class="glass-card">
+        <div class="section-title">File Naming</div>
+        <div class="naming-grid">
+          <div class="naming-opt active" data-naming="original">Keep Original</div>
+          <div class="naming-opt" data-naming="prefix">Add Prefix</div>
+          <div class="naming-opt" data-naming="suffix">Add Suffix</div>
+          <div class="naming-opt" data-naming="custom">Custom Pattern</div>
+        </div>
+        <div id="namingInputs"></div>
+      </div>
+
+      <!-- Process + Export -->
+      <div class="glass-card">
+        <div class="section-title">Process & Export</div>
+        <button class="btn btn-primary btn-full" id="processBtn" style="margin-bottom:10px" disabled>
+          ⚡ Compress All Files
+        </button>
+        <div class="export-grid" id="exportGrid">
+          <div class="export-card" id="exportSingle" onclick="exportSingle()">
+            <div class="export-card-icon">📄</div>
+            <div class="export-card-label">First File</div>
+            <div class="export-card-sub">Download as single</div>
+          </div>
+          <div class="export-card" id="exportAll" onclick="exportAll()">
+            <div class="export-card-icon">📦</div>
+            <div class="export-card-label">All as ZIP</div>
+            <div class="export-card-sub">Batch download</div>
+          </div>
+          <div class="export-card" id="exportEach" onclick="exportEach()">
+            <div class="export-card-icon">🗂️</div>
+            <div class="export-card-label">Each File</div>
+            <div class="export-card-sub">Individual download</div>
+          </div>
+          <div class="export-card" id="exportSelected" onclick="exportSelected()">
+            <div class="export-card-icon">✅</div>
+            <div class="export-card-label">Done Only</div>
+            <div class="export-card-sub">Completed files ZIP</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+const state = {
+  files: [], // {id, file, name, originalSize, width, height, format, blob, outputBlob, outputSize, outputName, status, thumb}
+  profile: 'bestquality',
+  outputFormat: 'original',
+  outputTab: 'image',   // 'image' | 'pdf'
+  pdfMode: 'single-to-single',
+  naming: 'original',
+  prefix: '',
+  suffix: '',
+  customPattern: 'image_{n}',
+  theme: 'dark',
+  processing: false,
+  processedCount: 0,
+  pdfOrder: [],
+  generatedPdfBlobs: [], // [{name, blob}] – filled by generatePDF()
+};
+
+const profiles = {
+  bestquality:  { maxSizeMB: 10,  maxWidthOrHeight: 8000, useWebWorker: false, initialQuality: 0.92, quality: 0.92 },
+  highquality:  { maxSizeMB: 2,   maxWidthOrHeight: 4096, useWebWorker: false, initialQuality: 0.82, quality: 0.82 },
+  balanced:     { maxSizeMB: 1,   maxWidthOrHeight: 2560, useWebWorker: false, initialQuality: 0.70, quality: 0.70 },
+  compact:      { maxSizeMB: 0.5, maxWidthOrHeight: 1920, useWebWorker: false, initialQuality: 0.55, quality: 0.55 },
+  maximum:      { maxSizeMB: 0.2, maxWidthOrHeight: 1280, useWebWorker: false, initialQuality: 0.35, quality: 0.35 },
+};
+const profileReduction = { bestquality: 0.90, highquality: 0.70, balanced: 0.50, compact: 0.35, maximum: 0.20 };
+
+// ═══════════════════════════════════════════════
+// INDEXEDDB
+// ═══════════════════════════════════════════════
+let db;
+function initDB() {
+  const req = indexedDB.open('UFileCompressor', 1);
+  req.onupgradeneeded = e => {
+    e.target.result.createObjectStore('prefs', { keyPath: 'key' });
+  };
+  req.onsuccess = e => {
+    db = e.target.result;
+    loadPrefs();
+  };
+}
+function savePref(key, value) {
+  if (!db) return;
+  const tx = db.transaction('prefs', 'readwrite');
+  tx.objectStore('prefs').put({ key, value });
+}
+function loadPrefs() {
+  if (!db) return;
+  const tx = db.transaction('prefs', 'readonly');
+  const store = tx.objectStore('prefs');
+  ['theme','profile','naming','prefix','suffix','customPattern','outputFormat','pdfMode'].forEach(key => {
+    store.get(key).onsuccess = e => {
+      if (e.target.result) applyPref(key, e.target.result.value);
+    };
+  });
+}
+function applyPref(key, value) {
+  if (key === 'theme') { state.theme = value; applyTheme(); }
+  if (key === 'profile') { state.profile = value; setProfile(value, false); }
+  if (key === 'naming') { state.naming = value; setNaming(value, false); }
+  if (key === 'prefix') { state.prefix = value; }
+  if (key === 'suffix') { state.suffix = value; }
+  if (key === 'customPattern') { state.customPattern = value; }
+  if (key === 'outputFormat') { state.outputFormat = value; document.getElementById('outputFormat').value = value; }
+  if (key === 'pdfMode') { state.pdfMode = value; document.getElementById('pdfMode').value = value; }
+}
+
+// ═══════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.theme);
+  document.getElementById('themeToggle').textContent = state.theme === 'dark' ? '☀️' : '🌙';
+}
+document.getElementById('themeToggle').addEventListener('click', () => {
+  state.theme = state.theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  savePref('theme', state.theme);
+});
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+function toast(msg, type = 'info', duration = 3500) {
+  const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'toastOut 0.3s ease forwards';
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+// ═══════════════════════════════════════════════
+// DROP ZONE
+// ═══════════════════════════════════════════════
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const browseBtn = document.getElementById('browseBtn');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFiles(Array.from(e.dataTransfer.files));
+});
+dropZone.addEventListener('click', e => {
+  if (e.target === fileInput || e.target.closest('#browseBtn')) return;
+  fileInput.click();
+});
+browseBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  fileInput.click();
+});
+fileInput.addEventListener('click', e => e.stopPropagation());
+fileInput.addEventListener('change', e => {
+  handleFiles(Array.from(e.target.files));
+  e.target.value = '';
+});
+
+const ACCEPTED = ['image/jpeg','image/jpg','image/png','image/webp','image/bmp','image/gif'];
+
+async function handleFiles(files) {
+  const valid = files.filter(f => ACCEPTED.includes(f.type));
+  if (valid.length !== files.length) toast(`${files.length - valid.length} unsupported file(s) skipped`, 'warning');
+  if (!valid.length) return;
+
+  for (const file of valid) {
+    if (state.files.find(f => f.name === file.name && f.originalSize === file.size)) continue;
+    const id = Date.now() + Math.random();
+    const entry = { id, file, name: file.name, originalSize: file.size, width: 0, height: 0,
+      format: file.type.split('/')[1].toUpperCase(), outputBlob: null, outputSize: 0,
+      outputName: file.name, status: 'pending', thumb: null };
+    state.files.push(entry);
+    loadThumb(entry);
+  }
+
+  renderFileList();
+  updateKPIs();
+  updateEstimate();
+  document.getElementById('processBtn').disabled = false;
+  document.getElementById('fileListCard').style.display = 'block';
+  toast(`${valid.length} file(s) added`, 'success');
+}
+
+function loadThumb(entry) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    entry.thumb = e.target.result;
+    const img = new Image();
+    img.onload = () => {
+      entry.width = img.width;
+      entry.height = img.height;
+      renderFileItemMeta(entry);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(entry.file);
+}
+
+// ═══════════════════════════════════════════════
+// FILE LIST RENDER
+// ═══════════════════════════════════════════════
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  if (!state.files.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No files uploaded yet</p></div>';
+    return;
+  }
+  list.innerHTML = state.files.map(f => fileItemHTML(f)).join('');
+  setupFileDragSort(list);
+}
+
+function fileItemHTML(f) {
+  const statusMap = { pending:'pending', processing:'processing', done:'done', error:'error' };
+  const statusLabel = { pending:'Pending', processing:'Processing…', done:'Done', error:'Error' };
+  return `<div class="file-item" data-id="${f.id}" draggable="true">
+    <div class="file-thumb">
+      ${f.thumb ? `<img src="${f.thumb}" alt="${f.name}">` : '📄'}
+    </div>
+    <div class="file-meta">
+      <div class="file-name" title="${f.name}">${f.name}</div>
+      <div class="file-info">
+        ${formatSize(f.originalSize)} · ${f.format}
+        ${f.width ? ` · ${f.width}×${f.height}` : ''}
+        ${f.outputSize ? ` → <strong style="color:var(--success)">${formatSize(f.outputSize)}</strong>` : ''}
+      </div>
+    </div>
+    <span class="file-status ${statusMap[f.status]}">${statusLabel[f.status]}</span>
+    <button class="btn-remove" onclick="removeFile('${f.id}')">✕</button>
+    <div class="file-progress" id="prog_${f.id}"><div class="file-progress-bar" id="progbar_${f.id}"></div></div>
+  </div>`;
+}
+
+function renderFileItemMeta(entry) {
+  const el = document.querySelector(`.file-item[data-id="${entry.id}"] .file-info`);
+  if (el) {
+    el.innerHTML = `${formatSize(entry.originalSize)} · ${entry.format}
+      ${entry.width ? ` · ${entry.width}×${entry.height}` : ''}
+      ${entry.outputSize ? ` → <strong style="color:var(--success)">${formatSize(entry.outputSize)}</strong>` : ''}`;
+  }
+  const thumb = document.querySelector(`.file-item[data-id="${entry.id}"] .file-thumb`);
+  if (thumb && entry.thumb) thumb.innerHTML = `<img src="${entry.thumb}" alt="${entry.name}">`;
+}
+
+function updateFileStatus(entry) {
+  const el = document.querySelector(`.file-item[data-id="${entry.id}"] .file-status`);
+  if (el) {
+    el.className = `file-status ${entry.status}`;
+    el.textContent = { pending:'Pending', processing:'Processing…', done:'Done', error:'Error' }[entry.status];
+  }
+  renderFileItemMeta(entry);
+}
+
+function removeFile(id) {
+  state.files = state.files.filter(f => String(f.id) !== String(id));
+  renderFileList();
+  updateKPIs();
+  updateEstimate();
+  if (!state.files.length) {
+    document.getElementById('processBtn').disabled = true;
+    document.getElementById('fileListCard').style.display = 'none';
+    document.getElementById('comparisonCard').style.display = 'none';
+    document.getElementById('savingsBanner').classList.remove('show');
+  }
+}
+
+document.getElementById('clearAllBtn').addEventListener('click', () => {
+  if (!state.files.length) return;
+  state.files = [];
+  renderFileList();
+  updateKPIs();
+  document.getElementById('processBtn').disabled = true;
+  document.getElementById('fileListCard').style.display = 'none';
+  document.getElementById('comparisonCard').style.display = 'none';
+  document.getElementById('savingsBanner').classList.remove('show');
+  document.getElementById('kpiOutput').textContent = '—';
+  document.getElementById('kpiSaved').textContent = '—';
+  document.getElementById('kpiBadge').style.display = 'none';
+  document.getElementById('estimatedOutput').textContent = '—';
+  toast('All files cleared', 'info');
+});
+
+// ═══════════════════════════════════════════════
+// FILE DRAG SORT
+// ═══════════════════════════════════════════════
+let dragSrc = null;
+function setupFileDragSort(list) {
+  list.querySelectorAll('.file-item').forEach(item => {
+    item.addEventListener('dragstart', e => {
+      dragSrc = item.dataset.id;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    item.addEventListener('dragover', e => { e.preventDefault(); item.classList.add('drag-target'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-target'));
+    item.addEventListener('drop', e => {
+      e.preventDefault(); e.stopPropagation();
+      item.classList.remove('drag-target');
+      if (dragSrc === item.dataset.id) return;
+      const srcIdx = state.files.findIndex(f => String(f.id) === dragSrc);
+      const tgtIdx = state.files.findIndex(f => String(f.id) === item.dataset.id);
+      if (srcIdx === -1 || tgtIdx === -1) return;
+      const [moved] = state.files.splice(srcIdx, 1);
+      state.files.splice(tgtIdx, 0, moved);
+      renderFileList();
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════
+// PROFILES
+// ═══════════════════════════════════════════════
+document.getElementById('profilesGrid').addEventListener('click', e => {
+  const btn = e.target.closest('.profile-btn');
+  if (!btn) return;
+  setProfile(btn.dataset.profile);
+});
+function setProfile(p, save = true) {
+  state.profile = p;
+  document.querySelectorAll('.profile-btn').forEach(b => b.classList.toggle('active', b.dataset.profile === p));
+  updateEstimate();
+  if (save) savePref('profile', p);
+}
+
+// ═══════════════════════════════════════════════
+// ESTIMATE
+// ═══════════════════════════════════════════════
+function updateEstimate() {
+  const totalOriginal = state.files.reduce((a, f) => a + f.originalSize, 0);
+  const ratio = profileReduction[state.profile] || 0.5;
+  const estimated = totalOriginal * ratio;
+  document.getElementById('estimatedOutput').textContent = totalOriginal ? formatSize(estimated) : '—';
+}
+
+// ═══════════════════════════════════════════════
+// FORMAT TABS
+// ═══════════════════════════════════════════════
+document.getElementById('formatTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  state.outputTab = tab.dataset.tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab.dataset.tab));
+  // Update process button label to reflect mode
+  const btn = document.getElementById('processBtn');
+  if (!btn.disabled) btn.textContent = state.outputTab === 'pdf' ? '📄 Convert to PDF' : '⚡ Compress All Files';
+});
+document.getElementById('outputFormat').addEventListener('change', e => {
+  state.outputFormat = e.target.value;
+  savePref('outputFormat', state.outputFormat);
+});
+document.getElementById('pdfMode').addEventListener('change', e => {
+  state.pdfMode = e.target.value;
+  savePref('pdfMode', state.pdfMode);
+});
+document.getElementById('preparePdfBtn').addEventListener('click', () => {
+  if (!state.files.length) { toast('Upload files first', 'warning'); return; }
+  state.pdfOrder = [...state.files.map(f => f.id)];
+  renderPdfOrder();
+  document.getElementById('pdfOrderCard').style.display = 'block';
+  document.getElementById('pdfOrderCard').scrollIntoView({ behavior: 'smooth' });
+  toast('Drag to reorder pages', 'info');
+});
+
+// ═══════════════════════════════════════════════
+// NAMING
+// ═══════════════════════════════════════════════
+document.querySelectorAll('.naming-opt').forEach(opt => {
+  opt.addEventListener('click', () => setNaming(opt.dataset.naming));
+});
+function setNaming(n, save = true) {
+  state.naming = n;
+  document.querySelectorAll('.naming-opt').forEach(o => o.classList.toggle('active', o.dataset.naming === n));
+  renderNamingInputs();
+  if (save) savePref('naming', n);
+}
+function renderNamingInputs() {
+  const wrap = document.getElementById('namingInputs');
+  if (state.naming === 'original') { wrap.innerHTML = ''; return; }
+  if (state.naming === 'prefix') {
+    wrap.innerHTML = `<div class="control-row"><label class="control-label">Prefix</label>
+      <input class="control-input" id="prefixInput" placeholder="e.g. compressed_" value="${state.prefix}"></div>`;
+    document.getElementById('prefixInput').addEventListener('input', e => { state.prefix = e.target.value; savePref('prefix', state.prefix); });
+  } else if (state.naming === 'suffix') {
+    wrap.innerHTML = `<div class="control-row"><label class="control-label">Suffix</label>
+      <input class="control-input" id="suffixInput" placeholder="e.g. _small" value="${state.suffix}"></div>`;
+    document.getElementById('suffixInput').addEventListener('input', e => { state.suffix = e.target.value; savePref('suffix', state.suffix); });
+  } else if (state.naming === 'custom') {
+    wrap.innerHTML = `<div class="control-row"><label class="control-label">Pattern <span style="color:var(--text-muted)">(use {n} for number, {name} for original)</span></label>
+      <input class="control-input" id="customInput" placeholder="image_{n}" value="${state.customPattern}"></div>`;
+    document.getElementById('customInput').addEventListener('input', e => { state.customPattern = e.target.value; savePref('customPattern', state.customPattern); });
+  }
+}
+function getOutputName(entry, idx) {
+  const ext = '.' + entry.file.name.split('.').pop();
+  const base = entry.file.name.replace(/\.[^.]+$/, '');
+  if (state.naming === 'prefix') return (state.prefix || 'compressed_') + entry.file.name;
+  if (state.naming === 'suffix') return base + (state.suffix || '_small') + ext;
+  if (state.naming === 'custom') return state.customPattern.replace('{n}', String(idx + 1).padStart(3, '0')).replace('{name}', base) + ext;
+  return entry.file.name;
+}
+
+// ═══════════════════════════════════════════════
+// COMPRESSION ENGINE
+// ═══════════════════════════════════════════════
+document.getElementById('processBtn').addEventListener('click', processAll);
+
+async function processAll() {
+  if (state.processing || !state.files.length) return;
+
+  // ── PDF mode: compress images first, then auto-generate PDF ──
+  if (state.outputTab === 'pdf') {
+    await processAllImages();          // compress all as images silently
+    await processPdfFromAllFiles();    // then build PDF(s) and store blobs
+    return;
+  }
+
+  // ── Image mode ──
+  await processAllImages();
+}
+
+async function processAllImages() {
+  state.processing = true;
+  state.processedCount = 0;
+  document.getElementById('processBtn').disabled = true;
+  document.getElementById('processBtn').textContent = '⏳ Processing…';
+  const prog = document.getElementById('globalProgress');
+  prog.style.display = 'block';
+  const total = state.files.length;
+  updateProgress(0, total);
+
+  const CONCURRENCY = 4;
+  const queue = [...state.files];
+  const workers = Array.from({ length: Math.min(CONCURRENCY, total) }, () => runWorker(queue, total));
+  await Promise.all(workers);
+
+  state.processing = false;
+  document.getElementById('processBtn').disabled = false;
+  document.getElementById('processBtn').textContent = state.outputTab === 'pdf' ? '📄 Convert to PDF' : '⚡ Compress All Files';
+  prog.style.display = 'none';
+
+  const doneFiles = state.files.filter(f => f.status === 'done');
+  if (doneFiles.length && state.outputTab === 'image') {
+    updateKPIs();
+    showComparison(doneFiles[0]);
+    showSavings();
+    toast(`${doneFiles.length} file(s) compressed successfully!`, 'success');
+  }
+}
+
+// Called by Process button when PDF tab is active
+async function processPdfFromAllFiles() {
+  const orderedFiles = state.files.filter(f => f.status === 'done');
+  if (!orderedFiles.length) { toast('No files could be processed', 'warning'); return; }
+
+  // use pdfOrder if already set, else natural order
+  const ordered = state.pdfOrder.length
+    ? state.pdfOrder.map(id => state.files.find(f => String(f.id) === String(id))).filter(Boolean)
+    : orderedFiles;
+
+  state.generatedPdfBlobs = [];
+
+  try {
+    if (state.pdfMode === 'multi-to-one' || state.pdfMode === 'single-to-single') {
+      const blob = await buildPdfBlob(ordered);
+      const name = ordered.length === 1
+        ? ordered[0].file.name.replace(/\.[^.]+$/, '') + '.pdf'
+        : 'combined.pdf';
+      state.generatedPdfBlobs = [{ name, blob }];
+      // Also store back so export cards work uniformly
+      ordered.forEach(f => { f.outputBlob = blob; f.outputName = name; f.outputSize = blob.size; });
+    } else {
+      // multi-to-multi: each image → its own PDF blob
+      for (const f of ordered) {
+        const blob = await buildPdfBlob([f]);
+        const name = f.file.name.replace(/\.[^.]+$/, '') + '.pdf';
+        state.generatedPdfBlobs.push({ name, blob });
+        f.outputBlob = blob;
+        f.outputName = name;
+        f.outputSize = blob.size;
+      }
+    }
+
+    updateKPIs();
+    showSavings();
+    updateExportPanelForPdf();
+    toast(`${state.generatedPdfBlobs.length} PDF(s) ready — use Export below`, 'success');
+  } catch (err) {
+    toast('PDF generation failed: ' + err.message, 'error');
+  }
+}
+
+function updateExportPanelForPdf() {
+  // Refresh export grid labels to make PDF context obvious
+  const single = document.getElementById('exportSingle');
+  const all = document.getElementById('exportAll');
+  if (state.generatedPdfBlobs.length === 1) {
+    single.querySelector('.export-card-label').textContent = 'Download PDF';
+    single.querySelector('.export-card-sub').textContent = state.generatedPdfBlobs[0].name;
+    all.querySelector('.export-card-label').textContent = 'ZIP (PDF + images)';
+  } else {
+    single.querySelector('.export-card-label').textContent = 'First PDF';
+    all.querySelector('.export-card-label').textContent = `All ${state.generatedPdfBlobs.length} PDFs as ZIP`;
+    all.querySelector('.export-card-sub').textContent = 'Single ZIP download';
+  }
+}
+
+async function runWorker(queue, total) {
+  while (queue.length) {
+    const entry = queue.shift();
+    if (!entry) break;
+    await compressFile(entry);
+    state.processedCount++;
+    updateProgress(state.processedCount, total);
+  }
+}
+
+async function compressFile(entry) {
+  try {
+    entry.status = 'processing';
+    updateFileStatus(entry);
+    showFileProgress(entry.id, true);
+
+    const profile = profiles[state.profile];
+    const fmt = state.outputFormat === 'original' ? entry.file.type : state.outputFormat;
+    const options = {
+      ...profile,
+      fileType: fmt,
+      onProgress: p => setFileProgress(entry.id, p),
+    };
+
+    const compressed = await imageCompression(entry.file, options);
+    entry.outputBlob = new Blob([compressed], { type: fmt });
+    entry.outputSize = entry.outputBlob.size;
+    entry.outputName = getOutputName(entry, state.files.indexOf(entry));
+    entry.status = 'done';
+    setFileProgress(entry.id, 100);
+    updateFileStatus(entry);
+    setTimeout(() => showFileProgress(entry.id, false), 600);
+  } catch (err) {
+    console.error('Compress error', entry.name, err);
+    entry.status = 'error';
+    updateFileStatus(entry);
+    showFileProgress(entry.id, false);
+  }
+}
+
+function showFileProgress(id, show) {
+  const el = document.getElementById(`prog_${id}`);
+  if (el) el.style.display = show ? 'block' : 'none';
+}
+function setFileProgress(id, pct) {
+  const el = document.getElementById(`progbar_${id}`);
+  if (el) el.style.width = pct + '%';
+}
+function updateProgress(done, total) {
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `Compressing… (${pct}%)`;
+  document.getElementById('progressCount').textContent = `${done} / ${total}`;
+}
+
+// ═══════════════════════════════════════════════
+// KPIs
+// ═══════════════════════════════════════════════
+function updateKPIs() {
+  const total = state.files.length;
+  const origTotal = state.files.reduce((a, f) => a + f.originalSize, 0);
+  const outTotal = state.files.filter(f => f.status === 'done').reduce((a, f) => a + f.outputSize, 0);
+  const saved = origTotal - outTotal;
+  const pct = origTotal ? Math.round((saved / origTotal) * 100) : 0;
+
+  document.getElementById('kpiFiles').textContent = total;
+  document.getElementById('kpiFilesSub').textContent = total ? `${state.files.filter(f=>f.status==='done').length} compressed` : 'No files loaded';
+  document.getElementById('kpiOriginal').textContent = formatSize(origTotal);
+  document.getElementById('kpiOutput').textContent = outTotal ? formatSize(outTotal) : '—';
+  document.getElementById('kpiOutputSub').textContent = outTotal ? 'After compression' : 'After compression';
+  document.getElementById('kpiSaved').textContent = saved > 0 ? formatSize(saved) : '—';
+  if (saved > 0) {
+    document.getElementById('kpiBadge').style.display = 'inline-flex';
+    document.getElementById('kpiPct').textContent = pct;
+  }
+}
+
+// ═══════════════════════════════════════════════
+// BEFORE/AFTER
+// ═══════════════════════════════════════════════
+function showComparison(entry) {
+  if (!entry.thumb || !entry.outputBlob) return;
+  document.getElementById('comparisonCard').style.display = 'block';
+  document.getElementById('comparisonWrap').classList.add('active');
+  document.getElementById('beforeImg').src = entry.thumb;
+  document.getElementById('afterImg').src = URL.createObjectURL(entry.outputBlob);
+  document.getElementById('beforeSize').textContent = formatSize(entry.originalSize);
+  document.getElementById('afterSize').textContent = formatSize(entry.outputSize);
+  const pct = Math.round((1 - entry.outputSize / entry.originalSize) * 100);
+  document.getElementById('savedPct').textContent = pct > 0 ? `${pct}% smaller` : 'No reduction';
+  setupComparisonSlider();
+}
+
+function setupComparisonSlider() {
+  if (setupComparisonSlider.initialized) return;
+  setupComparisonSlider.initialized = true;
+  const wrap = document.getElementById('comparisonWrap');
+  const slider = document.getElementById('comparisonSlider');
+  const afterImg = document.getElementById('afterImg');
+  let dragging = false;
+  slider.addEventListener('mousedown', () => dragging = true);
+  slider.addEventListener('touchstart', () => dragging = true, { passive: true });
+  document.addEventListener('mouseup', () => dragging = false);
+  document.addEventListener('touchend', () => dragging = false);
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const rect = wrap.getBoundingClientRect();
+    let x = (e.clientX - rect.left) / rect.width * 100;
+    x = Math.max(5, Math.min(95, x));
+    slider.style.left = x + '%';
+    afterImg.style.clipPath = `inset(0 ${100 - x}% 0 0)`;
+  });
+  document.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const rect = wrap.getBoundingClientRect();
+    let x = (e.touches[0].clientX - rect.left) / rect.width * 100;
+    x = Math.max(5, Math.min(95, x));
+    slider.style.left = x + '%';
+    afterImg.style.clipPath = `inset(0 ${100 - x}% 0 0)`;
+  }, { passive: true });
+}
+
+// ═══════════════════════════════════════════════
+// SAVINGS BANNER
+// ═══════════════════════════════════════════════
+function showSavings() {
+  const orig = state.files.reduce((a, f) => a + f.originalSize, 0);
+  const out = state.files.filter(f => f.status === 'done').reduce((a, f) => a + f.outputSize, 0);
+  const saved = orig - out;
+  const pct = orig ? Math.round((saved / orig) * 100) : 0;
+  const banner = document.getElementById('savingsBanner');
+  banner.classList.add('show');
+  document.getElementById('savingsMain').textContent = `Saved ${formatSize(saved)} (${pct}% reduction)`;
+  document.getElementById('savingsSub').textContent =
+    `${state.files.filter(f=>f.status==='done').length} of ${state.files.length} files processed · Original: ${formatSize(orig)} → Output: ${formatSize(out)}`;
+}
+
+// PDF ORDER
+// ═══════════════════════════════════════════════
+function renderPdfOrder() {
+  const list = document.getElementById('pdfOrderList');
+  list.innerHTML = state.pdfOrder.map((id, i) => {
+    const f = state.files.find(x => String(x.id) === String(id));
+    if (!f) return '';
+    return `<div class="pdf-order-item" data-id="${f.id}" draggable="true">
+      <span class="drag-handle">⠿</span>
+      <span class="pdf-order-num">${i + 1}</span>
+      ${f.thumb ? `<img class="pdf-order-thumb" src="${f.thumb}" alt="">` : '<div class="pdf-order-thumb">📄</div>'}
+      <span class="pdf-order-name">${f.name}</span>
+    </div>`;
+  }).join('');
+  setupPdfDragSort(list);
+}
+
+function setupPdfDragSort(list) {
+  let src = null;
+  list.querySelectorAll('.pdf-order-item').forEach(item => {
+    item.addEventListener('dragstart', () => { src = item.dataset.id; item.style.opacity = '0.4'; });
+    item.addEventListener('dragend', () => { item.style.opacity = '1'; });
+    item.addEventListener('dragover', e => { e.preventDefault(); item.style.borderColor = 'var(--accent-primary)'; });
+    item.addEventListener('dragleave', () => { item.style.borderColor = ''; });
+    item.addEventListener('drop', e => {
+      e.preventDefault(); item.style.borderColor = '';
+      if (src === item.dataset.id) return;
+      const si = state.pdfOrder.indexOf(src);
+      const ti = state.pdfOrder.findIndex(x => String(x) === item.dataset.id);
+      if (si === -1 || ti === -1) return;
+      const [m] = state.pdfOrder.splice(si, 1);
+      state.pdfOrder.splice(ti, 0, m);
+      renderPdfOrder();
+    });
+  });
+}
+
+document.getElementById('generatePdfBtn').addEventListener('click', generatePDF);
+
+async function generatePDF() {
+  const btn = document.getElementById('generatePdfBtn');
+  btn.disabled = true; btn.textContent = '⏳ Generating…';
+  try {
+    const orderedFiles = state.pdfOrder.map(id => state.files.find(f => String(f.id) === String(id))).filter(Boolean);
+    if (!orderedFiles.length) { toast('No files to convert', 'warning'); return; }
+
+    state.generatedPdfBlobs = [];
+
+    if (state.pdfMode === 'multi-to-multi') {
+      // Build each PDF blob, collect them all, then ZIP in one download
+      for (const f of orderedFiles) {
+        const blob = await buildPdfBlob([f]);
+        const name = f.file.name.replace(/\.[^.]+$/, '') + '.pdf';
+        state.generatedPdfBlobs.push({ name, blob });
+        f.outputBlob = blob;
+        f.outputName = name;
+        f.outputSize = blob.size;
+      }
+
+      if (state.generatedPdfBlobs.length === 1) {
+        // Only one file — just save directly
+        saveAs(state.generatedPdfBlobs[0].blob, state.generatedPdfBlobs[0].name);
+        toast('PDF downloaded', 'success');
+      } else {
+        // Multiple PDFs → bundle into one ZIP
+        toast('Packing PDFs into ZIP…', 'info');
+        const zip = new JSZip();
+        state.generatedPdfBlobs.forEach(({ name, blob }) => zip.file(name, blob));
+        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 3 } });
+        saveAs(zipBlob, 'converted_pdfs.zip');
+        toast(`${state.generatedPdfBlobs.length} PDFs packed into ZIP`, 'success');
+      }
+
+    } else if (state.pdfMode === 'multi-to-one' || state.pdfMode === 'single-to-single') {
+      // All images → one combined PDF
+      const blob = await buildPdfBlob(orderedFiles);
+      const name = orderedFiles.length === 1
+        ? orderedFiles[0].file.name.replace(/\.[^.]+$/, '') + '.pdf'
+        : 'combined.pdf';
+      state.generatedPdfBlobs = [{ name, blob }];
+      // Store back on entries so export cards also work
+      orderedFiles.forEach(f => { f.outputBlob = blob; f.outputName = name; f.outputSize = blob.size; });
+      saveAs(blob, name);
+      toast('PDF downloaded', 'success');
+    }
+
+    updateKPIs();
+    updateExportPanelForPdf();
+
+  } catch (err) {
+    console.error(err);
+    toast('PDF generation failed: ' + err.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = '⬇ Generate PDF';
+}
+
+// Core PDF builder — returns a Blob (does NOT trigger download)
+async function buildPdfBlob(files) {
+  const { PDFDocument } = PDFLib;
+  const doc = await PDFDocument.create();
+  for (const f of files) {
+    // Prefer compressed outputBlob if it's an image, else use original file
+    const src = (f.outputBlob && f.outputBlob.type !== 'application/pdf') ? f.outputBlob : f.file;
+    const srcType = src.type;
+
+    let img;
+    if (srcType === 'image/jpeg') {
+      img = await doc.embedJpg(await src.arrayBuffer());
+    } else {
+      // Convert anything else (PNG, WEBP, BMP, GIF) to PNG first via canvas
+      const pngBlob = await convertToFormat(src, 'image/png', 1.0);
+      img = await doc.embedPng(await pngBlob.arrayBuffer());
+    }
+    const page = doc.addPage([img.width, img.height]);
+    page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+  }
+  const bytes = await doc.save();
+  return new Blob([bytes], { type: 'application/pdf' });
+}
+
+async function convertToFormat(file, targetType, quality) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width; canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      canvas.toBlob(blob => resolve(blob), targetType, quality);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════
+async function exportSingle() {
+  const done = state.files.find(f => f.status === 'done' && f.outputBlob);
+  if (!done) { toast('No compressed files yet', 'warning'); return; }
+  saveAs(done.outputBlob, done.outputName);
+  toast('File downloaded', 'success');
+}
+
+async function exportAll() {
+  const done = state.files.filter(f => f.status === 'done' && f.outputBlob);
+  if (!done.length) { toast('Compress files first', 'warning'); return; }
+  toast('Creating ZIP…', 'info');
+  const zip = new JSZip();
+  done.forEach((f, i) => zip.file(f.outputName || `file_${i+1}`, f.outputBlob));
+  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+  saveAs(blob, 'compressed_files.zip');
+  toast(`ZIP with ${done.length} files ready`, 'success');
+}
+
+async function exportEach() {
+  const done = state.files.filter(f => f.status === 'done' && f.outputBlob);
+  if (!done.length) { toast('Compress files first', 'warning'); return; }
+  done.forEach(f => saveAs(f.outputBlob, f.outputName));
+  toast(`Downloading ${done.length} files`, 'info');
+}
+
+async function exportSelected() {
+  return exportAll();
+}
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function formatSize(bytes) {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+initDB();
+renderNamingInputs();
+applyTheme();
+</script>
+</body>
+</html>

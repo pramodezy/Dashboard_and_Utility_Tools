@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Operations Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        .custom-dropdown-content {
+            display: none;
+        }
+        .custom-dropdown-content.show {
+            display: block;
+        }
+        th, td {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+        }
+        
+        /* Sticky header and columns for pivot tables */
+        .pivot-table-wrapper {
+            position: relative;
+            overflow: auto;
+            max-height: 600px;
+        }
+        
+        .pivot-table-wrapper table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        
+        .pivot-table-wrapper thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #f3f4f6;
+        }
+        
+        .pivot-table-wrapper .sticky-col {
+            position: sticky;
+            z-index: 5;
+            background-color: white;
+        }
+        
+        .pivot-table-wrapper .sticky-col-header {
+            position: sticky;
+            z-index: 15;
+            background-color: #f3f4f6;
+        }
+        
+        .pivot-table-wrapper .sticky-col-1 {
+            left: 0;
+            min-width: 200px;
+            max-width: 300px;
+        }
+        
+        .pivot-table-wrapper .sticky-col-1-header {
+            left: 0;
+            min-width: 200px;
+            max-width: 300px;
+        }
+        
+        .pivot-table-wrapper .grand-total-col {
+            background-color: #dbeafe !important;
+            font-weight: 900;
+        }
+        
+        .pivot-table-wrapper .grand-total-row {
+            background-color: #e5e7eb !important;
+            font-weight: 900;
+        }
+        
+        .pivot-table-wrapper .parent-row {
+            background-color: #f3f4f6 !important;
+            font-weight: 700;
+        }
+        
+        .pivot-table-wrapper .child-row {
+            padding-left: 24px !important;
+            font-weight: 400;
+        }
+        
+        .pivot-table-wrapper .alternate-row {
+            background-color: #fafafa;
+        }
+        
+        .pivot-table-wrapper .alternate-row-even {
+            background-color: #ffffff;
+        }
+        
+        .pivot-table-wrapper .zero-value {
+            color: #d1d5db;
+        }
+        
+        .pivot-table-wrapper .parent-total {
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <header class="bg-blue-900 text-white px-6 py-4 shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold tracking-wide">Service Operations Dashboard</h1>
+        <span class="text-sm bg-blue-800 px-3 py-1 rounded-full border border-blue-700">Offline Processing Mode</span>
+    </header>
+
+    <main class="p-6 max-w-[1600px] mx-auto space-y-6">
+
+        <section class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">1. Upload Open Calls Excel/CSV</label>
+                <input type="file" id="openCallsFile" accept=".xlsx, .xls, .csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md p-1 bg-gray-50">
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-gray-700">2. Upload Region Mapping Excel/CSV</label>
+                <input type="file" id="regionMappingFile" accept=".xlsx, .xls, .csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 border border-gray-300 rounded-md p-1 bg-gray-50">
+            </div>
+            <div class="md:col-span-2 flex justify-end">
+                <button id="processBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg transition duration-200 shadow-sm flex items-center gap-2 cursor-pointer">
+                    <span>⚡ Process Data & Generate Dashboards</span>
+                </button>
+            </div>
+        </section>
+
+        <div id="dashboardWrapper" class="hidden space-y-6">
+
+            <section class="bg-white p-6 rounded-xl shadow-xs border border-gray-200">
+                <h2 class="text-md font-bold text-gray-700 mb-4 flex items-center gap-2">
+                    <span>🔍 Multi-Select Filters</span>
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                    <div id="filter-Region" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Region</label>
+                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Region ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Actionable_To" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Actionable To</label>
+                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Actionable ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Current_Status_-_Open_Call" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Current Status</label>
+                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Status ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Service_Order_Status" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Service Order Status</label>
+                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Status ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Parts_Status" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Parts Status</label>
+                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Parts Status ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Open_Call_Ageing_Bucket" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Open Call Ageing Bucket</label>
+                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Ageing Bucket ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Service_Type" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Service Type</label>
+                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Service Type ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="resetFiltersBtn" type="button" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-medium text-xs px-3 py-1.5 rounded-md shadow-sm transition cursor-pointer">
+                            Reset Filters
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-xs">
+                    <p class="text-xs font-bold text-blue-700 uppercase tracking-wider">Total Open Calls</p>
+                    <p id="kpi-total-open" class="text-2xl font-black text-blue-900 mt-1">0</p>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-xs">
+                    <p class="text-xs font-bold text-amber-700 uppercase tracking-wider">Waiting For Pickup</p>
+                    <p id="kpi-waiting-pickup" class="text-2xl font-black text-amber-900 mt-1">0</p>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 shadow-xs">
+                    <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Actionable For CCI</p>
+                    <p id="kpi-actionable-cci" class="text-2xl font-black text-emerald-900 mt-1">0</p>
+                </div>
+                <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 shadow-xs">
+                    <p class="text-xs font-bold text-purple-700 uppercase tracking-wider">ASP CWH Actionable</p>
+                    <p id="kpi-asp-cwh" class="text-2xl font-black text-purple-900 mt-1">0</p>
+                </div>
+                <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 shadow-xs">
+                    <p class="text-xs font-bold text-indigo-700 uppercase tracking-wider">In Transit To CCI</p>
+                    <p id="kpi-transit-cci" class="text-2xl font-black text-indigo-900 mt-1">0</p>
+                </div>
+                <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 shadow-xs">
+                    <p class="text-xs font-bold text-rose-700 uppercase tracking-wider">Parts In Serv Center</p>
+                    <p id="kpi-parts-sc" class="text-2xl font-black text-rose-900 mt-1">0</p>
+                </div>
+                <div class="bg-teal-50 border border-teal-200 rounded-xl p-4 shadow-xs">
+                    <p class="text-xs font-bold text-teal-700 uppercase tracking-wider">Motorola Actionable</p>
+                    <p id="kpi-motorola" class="text-2xl font-black text-teal-900 mt-1">0</p>
+                </div>
+            </section>
+
+            <!-- Pivot 1: Region - Full Width -->
+            <section class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide border-b pb-2 text-indigo-800">Consolidated Pivot: Actionable To × Current Status × Region</h3>
+                <div class="pivot-table-wrapper" id="pivotConsolidatedContainer"></div>
+            </section>
+
+            <!-- Pivot 2: Ageing Bucket - Full Width -->
+            <section class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
+                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide border-b pb-2 text-emerald-800">Consolidated Pivot: Actionable To × Current Status × Ageing Bucket</h3>
+                <div class="pivot-table-wrapper" id="pivotAgeingContainer"></div>
+            </section>
+
+            <!-- Detailed Report -->
+            <section class="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
+                <div class="bg-gray-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 border-b border-gray-200">
+                    <h2 class="text-md font-bold text-gray-800" id="tableHeaderTitle">Open_Calls_Report</h2>
+                    <button id="exportCsvBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-2 rounded shadow-sm transition cursor-pointer flex items-center gap-1.5">
+                        📦 Export Report to Excel
+                    </button>
+                </div>
+                <div class="overflow-x-auto max-h-[500px]">
+                    <table class="min-w-full text-left whitespace-nowrap" id="masterTable">
+                        <thead class="bg-gray-50 sticky top-0 shadow-xs z-10">
+                            <tr id="masterTableHead"></tr>
+                        </thead>
+                        <tbody class="bg-white" id="masterTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        // Core state architecture
+        let rawOpenCalls = [];
+        let regionalMapping = {};
+        let finalReportData = [];
+        let uniqueFilterValues = {};
+        let selectedFilters = {};
+        let latestCallDateString = "LatestDate";
+        let ageingReferenceDate = null;
+
+        const AGEING_BUCKETS = ["0-1Days", "2-4Days", "5-7Days", "8-15Days", "16-30Days", ">30days"];
+        const DATE_COLUMNS = new Set([
+            "SO Submitted Time",
+            "Carry-In Time",
+            "Apply for Parts Time",
+            "Finish Repair Time",
+            "Parts in CCI Time",
+            "Parts Available in Country Time",
+            "Parts Available in ASP Hub Time"
+        ]);
+
+        // Step 1: Status Mapping Function
+        function getOpenCallStatus(serviceStatus, partsStatus) {
+            serviceStatus = String(serviceStatus || "").trim();
+            partsStatus = String(partsStatus || "").trim();
+
+            // In Escalation
+            if (serviceStatus === "In Escalation") {
+                switch(partsStatus){
+                    case "ASP CWH to CCI":
+                        return { currentStatus: "In Escalation - ASP CWH to CCI", actionableTo: "Motorola" };
+                    case "":
+                        return { currentStatus: "In Escalation - Waiting for Approval", actionableTo: "Motorola" };
+                    case "CCI TO ASP CWH":
+                        return { currentStatus: "In Escalation - CCI TO ASP CWH", actionableTo: "Motorola" };
+                    case "Parts in ASP CWH":
+                        return { currentStatus: "In Escalation - Parts in ASP CWH", actionableTo: "Motorola" };
+                    case "Parts in other CCI":
+                        return { currentStatus: "In Escalation - Parts in other CCI", actionableTo: "Motorola" };
+                    case "Parts in service center":
+                        return { currentStatus: "In Escalation - Parts in service center", actionableTo: "Motorola" };
+                    case "Parts shortage":
+                        return { currentStatus: "In Escalation - Parts shortage", actionableTo: "Motorola" };
+                    default:
+                        return { currentStatus: "In Escalation - Vendor Hub", actionableTo: "Motorola" };
+                }
+            }
+
+            // Pre Submitted
+            if (serviceStatus === "Pre Submitted") {
+                return {
+                    currentStatus: "Pre Submitted",
+                    actionableTo: "CCI"
+                };
+            }
+
+            // Repair in progress
+            if (serviceStatus === "Repair in progress") {
+                switch(partsStatus){
+                    case "ASP CWH to CCI":
+                        return {
+                            currentStatus: "ASP CWH to CCI",
+                            actionableTo: "CCI"
+                        };
+                    case "":
+                        return {
+                            currentStatus: "Repair In Progress - Without Parts",
+                            actionableTo: "CCI"
+                        };
+                    case "CCI TO ASP CWH":
+                        return {
+                            currentStatus: "CCI to Escalate - Parts Shortage",
+                            actionableTo: "CCI"
+                        };
+                    case "Parts shortage":
+                        return {
+                            currentStatus: "CCI to Escalate - Parts Shortage",
+                            actionableTo: "CCI"
+                        };
+                    case "Parts in ASP CWH":
+                        return {
+                            currentStatus: "Parts in ASP CWH",
+                            actionableTo: "CWH"
+                        };
+                    case "Parts in other CCI":
+                        return {
+                            currentStatus: "Parts in Other CCI",
+                            actionableTo: "CWH"
+                        };
+                    case "Parts in service center":
+                        return {
+                            currentStatus: "Parts in Service Center",
+                            actionableTo: "CCI"
+                        };
+                    default:
+                        return {
+                            currentStatus: "Repair In Progress - Vendor Hub",
+                            actionableTo: "Motorola"
+                        };
+                }
+            }
+
+            // Submitted
+            if (serviceStatus === "Submitted") {
+                return {
+                    currentStatus: "Submitted",
+                    actionableTo: "CCI"
+                };
+            }
+
+            // Waiting for Pickup
+            if (serviceStatus === "Waiting for pickup" || serviceStatus === "Waiting for pick up") {
+                return {
+                    currentStatus: "RFPU",
+                    actionableTo: "CCI"
+                };
+            }
+
+            // Default
+            return {
+                currentStatus: serviceStatus || "Unknown",
+                actionableTo: "Others"
+            };
+        }
+
+        // Initialization & event binding hooks
+        document.getElementById('processBtn').addEventListener('click', startDataPipeline);
+        document.getElementById('exportCsvBtn').addEventListener('click', exportToExcel);
+        document.getElementById('resetFiltersBtn').addEventListener('click', resetAllFilters);
+
+        // Click-outside dynamic setup for custom filter elements
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.filter-dropdown')) {
+                document.querySelectorAll('.custom-dropdown-content').forEach(d => d.classList.remove('show'));
+            }
+        });
+
+        // Trigger execution pipeline
+        async function startDataPipeline() {
+            const openCallsInput = document.getElementById('openCallsFile').files[0];
+            const mappingInput = document.getElementById('regionMappingFile').files[0];
+
+            if (!openCallsInput) {
+                alert("Please upload the Open Calls report excel file before continuing.");
+                return;
+            }
+
+            try {
+                // Read Mapping table if provided
+                if (mappingInput) {
+                    const mappingData = await parseFile(mappingInput);
+                    buildMappingDictionary(mappingData);
+                } else {
+                    regionalMapping = {};
+                }
+
+                // Process Base Data Model
+                rawOpenCalls = await parseFile(openCallsInput);
+                if (rawOpenCalls.length === 0) {
+                    alert("The uploaded Open Calls spreadsheet contains no data rows.");
+                    return;
+                }
+
+                processDataEngine();
+                initFilterSchemas();
+                applyGlobalFiltersAndRender();
+
+                document.getElementById('dashboardWrapper').classList.remove('hidden');
+                document.getElementById('tableHeaderTitle').innerText = `Open_Calls_Report_${latestCallDateString}`;
+            } catch (err) {
+                console.error(err);
+                alert("Error compiling data files. Check spreadsheet formatting structures.");
+            }
+        }
+
+        // Standardized File Parser Factory
+        function parseFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    if (ext === 'csv') {
+                        resolve(parseCSVText(e.target.result));
+                        return;
+                    } else {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array', raw: true });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const sheet = workbook.Sheets[firstSheetName];
+                        const json = XLSX.utils.sheet_to_json(sheet, {
+                            defval: "",
+                            raw: false
+                        });
+                        resolve(json);
+                    }
+                };
+                reader.onerror = reject;
+                if (file.name.split('.').pop().toLowerCase() === 'csv') {
+                    reader.readAsText(file);
+                } else {
+                    reader.readAsArrayBuffer(file);
+                }
+            });
+        }
+
+        function parseCSVText(text) {
+            const rows = [];
+            let row = [];
+            let cell = "";
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const next = text[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && next === '"') {
+                        cell += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === "," && !inQuotes) {
+                    row.push(cell);
+                    cell = "";
+                } else if ((char === "\n" || char === "\r") && !inQuotes) {
+                    if (char === "\r" && next === "\n") i++;
+                    row.push(cell);
+                    rows.push(row);
+                    row = [];
+                    cell = "";
+                } else {
+                    cell += char;
+                }
+            }
+
+            if (cell !== "" || row.length > 0) {
+                row.push(cell);
+                rows.push(row);
+            }
+
+            const headers = (rows.shift() || []).map(header => header.replace(/^\uFEFF/, "").trim());
+            return rows
+                .filter(values => values.some(value => String(value).trim() !== ""))
+                .map(values => {
+                    const record = {};
+                    headers.forEach((header, index) => {
+                        record[header] = values[index] !== undefined ? String(values[index]).trim() : "";
+                    });
+                    return record;
+                });
+        }
+
+        function buildMappingDictionary(data) {
+            regionalMapping = {};
+            console.log("Building mapping dictionary from", data.length, "rows");
+            
+            const firstRow = data[0] || {};
+            const columnNames = Object.keys(firstRow);
+            console.log("Available columns in mapping file:", columnNames);
+            
+            let stationCodeCol = null;
+            let regionCol = null;
+            
+            for (const col of columnNames) {
+                const colLower = col.toLowerCase().trim();
+                if (colLower === 'station code' || colLower === 'stationcode' || colLower === 'station') {
+                    stationCodeCol = col;
+                }
+                if (colLower === 'region' || colLower === 'territory' || colLower === 'area') {
+                    regionCol = col;
+                }
+            }
+            
+            if (!stationCodeCol || !regionCol) {
+                console.warn("Could not find Station Code or Region columns in mapping file. Available columns:", columnNames);
+                if (columnNames.length >= 2) {
+                    stationCodeCol = columnNames[0];
+                    regionCol = columnNames[1];
+                    console.log(`Using fallback: "${stationCodeCol}" as Station Code and "${regionCol}" as Region`);
+                } else {
+                    console.error("Mapping file has insufficient columns");
+                    return;
+                }
+            }
+            
+            console.log(`Using mapping: Station Code column = "${stationCodeCol}", Region column = "${regionCol}"`);
+            
+            data.forEach(row => {
+                let code = String(row[stationCodeCol] || "").trim();
+                const region = String(row[regionCol] || "").trim();
+                
+                code = normalizeStationCode(code);
+                
+                if (code && region) {
+                    regionalMapping[code] = region;
+                }
+            });
+            
+            console.log("Total mappings:", Object.keys(regionalMapping).length);
+        }
+
+        function normalizeStationCode(code) {
+            if (!code) return "";
+            
+            let normalized = code.trim();
+            
+            if (normalized.endsWith('.0')) {
+                normalized = normalized.slice(0, -2);
+            }
+            
+            normalized = normalized.replace(/^0+/, '');
+            
+            if (normalized === '') {
+                normalized = '0';
+            }
+            
+            return normalized;
+        }
+
+        function pad2(value) {
+            return String(value).padStart(2, "0");
+        }
+
+        function formatDashboardDate(value) {
+            const parsedDate = parseDashboardDate(value);
+            if (!parsedDate) return value || "";
+
+            let hour = parsedDate.getHours();
+            const ampm = hour >= 12 ? "PM" : "AM";
+            hour = hour % 12;
+            if (hour === 0) hour = 12;
+
+            return `${pad2(parsedDate.getDate())}/${pad2(parsedDate.getMonth() + 1)}/${parsedDate.getFullYear()} ${hour}:${pad2(parsedDate.getMinutes())}:${pad2(parsedDate.getSeconds())} ${ampm}`;
+        }
+
+        function parseDashboardDate(value) {
+            if (!value) return null;
+            if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+
+            if (typeof value === "number") {
+                const d = new Date((value - 25569) * 86400 * 1000);
+                return isNaN(d.getTime()) ? null : d;
+            }
+
+            const rawStr = String(value);
+            const hadComma = rawStr.includes(",");
+            const cleanStr = rawStr
+                .replace(/[\s\u00A0]+/g, " ")
+                .replace(/\s*,\s*/g, " ")
+                .trim();
+            const slashMatch = cleanStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(AM|PM)?)?$/i);
+
+            if (slashMatch) {
+                const first = parseInt(slashMatch[1], 10);
+                const second = parseInt(slashMatch[2], 10);
+                let year = parseInt(slashMatch[3], 10);
+                if (year < 100) year += 2000;
+
+                let day;
+                let month;
+                const ampm = (slashMatch[7] || "").toUpperCase();
+                if (first > 12 && second <= 12) {
+                    day = first;
+                    month = second - 1;
+                } else if (second > 12 && first <= 12) {
+                    day = second;
+                    month = first - 1;
+                } else if (hadComma) {
+                    day = second;
+                    month = first - 1;
+                } else {
+                    day = first;
+                    month = second - 1;
+                }
+
+                let hour = parseInt(slashMatch[4] || "0", 10);
+                const minute = parseInt(slashMatch[5] || "0", 10);
+                const secondPart = parseInt(slashMatch[6] || "0", 10);
+                if (ampm === "PM" && hour < 12) hour += 12;
+                if (ampm === "AM" && hour === 12) hour = 0;
+
+                const parsedDate = new Date(year, month, day, hour, minute, secondPart);
+                if (
+                    parsedDate.getFullYear() === year &&
+                    parsedDate.getMonth() === month &&
+                    parsedDate.getDate() === day
+                ) {
+                    return parsedDate;
+                }
+                return null;
+            }
+
+            const fallbackDate = new Date(cleanStr);
+            return isNaN(fallbackDate.getTime()) ? null : fallbackDate;
+        }
+
+        // Updated: Calculate ageing from Carry-In Time if available, otherwise from SO Submitted Time
+        function calculateAgeingAndBucket(row, referenceDate = ageingReferenceDate) {
+            // Check if Carry-In Time is available
+            let timeStr = null;
+            let timeSource = "SO Submitted Time";
+            
+            if (row["Carry-In Time"] && String(row["Carry-In Time"]).trim() !== "") {
+                timeStr = row["Carry-In Time"];
+                timeSource = "Carry-In Time";
+            } else {
+                timeStr = row["SO Submitted Time"];
+                timeSource = "SO Submitted Time";
+            }
+
+            const parsedDate = parseDashboardDate(timeStr);
+
+            if (!parsedDate || isNaN(parsedDate.getTime())) {
+                console.warn('Invalid date for ageing:', timeStr, '(source:', timeSource, ')');
+                return { days: null, bucket: "", source: timeSource };
+            }
+
+            if (!referenceDate || isNaN(referenceDate.getTime())) {
+                console.warn('Missing ageing reference date');
+                return { days: null, bucket: "", source: timeSource };
+            }
+
+            const timeDiff = referenceDate.getTime() - parsedDate.getTime();
+            const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+
+            let bucket = "";
+            if (daysDiff <= 1) bucket = "0-1Days";
+            else if (daysDiff <= 4) bucket = "2-4Days";
+            else if (daysDiff <= 7) bucket = "5-7Days";
+            else if (daysDiff <= 15) bucket = "8-15Days";
+            else if (daysDiff <= 30) bucket = "16-30Days";
+            else bucket = ">30days";
+
+            return { days: daysDiff, bucket: bucket, source: timeSource };
+        }
+
+        // Step 2: Process data with derived columns
+        function processDataEngine() {
+            finalReportData = [];
+            let trackedLatestDate = null;
+
+            rawOpenCalls.forEach(row => {
+                // Find the latest date from either Carry-In Time or SO Submitted Time
+                let dateToCheck = null;
+                if (row["Carry-In Time"] && String(row["Carry-In Time"]).trim() !== "") {
+                    dateToCheck = row["Carry-In Time"];
+                } else if (row["SO Submitted Time"]) {
+                    dateToCheck = row["SO Submitted Time"];
+                }
+                
+                if (dateToCheck) {
+                    let d = parseDashboardDate(dateToCheck);
+                    if (d) {
+                        if (!trackedLatestDate || d > trackedLatestDate) trackedLatestDate = d;
+                    }
+                }
+            });
+
+            ageingReferenceDate = trackedLatestDate;
+
+            console.log("Regional mapping entries:", Object.keys(regionalMapping).length);
+            console.log("Ageing reference date:", formatDashboardDate(ageingReferenceDate));
+
+            rawOpenCalls.forEach(row => {
+                let stationCode = String(row["Station Code"] || "").trim();
+                const normalizedStationCode = normalizeStationCode(stationCode);
+                
+                let regionComputed = "Unmapped";
+                if (regionalMapping[normalizedStationCode]) {
+                    regionComputed = regionalMapping[normalizedStationCode];
+                }
+
+                // Step 2: Get status mapping
+                const statusMap = getOpenCallStatus(
+                    row["Service Order Status"],
+                    row["Parts Status"]
+                );
+
+                // Calculate ageing using Carry-In Time if available
+                const ageingResult = calculateAgeingAndBucket(row, ageingReferenceDate);
+                const pickupAgeing = row["Finish Repair Time"] ? calculateAgeingAndBucket({ "SO Submitted Time": row["Finish Repair Time"] }, ageingReferenceDate) : { bucket: "", source: "N/A" };
+
+                let newRow = {
+                    "Service Order": row["Service Order"] || "",
+                    "Station Code": stationCode,
+                    "Station Name": row["Station Name"] || "",
+                    "Model": row["Model"] || "",
+                    "IMEI1": row["IMEI1"] || "",
+                    "IMEI2": row["IMEI2"] || "",
+                    "SN": row["SN"] || "",
+                    "Service Order Status": String(row["Service Order Status"] || "").trim(),
+                    "Warranty Status": String(row["Warranty Status"] || "").trim(),
+                    "Parts Status": String(row["Parts Status"] || "").trim(),
+                    "DOA Status": String(row["DOA Status"] || "").trim(),
+                    "CID Status": row["CID Status"] || "",
+                    "SO Submitted Time": formatDashboardDate(row["SO Submitted Time"]),
+                    "Carry-In Time": formatDashboardDate(row["Carry-In Time"]),
+                    "Apply for Parts Time": formatDashboardDate(row["Apply for Parts Time"]),
+                    "Finish Repair Time": formatDashboardDate(row["Finish Repair Time"]),
+                    "Parts in CCI Time": formatDashboardDate(row["Parts in CCI Time"]),
+                    "Parts Available in Country Time": formatDashboardDate(row["Parts Available in Country Time"]),
+                    "Parts Available in ASP Hub Time": formatDashboardDate(row["Parts Available in ASP Hub Time"]),
+                    "Transaction Code": row["Transaction Code"] || "",
+                    "Repair Code": row["Repair Code"] || "",
+                    "Repair Code Description": row["Repair Code Description"] || "",
+                    "Repair Type": row["Repair Type"] || "",
+                    "Service Type": String(row["Service Type"] || "").trim(),
+                    
+                    "Open Call Ageing Bucket": ageingResult.bucket,
+                    "Ageing Source": ageingResult.source,
+                    "Waiting for pickup Ageing Bucket": pickupAgeing.bucket,
+                    "Region": regionComputed,
+                    
+                    // Step 2: Add derived columns
+                    "Current Status - Open Call": statusMap.currentStatus,
+                    "Actionable To": statusMap.actionableTo
+                };
+
+                finalReportData.push(newRow);
+            });
+
+            // Log mapping statistics
+            const mappedCount = finalReportData.filter(r => r["Region"] !== "Unmapped").length;
+            const unmappedCount = finalReportData.filter(r => r["Region"] === "Unmapped").length;
+            console.log(`Region mapping: ${mappedCount} mapped, ${unmappedCount} unmapped`);
+
+            // Log ageing source statistics
+            const carryInCount = finalReportData.filter(r => r["Ageing Source"] === "Carry-In Time").length;
+            const submittedCount = finalReportData.filter(r => r["Ageing Source"] === "SO Submitted Time").length;
+            console.log(`Ageing source: ${carryInCount} used Carry-In Time, ${submittedCount} used SO Submitted Time`);
+
+            console.table(AGEING_BUCKETS.map(bucket => ({
+                bucket,
+                count: finalReportData.filter(row => row["Open Call Ageing Bucket"] === bucket).length
+            })));
+
+            if (trackedLatestDate) {
+                const pad = (n) => String(n).padStart(2, '0');
+                latestCallDateString = `${pad(trackedLatestDate.getDate())}${pad(trackedLatestDate.getMonth() + 1)}${trackedLatestDate.getFullYear()}`;
+            } else {
+                latestCallDateString = "LatestDate";
+            }
+        }
+
+        // Setup filter structures
+        function initFilterSchemas() {
+            const keysToFilter = [
+                "Region", 
+                "Actionable To",
+                "Current Status - Open Call",
+                "Service Order Status", 
+                "Parts Status", 
+                "DOA Status", 
+                "Warranty Status", 
+                "Open Call Ageing Bucket",
+                "Service Type"
+            ];
+
+            keysToFilter.forEach(key => {
+                let uniqueVals = [...new Set(finalReportData.map(r => r[key]))].map(v => String(v).trim());
+                uniqueVals.sort();
+
+                uniqueFilterValues[key] = uniqueVals;
+                selectedFilters[key] = [...uniqueVals]; 
+
+                renderFilterDropdownUI(key);
+            });
+        }
+
+        function renderFilterDropdownUI(key) {
+            const containerId = `filter-${key.replace(/ /g, '_')}`;
+            const dropdownContainer = document.getElementById(containerId);
+            if (!dropdownContainer) return;
+
+            const contentDiv = dropdownContainer.querySelector('.custom-dropdown-content');
+            const selectBtn = dropdownContainer.querySelector('.select-box');
+
+            let html = `
+                <div class="flex items-center justify-between border-b border-gray-200 pb-1.5 mb-1.5 text-xs">
+                    <button class="text-blue-600 hover:underline font-bold select-all-btn" type="button">All</button>
+                    <button class="text-gray-500 hover:underline font-bold clear-all-btn" type="button">Clear</button>
+                </div>
+                <div class="space-y-1 max-h-44 overflow-y-auto pr-1">
+            `;
+
+            uniqueFilterValues[key].forEach(val => {
+                const isChecked = selectedFilters[key].includes(val) ? "checked" : "";
+                html += `
+                    <label class="flex items-center gap-2 text-xs text-gray-700 hover:bg-gray-100 p-1 rounded cursor-pointer">
+                        <input type="checkbox" value="${val}" ${isChecked} class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 item-checkbox">
+                        <span class="truncate">${val === "" ? "(Blank)" : val}</span>
+                    </label>
+                `;
+            });
+
+            html += `</div>`;
+            contentDiv.innerHTML = html;
+
+            updateDropdownButtonLabel(key, selectBtn);
+
+            selectBtn.onclick = function (e) {
+                e.stopPropagation();
+                const isCurrentlyShown = contentDiv.classList.contains('show');
+                document.querySelectorAll('.custom-dropdown-content').forEach(d => d.classList.remove('show'));
+                if (!isCurrentlyShown) contentDiv.classList.add('show');
+            };
+
+            contentDiv.querySelectorAll('.item-checkbox').forEach(cb => {
+                cb.onchange = function () {
+                    if (this.checked) {
+                        if (!selectedFilters[key].includes(this.value)) selectedFilters[key].push(this.value);
+                    } else {
+                        selectedFilters[key] = selectedFilters[key].filter(v => v !== this.value);
+                    }
+                    updateDropdownButtonLabel(key, selectBtn);
+                    applyGlobalFiltersAndRender();
+                };
+            });
+
+            contentDiv.querySelector('.select-all-btn').onclick = function () {
+                selectedFilters[key] = [...uniqueFilterValues[key]];
+                contentDiv.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = true);
+                updateDropdownButtonLabel(key, selectBtn);
+                applyGlobalFiltersAndRender();
+            };
+
+            contentDiv.querySelector('.clear-all-btn').onclick = function () {
+                selectedFilters[key] = [];
+                contentDiv.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+                updateDropdownButtonLabel(key, selectBtn);
+                applyGlobalFiltersAndRender();
+            };
+        }
+
+        function updateDropdownButtonLabel(key, buttonEl) {
+            const selectedCount = selectedFilters[key].length;
+            const totalCount = uniqueFilterValues[key].length;
+            if (selectedCount === totalCount) {
+                buttonEl.innerText = "All Selected ⬇";
+            } else if (selectedCount === 0) {
+                buttonEl.innerText = "None Selected ⬇";
+            } else {
+                buttonEl.innerText = `Selected (${selectedCount}) ⬇`;
+            }
+        }
+
+        function resetAllFilters() {
+            Object.keys(uniqueFilterValues).forEach(key => {
+                selectedFilters[key] = [...uniqueFilterValues[key]];
+                renderFilterDropdownUI(key);
+            });
+            document.querySelectorAll('.custom-dropdown-content').forEach(d => d.classList.remove('show'));
+            applyGlobalFiltersAndRender();
+        }
+
+        function getFilteredReportData() {
+            return finalReportData.filter(row => {
+                for (const key in selectedFilters) {
+                    const cellVal = String(row[key]).trim();
+                    if (!selectedFilters[key].includes(cellVal)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        }
+
+        function applyGlobalFiltersAndRender() {
+            const filteredData = getFilteredReportData();
+
+            calculateKPIMetrics(filteredData);
+            renderConsolidatedPivot(filteredData);
+            renderAgeingPivot(filteredData);
+            renderMasterTableUI(filteredData);
+        }
+
+        // KPI metric parsing engines
+        function calculateKPIMetrics(data) {
+            let totalOpen = data.length;
+            let waitingPickup = 0;
+            let actionableCCI = 0;
+            let aspCwh = 0;
+            let transitCCI = 0;
+            let partsServiceCenter = 0;
+            let motorolaActionable = 0;
+
+            data.forEach(row => {
+                const currentStatus = row["Current Status - Open Call"];
+                const actionableTo = row["Actionable To"];
+
+                if (currentStatus === "RFPU") {
+                    waitingPickup++;
+                }
+
+                if (actionableTo === "CCI") {
+                    actionableCCI++;
+                }
+
+                if (actionableTo === "CWH") {
+                    aspCwh++;
+                }
+
+                if (currentStatus === "ASP CWH to CCI") {
+                    transitCCI++;
+                }
+
+                if (currentStatus === "Parts in Service Center") {
+                    partsServiceCenter++;
+                }
+
+                if (actionableTo === "Motorola") {
+                    motorolaActionable++;
+                }
+            });
+
+            document.getElementById('kpi-total-open').innerText = totalOpen.toLocaleString();
+            document.getElementById('kpi-waiting-pickup').innerText = waitingPickup.toLocaleString();
+            document.getElementById('kpi-actionable-cci').innerText = actionableCCI.toLocaleString();
+            document.getElementById('kpi-asp-cwh').innerText = aspCwh.toLocaleString();
+            document.getElementById('kpi-transit-cci').innerText = transitCCI.toLocaleString();
+            document.getElementById('kpi-parts-sc').innerText = partsServiceCenter.toLocaleString();
+            document.getElementById('kpi-motorola').innerText = motorolaActionable.toLocaleString();
+        }
+
+        // Pivot 1: Region Pivot with grouped rows
+        function renderConsolidatedPivot(data) {
+            const container = document.getElementById('pivotConsolidatedContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 italic py-4 text-center">No matching data found.</p>`;
+                return;
+            }
+
+            const regions = [...new Set(data.map(r => r["Region"]))].sort();
+            
+            // Build pivot data
+            const pivotData = {};
+            data.forEach(row => {
+                const actionableTo = row["Actionable To"] || "Unknown";
+                const currentStatus = row["Current Status - Open Call"] || "Unknown";
+                const key = `${actionableTo}|||${currentStatus}`;
+                
+                if (!pivotData[key]) {
+                    pivotData[key] = {
+                        actionableTo: actionableTo,
+                        currentStatus: currentStatus,
+                        regions: {}
+                    };
+                    regions.forEach(r => pivotData[key].regions[r] = 0);
+                }
+                if (pivotData[key].regions[row["Region"]] !== undefined) {
+                    pivotData[key].regions[row["Region"]]++;
+                }
+            });
+
+            // Group by Actionable To
+            const groupedData = {};
+            Object.values(pivotData).forEach(item => {
+                if (!groupedData[item.actionableTo]) {
+                    groupedData[item.actionableTo] = [];
+                }
+                groupedData[item.actionableTo].push(item);
+            });
+
+            // Sort statuses within each group
+            Object.keys(groupedData).forEach(key => {
+                groupedData[key].sort((a, b) => a.currentStatus.localeCompare(b.currentStatus));
+            });
+
+            // Sort actionable to keys
+            const sortedActionableKeys = Object.keys(groupedData).sort();
+
+            // Calculate grand totals
+            const grandTotals = {};
+            regions.forEach(r => grandTotals[r] = 0);
+            let overallTotal = 0;
+
+            // First pass to calculate totals
+            Object.values(pivotData).forEach(item => {
+                regions.forEach(region => {
+                    grandTotals[region] += item.regions[region] || 0;
+                    overallTotal += item.regions[region] || 0;
+                });
+            });
+
+            // Build HTML
+            let html = `
+                <table class="min-w-full text-left border border-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="sticky-col-1-header text-xs font-bold text-gray-700 uppercase bg-gray-100 px-3 py-2 border-b border-gray-300">Current Status - Open Call</th>
+            `;
+            
+            regions.forEach(region => {
+                html += `<th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300">${region}</th>`;
+            });
+            
+            html += `
+                            <th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300 grand-total-col">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+            `;
+
+            let rowIndex = 0;
+            sortedActionableKeys.forEach(actionableTo => {
+                const statuses = groupedData[actionableTo];
+                let actionableTotal = 0;
+                const actionableTotals = {};
+                regions.forEach(r => actionableTotals[r] = 0);
+
+                // Calculate actionable total
+                statuses.forEach(item => {
+                    regions.forEach(region => {
+                        actionableTotals[region] += item.regions[region] || 0;
+                        actionableTotal += item.regions[region] || 0;
+                    });
+                });
+
+                // Only show actionable row if total > 0
+                if (actionableTotal > 0) {
+                    // Parent row - Actionable To
+                    const isEven = rowIndex % 2 === 0;
+                    html += `<tr class="parent-row ${isEven ? 'alternate-row-even' : 'alternate-row'}">`;
+                    html += `<td class="sticky-col-1 text-xs font-bold text-gray-900 px-3 py-1.5 border-b border-gray-200">${actionableTo}</td>`;
+                    regions.forEach(region => {
+                        const val = actionableTotals[region] || 0;
+                        html += `<td class="text-xs text-center font-bold text-gray-800 px-3 py-1.5 border-b border-gray-200 parent-total">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                    });
+                    html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col parent-total">${actionableTotal.toLocaleString()}</td>`;
+                    html += `</tr>`;
+                    rowIndex++;
+
+                    // Child rows (Current Status)
+                    statuses.forEach(item => {
+                        const itemTotal = regions.reduce((sum, r) => sum + (item.regions[r] || 0), 0);
+                        
+                        // Skip rows with zero total
+                        if (itemTotal === 0) return;
+
+                        const isEvenChild = rowIndex % 2 === 0;
+                        html += `<tr class="${isEvenChild ? 'alternate-row-even' : 'alternate-row'}">`;
+                        html += `<td class="sticky-col-1 text-xs text-gray-700 px-3 py-1.5 border-b border-gray-200 child-row">${item.currentStatus}</td>`;
+                        regions.forEach(region => {
+                            const val = item.regions[region] || 0;
+                            html += `<td class="text-xs text-center text-gray-600 px-3 py-1.5 border-b border-gray-200 ${val > 0 ? '' : 'zero-value'}">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                        });
+                        html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col">${itemTotal.toLocaleString()}</td>`;
+                        html += `</tr>`;
+                        rowIndex++;
+                    });
+                }
+            });
+
+            // Grand Total row
+            html += `<tr class="grand-total-row">`;
+            html += `<td class="sticky-col-1 text-xs font-bold text-gray-800 uppercase tracking-wide px-3 py-1.5 border-t-2 border-gray-300">Grand Total</td>`;
+            regions.forEach(region => {
+                html += `<td class="text-xs text-center text-gray-900 font-black px-3 py-1.5 border-t-2 border-gray-300 grand-total-col">${grandTotals[region].toLocaleString()}</td>`;
+            });
+            html += `<td class="text-xs text-center text-blue-900 font-black bg-blue-100 px-3 py-1.5 border-t-2 border-gray-300 grand-total-col">${overallTotal.toLocaleString()}</td>`;
+            html += `</tr></tbody></table>`;
+
+            container.innerHTML = html;
+        }
+
+        // Pivot 2: Ageing Bucket Pivot with grouped rows
+        function renderAgeingPivot(data) {
+            const container = document.getElementById('pivotAgeingContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 italic py-4 text-center">No matching data found.</p>`;
+                return;
+            }
+
+            // Use fixed ageing bucket order
+            const ageingBuckets = AGEING_BUCKETS;
+            
+            // Build pivot data
+            const pivotData = {};
+            data.forEach(row => {
+                const actionableTo = row["Actionable To"] || "Unknown";
+                const currentStatus = row["Current Status - Open Call"] || "Unknown";
+                const key = `${actionableTo}|||${currentStatus}`;
+                const bucket = row["Open Call Ageing Bucket"] || "Unknown";
+                
+                if (!pivotData[key]) {
+                    pivotData[key] = {
+                        actionableTo: actionableTo,
+                        currentStatus: currentStatus,
+                        buckets: {}
+                    };
+                    ageingBuckets.forEach(b => pivotData[key].buckets[b] = 0);
+                }
+                
+                // Only count if bucket is in our defined list, otherwise ignore
+                if (pivotData[key].buckets[bucket] !== undefined) {
+                    pivotData[key].buckets[bucket]++;
+                }
+            });
+
+            // Group by Actionable To
+            const groupedData = {};
+            Object.values(pivotData).forEach(item => {
+                if (!groupedData[item.actionableTo]) {
+                    groupedData[item.actionableTo] = [];
+                }
+                groupedData[item.actionableTo].push(item);
+            });
+
+            // Sort statuses within each group
+            Object.keys(groupedData).forEach(key => {
+                groupedData[key].sort((a, b) => a.currentStatus.localeCompare(b.currentStatus));
+            });
+
+            // Sort actionable to keys
+            const sortedActionableKeys = Object.keys(groupedData).sort();
+
+            // Calculate grand totals
+            const grandTotals = {};
+            ageingBuckets.forEach(b => grandTotals[b] = 0);
+            let overallTotal = 0;
+
+            // First pass to calculate totals
+            Object.values(pivotData).forEach(item => {
+                ageingBuckets.forEach(bucket => {
+                    grandTotals[bucket] += item.buckets[bucket] || 0;
+                    overallTotal += item.buckets[bucket] || 0;
+                });
+            });
+
+            // Build HTML
+            let html = `
+                <table class="min-w-full text-left border border-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="sticky-col-1-header text-xs font-bold text-gray-700 uppercase bg-gray-100 px-3 py-2 border-b border-gray-300">Current Status - Open Call</th>
+            `;
+            
+            ageingBuckets.forEach(bucket => {
+                html += `<th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300">${bucket}</th>`;
+            });
+            
+            html += `
+                            <th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300 grand-total-col">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+            `;
+
+            let rowIndex = 0;
+            sortedActionableKeys.forEach(actionableTo => {
+                const statuses = groupedData[actionableTo];
+                let actionableTotal = 0;
+                const actionableTotals = {};
+                ageingBuckets.forEach(b => actionableTotals[b] = 0);
+
+                // Calculate actionable total
+                statuses.forEach(item => {
+                    ageingBuckets.forEach(bucket => {
+                        actionableTotals[bucket] += item.buckets[bucket] || 0;
+                        actionableTotal += item.buckets[bucket] || 0;
+                    });
+                });
+
+                // Only show actionable row if total > 0
+                if (actionableTotal > 0) {
+                    // Parent row - Actionable To
+                    const isEven = rowIndex % 2 === 0;
+                    html += `<tr class="parent-row ${isEven ? 'alternate-row-even' : 'alternate-row'}">`;
+                    html += `<td class="sticky-col-1 text-xs font-bold text-gray-900 px-3 py-1.5 border-b border-gray-200">${actionableTo}</td>`;
+                    ageingBuckets.forEach(bucket => {
+                        const val = actionableTotals[bucket] || 0;
+                        html += `<td class="text-xs text-center font-bold text-gray-800 px-3 py-1.5 border-b border-gray-200 parent-total">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                    });
+                    html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col parent-total">${actionableTotal.toLocaleString()}</td>`;
+                    html += `</tr>`;
+                    rowIndex++;
+
+                    // Child rows (Current Status)
+                    statuses.forEach(item => {
+                        const itemTotal = ageingBuckets.reduce((sum, b) => sum + (item.buckets[b] || 0), 0);
+                        
+                        // Skip rows with zero total
+                        if (itemTotal === 0) return;
+
+                        const isEvenChild = rowIndex % 2 === 0;
+                        html += `<tr class="${isEvenChild ? 'alternate-row-even' : 'alternate-row'}">`;
+                        html += `<td class="sticky-col-1 text-xs text-gray-700 px-3 py-1.5 border-b border-gray-200 child-row">${item.currentStatus}</td>`;
+                        ageingBuckets.forEach(bucket => {
+                            const val = item.buckets[bucket] || 0;
+                            html += `<td class="text-xs text-center text-gray-600 px-3 py-1.5 border-b border-gray-200 ${val > 0 ? '' : 'zero-value'}">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                        });
+                        html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col">${itemTotal.toLocaleString()}</td>`;
+                        html += `</tr>`;
+                        rowIndex++;
+                    });
+                }
+            });
+
+            // Grand Total row
+            html += `<tr class="grand-total-row">`;
+            html += `<td class="sticky-col-1 text-xs font-bold text-gray-800 uppercase tracking-wide px-3 py-1.5 border-t-2 border-gray-300">Grand Total</td>`;
+            ageingBuckets.forEach(bucket => {
+                html += `<td class="text-xs text-center text-gray-900 font-black px-3 py-1.5 border-t-2 border-gray-300 grand-total-col">${grandTotals[bucket].toLocaleString()}</td>`;
+            });
+            html += `<td class="text-xs text-center text-blue-900 font-black bg-blue-100 px-3 py-1.5 border-t-2 border-gray-300 grand-total-col">${overallTotal.toLocaleString()}</td>`;
+            html += `</tr></tbody></table>`;
+
+            container.innerHTML = html;
+        }
+
+        function renderMasterTableUI(data) {
+            const columnsToLoad = [
+                "Service Order", "Station Code", "Station Name", "Model", "IMEI1", "IMEI2", "SN", 
+                "Service Order Status", "Warranty Status", "Parts Status", "DOA Status", "CID Status", 
+                "SO Submitted Time", "Carry-In Time", "Apply for Parts Time", "Finish Repair Time", 
+                "Parts in CCI Time", "Parts Available in Country Time", "Parts Available in ASP Hub Time", 
+                "Transaction Code", "Repair Code", "Repair Code Description", "Repair Type", "Service Type",
+                "Open Call Ageing Bucket", "Ageing Source", "Waiting for pickup Ageing Bucket", "Region",
+                "Current Status - Open Call", "Actionable To"
+            ];
+
+            const headerRow = document.getElementById('masterTableHead');
+            const bodyRow = document.getElementById('masterTableBody');
+
+            headerRow.innerHTML = columnsToLoad.map(col => `
+                <th class="px-4 py-2 text-left text-xs font-bold text-gray-700 bg-gray-100 border-b border-gray-200 uppercase tracking-wider">${col}</th>
+            `).join('');
+
+            if (data.length === 0) {
+                bodyRow.innerHTML = `<tr><td colspan="${columnsToLoad.length}" class="text-center p-8 text-sm text-gray-400 italic">No records found matching target selection criteria definitions.</td></tr>`;
+                return;
+            }
+
+            bodyRow.innerHTML = data.map(row => {
+                return `<tr class="hover:bg-gray-50 transition">` + 
+                    columnsToLoad.map(col => {
+                        let cellVal = row[col];
+                        if (DATE_COLUMNS.has(col)) {
+                            cellVal = formatDashboardDate(cellVal);
+                        }
+                        return `<td class="px-4 py-2 text-xs text-gray-600 border-b border-gray-200 max-w-xs truncate">${cellVal === "" ? "-" : cellVal}</td>`;
+                    }).join('') + 
+                `</tr>`;
+            }).join('');
+        }
+
+        // Excel export functions with grouped hierarchy
+        function buildConsolidatedPivotSheet(data) {
+            if (data.length === 0) {
+                return [["No matching data"]];
+            }
+
+            const regions = [...new Set(data.map(r => r["Region"]))].sort();
+            
+            const pivotData = {};
+            data.forEach(row => {
+                const actionableTo = row["Actionable To"] || "Unknown";
+                const currentStatus = row["Current Status - Open Call"] || "Unknown";
+                const key = `${actionableTo}|||${currentStatus}`;
+                
+                if (!pivotData[key]) {
+                    pivotData[key] = {
+                        actionableTo: actionableTo,
+                        currentStatus: currentStatus,
+                        regions: {}
+                    };
+                    regions.forEach(r => pivotData[key].regions[r] = 0);
+                }
+                if (pivotData[key].regions[row["Region"]] !== undefined) {
+                    pivotData[key].regions[row["Region"]]++;
+                }
+            });
+
+            // Group by Actionable To
+            const groupedData = {};
+            Object.values(pivotData).forEach(item => {
+                if (!groupedData[item.actionableTo]) {
+                    groupedData[item.actionableTo] = [];
+                }
+                groupedData[item.actionableTo].push(item);
+            });
+
+            const sortedActionableKeys = Object.keys(groupedData).sort();
+
+            const aoa = [["Current Status - Open Call", ...regions, "Total"]];
+            const grandTotals = {};
+            regions.forEach(r => grandTotals[r] = 0);
+            let overallTotal = 0;
+
+            sortedActionableKeys.forEach(actionableTo => {
+                const statuses = groupedData[actionableTo];
+                let actionableTotal = 0;
+                const actionableTotals = {};
+                regions.forEach(r => actionableTotals[r] = 0);
+
+                statuses.forEach(item => {
+                    regions.forEach(region => {
+                        actionableTotals[region] += item.regions[region] || 0;
+                        actionableTotal += item.regions[region] || 0;
+                    });
+                });
+
+                if (actionableTotal > 0) {
+                    // Parent row - Actionable To (bold in Excel)
+                    const parentRow = [actionableTo];
+                    regions.forEach(region => {
+                        const val = actionableTotals[region] || 0;
+                        parentRow.push(val);
+                        grandTotals[region] += val;
+                        overallTotal += val;
+                    });
+                    parentRow.push(actionableTotal);
+                    aoa.push(parentRow);
+
+                    // Child rows
+                    statuses.forEach(item => {
+                        const itemTotal = regions.reduce((sum, r) => sum + (item.regions[r] || 0), 0);
+                        if (itemTotal > 0) {
+                            const childRow = [item.currentStatus];
+                            regions.forEach(region => {
+                                childRow.push(item.regions[region] || 0);
+                            });
+                            childRow.push(itemTotal);
+                            aoa.push(childRow);
+                        }
+                    });
+                }
+            });
+
+            // Grand Total row
+            const grandTotalRow = ["Grand Total"];
+            regions.forEach(region => {
+                grandTotalRow.push(grandTotals[region]);
+            });
+            grandTotalRow.push(overallTotal);
+            aoa.push(grandTotalRow);
+
+            return aoa;
+        }
+
+        function buildAgeingPivotSheet(data) {
+            if (data.length === 0) {
+                return [["No matching data"]];
+            }
+
+            const ageingBuckets = AGEING_BUCKETS;
+            
+            const pivotData = {};
+            data.forEach(row => {
+                const actionableTo = row["Actionable To"] || "Unknown";
+                const currentStatus = row["Current Status - Open Call"] || "Unknown";
+                const key = `${actionableTo}|||${currentStatus}`;
+                const bucket = row["Open Call Ageing Bucket"] || "Unknown";
+                
+                if (!pivotData[key]) {
+                    pivotData[key] = {
+                        actionableTo: actionableTo,
+                        currentStatus: currentStatus,
+                        buckets: {}
+                    };
+                    ageingBuckets.forEach(b => pivotData[key].buckets[b] = 0);
+                }
+                
+                if (pivotData[key].buckets[bucket] !== undefined) {
+                    pivotData[key].buckets[bucket]++;
+                }
+            });
+
+            // Group by Actionable To
+            const groupedData = {};
+            Object.values(pivotData).forEach(item => {
+                if (!groupedData[item.actionableTo]) {
+                    groupedData[item.actionableTo] = [];
+                }
+                groupedData[item.actionableTo].push(item);
+            });
+
+            const sortedActionableKeys = Object.keys(groupedData).sort();
+
+            const aoa = [["Current Status - Open Call", ...ageingBuckets, "Total"]];
+            const grandTotals = {};
+            ageingBuckets.forEach(b => grandTotals[b] = 0);
+            let overallTotal = 0;
+
+            sortedActionableKeys.forEach(actionableTo => {
+                const statuses = groupedData[actionableTo];
+                let actionableTotal = 0;
+                const actionableTotals = {};
+                ageingBuckets.forEach(b => actionableTotals[b] = 0);
+
+                statuses.forEach(item => {
+                    ageingBuckets.forEach(bucket => {
+                        actionableTotals[bucket] += item.buckets[bucket] || 0;
+                        actionableTotal += item.buckets[bucket] || 0;
+                    });
+                });
+
+                if (actionableTotal > 0) {
+                    // Parent row - Actionable To
+                    const parentRow = [actionableTo];
+                    ageingBuckets.forEach(bucket => {
+                        const val = actionableTotals[bucket] || 0;
+                        parentRow.push(val);
+                        grandTotals[bucket] += val;
+                        overallTotal += val;
+                    });
+                    parentRow.push(actionableTotal);
+                    aoa.push(parentRow);
+
+                    // Child rows
+                    statuses.forEach(item => {
+                        const itemTotal = ageingBuckets.reduce((sum, b) => sum + (item.buckets[b] || 0), 0);
+                        if (itemTotal > 0) {
+                            const childRow = [item.currentStatus];
+                            ageingBuckets.forEach(bucket => {
+                                childRow.push(item.buckets[bucket] || 0);
+                            });
+                            childRow.push(itemTotal);
+                            aoa.push(childRow);
+                        }
+                    });
+                }
+            });
+
+            // Grand Total row
+            const grandTotalRow = ["Grand Total"];
+            ageingBuckets.forEach(bucket => {
+                grandTotalRow.push(grandTotals[bucket]);
+            });
+            grandTotalRow.push(overallTotal);
+            aoa.push(grandTotalRow);
+
+            return aoa;
+        }
+
+        function buildPivotWorkbookSheets(data) {
+            const consolidatedSheet = buildConsolidatedPivotSheet(data);
+            const ageingSheet = buildAgeingPivotSheet(data);
+            return [
+                { name: "Pivot_Region", rows: consolidatedSheet },
+                { name: "Pivot_Ageing", rows: ageingSheet }
+            ];
+        }
+
+        function setWorksheetWidths(ws, aoa) {
+            ws["!cols"] = aoa[0].map((_, colIndex) => {
+                const maxLen = aoa.reduce((max, row) => {
+                    const val = row[colIndex] === undefined || row[colIndex] === null ? "" : String(row[colIndex]);
+                    return Math.max(max, val.length);
+                }, 10);
+                return { wch: Math.min(Math.max(maxLen + 2, 10), 35) };
+            });
+        }
+
+        function exportToExcel() {
+            const columnsToLoad = [
+                "Service Order", "Station Code", "Station Name", "Model", "IMEI1", "IMEI2", "SN", 
+                "Service Order Status", "Warranty Status", "Parts Status", "DOA Status", "CID Status", 
+                "SO Submitted Time", "Carry-In Time", "Apply for Parts Time", "Finish Repair Time", 
+                "Parts in CCI Time", "Parts Available in Country Time", "Parts Available in ASP Hub Time", 
+                "Transaction Code", "Repair Code", "Repair Code Description", "Repair Type", "Service Type",
+                "Open Call Ageing Bucket", "Ageing Source", "Waiting for pickup Ageing Bucket", "Region",
+                "Current Status - Open Call", "Actionable To"
+            ];
+
+            const filteredData = getFilteredReportData();
+            const workbook = XLSX.utils.book_new();
+            const reportRows = [
+                columnsToLoad,
+                ...filteredData.map(row => columnsToLoad.map(col => {
+                    let val = row[col];
+                    if (DATE_COLUMNS.has(col)) val = formatDashboardDate(val);
+                    return val || "";
+                }))
+            ];
+
+            const reportWs = XLSX.utils.aoa_to_sheet(reportRows);
+            setWorksheetWidths(reportWs, reportRows);
+            XLSX.utils.book_append_sheet(workbook, reportWs, "Open_Calls_Report");
+
+            buildPivotWorkbookSheets(filteredData).forEach(sheetConfig => {
+                const ws = XLSX.utils.aoa_to_sheet(sheetConfig.rows);
+                setWorksheetWidths(ws, sheetConfig.rows);
+                XLSX.utils.book_append_sheet(workbook, ws, sheetConfig.name);
+            });
+
+            XLSX.writeFile(workbook, `Open_Calls_Report_${latestCallDateString}_Export.xlsx`);
+        }
+    </script>
+</body>
+</html>

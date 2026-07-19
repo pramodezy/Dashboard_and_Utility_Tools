@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
+  <title>OTD · Service Repair Dashboard</title>
+  <!-- Library CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Roboto, system-ui, sans-serif; background: #f4f7fc; color: #1e293b; transition: background 0.2s, color 0.2s; }
+    .app { max-width: 1600px; margin: 0 auto; padding: 1.5rem; }
+    body.dark { background: #0f172a; color: #e2e8f0; }
+    body.dark .card { background: #1e293b; border-color: #334155; }
+    body.dark .table-container { background: #1e293b; }
+    body.dark .dataTables_wrapper .dataTables_filter input,
+    body.dark .dataTables_wrapper select { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+    body.dark .dt-button { background: #334155; color: #e2e8f0; }
+    .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .logo-area { display: flex; align-items: center; gap: 0.75rem; }
+    .logo-area h1 { font-weight: 600; font-size: 1.6rem; letter-spacing: -0.5px; }
+    .logo-area .subtitle { font-size: 0.8rem; color: #64748b; font-weight: 400; margin-left: 0.5rem; }
+    body.dark .logo-area .subtitle { color: #94a3b8; }
+    .theme-toggle { background: none; border: 1px solid #cbd5e1; border-radius: 40px; padding: 0.5rem 1.2rem; cursor: pointer; font-weight: 500; }
+    body.dark .theme-toggle { border-color: #475569; color: #e2e8f0; }
+    .upload-zone { background: white; border: 2px dashed #94a3b8; border-radius: 24px; padding: 2rem 1.5rem; text-align: center; cursor: pointer; transition: 0.2s; margin-bottom: 1rem; }
+    body.dark .upload-zone { background: #1e293b; border-color: #475569; }
+    .upload-zone:hover { border-color: #2563eb; background: #f8fafc; }
+    body.dark .upload-zone:hover { background: #2d3a4f; }
+    .upload-zone i { font-size: 3rem; color: #2563eb; margin-bottom: 0.5rem; }
+    .upload-zone p { font-size: 1.1rem; }
+    .file-info { margin-top: 0.8rem; font-weight: 500; }
+    .upload-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+    .upload-zone-small { flex: 1; min-width: 200px; background: white; border: 2px dashed #94a3b8; border-radius: 16px; padding: 1rem; text-align: center; cursor: pointer; transition: 0.2s; }
+    body.dark .upload-zone-small { background: #1e293b; border-color: #475569; }
+    .upload-zone-small:hover { border-color: #2563eb; background: #f8fafc; }
+    body.dark .upload-zone-small:hover { background: #2d3a4f; }
+    .upload-zone-small i { font-size: 1.5rem; color: #2563eb; }
+    .upload-zone-small p { font-size: 0.85rem; margin: 0; }
+    
+    .filter-section { background: white; border-radius: 16px; padding: 1rem 1.5rem; margin: 1rem 0 1.5rem; border: 1px solid #e9edf2; }
+    body.dark .filter-section { background: #1e293b; border-color: #334155; }
+    .filter-section h4 { margin-bottom: 0.5rem; font-size: 0.95rem; }
+    .filter-group { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; }
+    .filter-group label { display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; cursor: pointer; }
+    .filter-group select { padding: 0.3rem 0.8rem; border-radius: 6px; border: 1px solid #d1d9e6; background: white; }
+    body.dark .filter-group select { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+    .filter-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .filter-btn { padding: 0.25rem 0.8rem; border-radius: 20px; border: 1px solid #d1d9e6; background: white; cursor: pointer; font-size: 0.8rem; }
+    body.dark .filter-btn { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+    .filter-btn:hover { background: #f1f5f9; }
+    body.dark .filter-btn:hover { background: #2d3a4f; }
+    
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .kpi-card { background: white; border-radius: 20px; padding: 1.2rem 0.8rem; box-shadow: 0 4px 8px rgba(0,0,0,0.02); border: 1px solid #e9edf2; text-align: center; transition: 0.15s; }
+    body.dark .kpi-card { background: #1e293b; border-color: #334155; }
+    .kpi-card .label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+    body.dark .kpi-card .label { color: #94a3b8; }
+    .kpi-card .value { font-size: 1.9rem; font-weight: 700; margin: 0.3rem 0; }
+    .kpi-card .value.percentage { color: #2563eb; }
+    .kpi-card .value.ect { color: #8b5cf6; }
+    body.dark .kpi-card .value.percentage { color: #60a5fa; }
+    body.dark .kpi-card .value.ect { color: #a78bfa; }
+    .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem; margin: 1.5rem 0; }
+    .card { background: white; border-radius: 20px; padding: 1.2rem 1rem; border: 1px solid #e9edf2; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+    body.dark .card { background: #1e293b; border-color: #334155; }
+    .card h3 { font-size: 1.1rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+    .table-container { background: white; border-radius: 20px; padding: 1rem 0.5rem; border: 1px solid #e9edf2; margin-top: 1.5rem; overflow-x: auto; }
+    body.dark .table-container { background: #1e293b; border-color: #334155; }
+    .dt-buttons { margin-bottom: 0.5rem; }
+    .dataTables_wrapper .dataTables_filter input { border-radius: 40px; padding: 0.4rem 1rem; border: 1px solid #d1d9e6; }
+    .dataTables_wrapper .dataTables_length select { border-radius: 30px; padding: 0.3rem 1.5rem 0.3rem 0.8rem; }
+    #dataTable { font-size: 0.85rem; width: 100% !important; }
+    #dataTable th { background: #f1f5f9; }
+    body.dark #dataTable th { background: #2d3a4f; color: #e2e8f0; }
+    #stationTable { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    #stationTable th { background: #f1f5f9; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e9edf2; position: sticky; top: 0; z-index: 10; }
+    body.dark #stationTable th { background: #2d3a4f; color: #e2e8f0; border-color: #334155; }
+    #stationTable td { padding: 8px 12px; border-bottom: 1px solid #e9edf2; }
+    body.dark #stationTable td { border-color: #334155; }
+    #stationTable tr:hover { background: #f8fafc; }
+    body.dark #stationTable tr:hover { background: #2d3a4f; }
+    #stationTable .region-header td { background: #e9edf2; font-weight: bold; font-size: 0.95rem; padding: 8px 12px; }
+    body.dark #stationTable .region-header td { background: #334155; }
+    .station-otd-bar { height: 20px; border-radius: 10px; background: #22c55e; transition: width 0.3s; min-width: 20px; display: inline-block; text-align: center; color: white; font-size: 0.7rem; line-height: 20px; padding: 0 8px; }
+    .station-otd-bar.missed { background: #ef4444; }
+    .station-otd-bar.partial { background: #f59e0b; }
+    .station-table-wrapper { max-height: 400px; overflow-y: auto; position: relative; }
+    .export-buttons { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+    .export-btn-small { background: #2563eb; color: white; border: none; padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
+    .export-btn-small:hover { background: #1d4ed8; }
+    .export-btn-small.excel { background: #22c55e; }
+    .export-btn-small.excel:hover { background: #16a34a; }
+    .export-btn-small.png { background: #8b5cf6; }
+    .export-btn-small.png:hover { background: #7c3aed; }
+    .region-badge { background: #818cf8; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; }
+    .badge-achieved { background: #22c55e; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; }
+    .badge-missed { background: #ef4444; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; }
+    .badge-exclude { background: #94a3b8; color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; }
+    .footer { text-align: center; margin: 2rem 0 0.5rem; font-size: 0.8rem; color: #64748b; }
+    body.dark .footer { color: #94a3b8; }
+    @media (max-width: 600px) { .kpi-grid { grid-template-columns: repeat(2,1fr); } .chart-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="header">
+    <div class="logo-area">
+      <i class="fas fa-tools" style="color:#2563eb; font-size:2rem;"></i>
+      <div>
+        <h1>OTD (On Time Delivery) Performance Dashboard</h1>
+        <span class="subtitle">Service Repair Turnaround Time Analysis · Carry‑In Time base · Target 95.90%</span>
+      </div>
+    </div>
+    <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i> Dark</button>
+  </div>
+
+  <!-- Upload Section -->
+  <div class="upload-row">
+    <div class="upload-zone-small" id="uploadZone">
+      <i class="fas fa-cloud-upload-alt"></i>
+      <p><strong>Upload Data File</strong></p>
+      <p style="font-size:0.75rem; color:#64748b;">.xlsx, .xls, .csv</p>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none;" />
+      <div class="file-info" id="fileInfo"></div>
+    </div>
+    <div class="upload-zone-small" id="uploadRegionZone">
+      <i class="fas fa-map-marked-alt"></i>
+      <p><strong>Upload Region Mapping</strong></p>
+      <p style="font-size:0.75rem; color:#64748b;">.xlsx, .xls, .csv</p>
+      <input type="file" id="regionFileInput" accept=".xlsx,.xls,.csv" style="display:none;" />
+      <div class="file-info" id="regionFileInfo"></div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-section" id="filterSection">
+    <h4><i class="fas fa-sliders-h"></i> Filters</h4>
+    <div class="filter-group">
+      <div>
+        <label>Week:</label>
+        <select id="weekFilter" multiple style="min-width:120px; height:60px;"></select>
+        <div class="filter-actions" style="margin-top:4px;">
+          <button class="filter-btn" onclick="selectAllWeeks()">Select All</button>
+          <button class="filter-btn" onclick="deselectAllWeeks()">Clear</button>
+        </div>
+      </div>
+      <div>
+        <label>Month:</label>
+        <select id="monthFilter" multiple style="min-width:120px; height:60px;"></select>
+        <div class="filter-actions" style="margin-top:4px;">
+          <button class="filter-btn" onclick="selectAllMonths()">Select All</button>
+          <button class="filter-btn" onclick="deselectAllMonths()">Clear</button>
+        </div>
+      </div>
+      <div>
+        <label>Repair Type:</label>
+        <select id="repairTypeFilter" multiple style="min-width:120px; height:60px;"></select>
+        <div class="filter-actions" style="margin-top:4px;">
+          <button class="filter-btn" onclick="selectAllRepairTypes()">Select All</button>
+          <button class="filter-btn" onclick="deselectAllRepairTypes()">Clear</button>
+        </div>
+      </div>
+      <div>
+        <label>Region:</label>
+        <select id="regionFilter" multiple style="min-width:120px; height:60px;"></select>
+        <div class="filter-actions" style="margin-top:4px;">
+          <button class="filter-btn" onclick="selectAllRegions()">Select All</button>
+          <button class="filter-btn" onclick="deselectAllRegions()">Clear</button>
+        </div>
+      </div>
+      <div>
+        <label>Warranty Status:</label>
+        <select id="warrantyFilter" multiple style="min-width:140px; height:60px;"></select>
+        <div class="filter-actions" style="margin-top:4px;">
+          <button class="filter-btn" onclick="selectAllWarranty()">Select All</button>
+          <button class="filter-btn" onclick="deselectAllWarranty()">Clear</button>
+        </div>
+      </div>
+      <div>
+        <label>Device Model:</label>
+        <select id="modelFilter" multiple style="min-width:140px; height:60px;"></select>
+        <div class="filter-actions" style="margin-top:4px;">
+          <button class="filter-btn" onclick="selectAllModels()">Select All</button>
+          <button class="filter-btn" onclick="deselectAllModels()">Clear</button>
+        </div>
+      </div>
+      <button class="export-btn" id="applyFiltersBtn" style="padding:0.4rem 1.2rem; align-self:flex-end;"><i class="fas fa-filter"></i> Apply Filters</button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi-card"><div class="label">Total Orders</div><div class="value" id="kpiTotal">-</div></div>
+    <div class="kpi-card"><div class="label">Avg OTD (days)</div><div class="value" id="kpiAvg">-</div></div>
+    <div class="kpi-card"><div class="label">ECT (days)</div><div class="value ect" id="kpiECT">-</div></div>
+    <div class="kpi-card"><div class="label">OTD %</div><div class="value percentage" id="kpiOTDPercentage">-</div></div>
+    <div class="kpi-card"><div class="label">Achieved OTD</div><div class="value" id="kpiAchieved" style="color:#22c55e;">-</div></div>
+    <div class="kpi-card"><div class="label">Missed OTD</div><div class="value" id="kpiMissed" style="color:#ef4444;">-</div></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-grid" id="chartGrid">
+    <div class="card"><h3><i class="fas fa-chart-bar"></i> OTD Distribution</h3><canvas id="chartOtd"></canvas></div>
+    <div class="card"><h3><i class="fas fa-layer-group"></i> Avg Days by Stage</h3><canvas id="chartStage"></canvas></div>
+    <div class="card"><h3><i class="fas fa-chart-pie"></i> Repair Type OTD Achievement</h3><canvas id="chartRepairType"></canvas></div>
+    <div class="card"><h3><i class="fas fa-chart-bar"></i> Region OTD %</h3><canvas id="chartRegionOTD"></canvas></div>
+    <div class="card" style="grid-column: span 2;"><h3><i class="fas fa-chart-bar"></i> Model-wise Count by Warranty Status</h3><canvas id="chartModelWarranty"></canvas></div>
+  </div>
+
+  <!-- Station OTD Table -->
+  <div class="card" style="margin-top:1.5rem;" id="stationTableCard">
+    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center;">
+      <h3><i class="fas fa-table"></i> Station OTD % · Target 95.90%</h3>
+      <div class="export-buttons">
+        <button class="export-btn-small excel" id="exportStationExcel"><i class="fas fa-file-excel"></i> Export Excel</button>
+        <button class="export-btn-small png" id="exportStationPNG"><i class="fas fa-image"></i> Export PNG</button>
+      </div>
+    </div>
+    <div class="station-table-wrapper" id="stationTableWrapper">
+      <table id="stationTable">
+        <thead>
+          <tr>
+            <th>Region</th>
+            <th>Station Code</th>
+            <th>Station Name</th>
+            <th>Total Orders</th>
+            <th>Achieved</th>
+            <th>Missed</th>
+            <th>OTD %</th>
+            <th>Performance</th>
+          </tr>
+        </thead>
+        <tbody id="stationTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Main Data Table + export -->
+  <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; margin: 0.5rem 0 0.2rem;">
+    <span><i class="fas fa-table"></i> Data preview <span id="recordCount" class="status-badge" style="margin-left:0.5rem;">0 records</span></span>
+    <button class="export-btn" id="exportExcelBtn"><i class="fas fa-file-excel"></i> Export filtered .xlsx</button>
+  </div>
+  <div class="table-container">
+    <table id="dataTable" class="display" style="width:100%;"></table>
+  </div>
+  <div class="footer">Service OTD dashboard · all processing client-side</div>
+</div>
+
+<script>
+  (function() {
+    // ---------- state ----------
+    let rawData = [];
+    let filteredData = [];
+    let chartInstances = {};
+    let regionMap = {};
+    let regionMapNormalized = {};
+    let currentFilters = { weeks: [], months: [], repairTypes: [], regions: [], warranties: [], models: [] };
+    let currentStationData = [];
+
+    // required columns: include 'Carry-In Time' instead of 'SO Submitted Time' for TAT base
+    const requiredCols = [
+      'Service Order', 'IMEI1', 'IMEI2', 'SN', 'Model',
+      'Station Code','Station Name','Warranty Status','DOA Status','Repair Type',
+      'Carry-In Time',
+      'Apply for Parts Time',
+      'Parts Available in ASP Hub Time',
+      'Parts Available in Country Time',
+      'Parts in CCI Time','Finish Repair Time','SO Close Time',
+      'Escalation Create Time 1','Escalation Approval/Rejection Time 1',
+      'Escalation Create Time 2','Escalation Approval/Rejection Time 2',
+      'Escalation Create Time 3','Escalation Approval/Rejection Time 3'
+    ];
+
+    // ---------- helpers ----------
+    function toDate(val) {
+      if (!val) return null;
+      if (val instanceof Date && !isNaN(val)) return val;
+      if (typeof val === 'number') {
+        const d = new Date((val - 25569) * 86400 * 1000);
+        return isNaN(d) ? null : d;
+      }
+      const d = new Date(val);
+      return isNaN(d) ? null : d;
+    }
+
+    function getWeekNumber(date) {
+      if (!date) return null;
+      const d = new Date(date);
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+      const week1 = new Date(d.getFullYear(), 0, 4);
+      return 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    }
+
+    function getMonthName(date) {
+      if (!date) return null;
+      const d = new Date(date);
+      return d.toLocaleString('default', { month: 'long' });
+    }
+
+    function getYear(date) {
+      if (!date) return null;
+      return new Date(date).getFullYear();
+    }
+
+    // business days (weekdays only)
+    function diffBusinessDays(d1, d2) {
+      if (!d1 || !d2) return null;
+      if (d2 < d1) return null;
+      let count = 0;
+      let current = new Date(d1);
+      const end = new Date(d2);
+      while (current < end) {
+        current.setDate(current.getDate() + 1);
+        if (current.getDay() !== 0 && current.getDay() !== 6) count++;
+      }
+      return Math.round(count * 100) / 100;
+    }
+
+    // calendar days
+    function diffCalendarDays(d1, d2) {
+      if (!d1 || !d2) return null;
+      if (d2 < d1) return null;
+      return Math.round(((d2 - d1) / (1000*60*60*24)) * 100) / 100;
+    }
+
+    // simple diff in days (can be negative)
+    function diffDays(d1, d2) {
+      if (!d1 || !d2) return null;
+      const diff = (d2 - d1) / (1000 * 60 * 60 * 24);
+      if (isNaN(diff)) return null;
+      return Math.round(diff * 100) / 100;
+    }
+
+    function isExcludedRepairType(repairType) {
+      const excludeTypes = ['Exclude', 'exclude', 'EXCLUDE', 'Excluded', 'excluded', 'EXCLUDED'];
+      return excludeTypes.includes(repairType);
+    }
+
+    function isNoPartsRepairType(repairType) {
+      const noPartsTypes = ['Hardware without parts', 'NTF', 'Software', 'HW No Parts'];
+      return noPartsTypes.some(type => repairType && repairType.includes(type));
+    }
+
+    function getCategoryFromStage(stageName) {
+      if (!stageName) return 'Other';
+      if (stageName.includes('Part Apply TAT')) return 'Part Apply';
+      if (stageName.includes('CWH TAT')) return 'CWH';
+      if (stageName.includes('Country TAT')) return 'Country';
+      if (stageName.includes('CCI Receive TAT')) return 'CCI Receive';
+      if (stageName.includes('Repair TAT')) return 'Repair';
+      if (stageName.includes('Escalation')) return 'Escalation';
+      if (stageName.includes('Total')) return 'Total';
+      return 'Other';
+    }
+
+    function normalizeStationCode(stationCode) {
+      if (!stationCode) return stationCode;
+      let code = String(stationCode).trim();
+      if (/^\d+$/.test(code)) {
+        code = String(parseInt(code, 10));
+      }
+      return code;
+    }
+
+    function normalizeRegion(region) {
+      if (!region) return region;
+      return String(region).trim().toUpperCase();
+    }
+
+    function getRegion(stationCode) {
+      if (!stationCode) return '';
+      const normalizedCode = normalizeStationCode(stationCode);
+      if (regionMap[normalizedCode]) return regionMap[normalizedCode];
+      if (regionMapNormalized[normalizedCode]) return regionMapNormalized[normalizedCode];
+      if (regionMap[stationCode]) return regionMap[stationCode];
+      return '';
+    }
+
+    // ---------- core enrichment using Carry-In Time as base ----------
+    function enrichRow(row) {
+      const get = (k) => row[k] !== undefined ? row[k] : null;
+      
+      // base = Carry-In Time
+      const carryIn = toDate(get('Carry-In Time'));
+      const applyParts = toDate(get('Apply for Parts Time'));
+      const aspHub = toDate(get('Parts Available in ASP Hub Time'));
+      const availCountry = toDate(get('Parts Available in Country Time'));
+      const cci = toDate(get('Parts in CCI Time'));
+      const finishRepair = toDate(get('Finish Repair Time'));
+      const soClose = toDate(get('SO Close Time'));
+      
+      // OTD computed from Carry-In to Finish Repair (business days)
+      let otd = null;
+      let totalDays = null;
+      const repairType = get('Repair Type') || '';
+      const isExcluded = isExcludedRepairType(repairType);
+      
+      if (!isExcluded && carryIn && finishRepair) {
+        otd = diffBusinessDays(carryIn, finishRepair);
+        totalDays = diffCalendarDays(carryIn, soClose);
+      }
+      
+      // Stage calculations based on Carry-In
+      const stageApply = diffBusinessDays(carryIn, applyParts);
+      const aspHubEffective = aspHub || applyParts;
+      const stageAspHub = diffBusinessDays(applyParts, aspHubEffective);
+      const countryEffective = availCountry || aspHubEffective;
+      const stageAvailCountry = diffBusinessDays(aspHubEffective, countryEffective);
+      
+      let cciStart = countryEffective;
+      if (!cciStart) cciStart = aspHubEffective || applyParts;
+      const stageCci = diffBusinessDays(cciStart, cci);
+      
+      let finishStart = cci;
+      if (!finishStart) finishStart = countryEffective || aspHubEffective || applyParts;
+      const stageFinish = diffBusinessDays(finishStart, finishRepair);
+
+      const esc1 = diffDays(toDate(get('Escalation Create Time 1')), toDate(get('Escalation Approval/Rejection Time 1')));
+      const esc2 = diffDays(toDate(get('Escalation Create Time 2')), toDate(get('Escalation Approval/Rejection Time 2')));
+      const esc3 = diffDays(toDate(get('Escalation Create Time 3')), toDate(get('Escalation Approval/Rejection Time 3')));
+      
+      const totalEscDays = [esc1, esc2, esc3].filter(v => v !== null && !isNaN(v)).reduce((a, b) => a + b, 0);
+      const hasEsc = totalEscDays > 0;
+
+      // OTD Flag - achieved if OTD <= 3 days
+      let otdFlag = '';
+      if (isExcluded) {
+        otdFlag = 'Excluded';
+      } else if (otd !== null && !isNaN(otd)) {
+        otdFlag = otd <= 3 ? 'Achieved' : 'Missed';
+      }
+
+      // Most impact analysis
+      let mostImpact = '';
+      let mostImpactCategory = '';
+      const totalDuration = diffBusinessDays(carryIn, finishRepair);
+      
+      if (isExcluded) {
+        mostImpact = totalDuration !== null ? `Total: ${totalDuration.toFixed(2)} days` : '';
+        mostImpactCategory = 'Excluded';
+      } else {
+        const isNoParts = isNoPartsRepairType(repairType);
+        const hasPartsData = stageApply !== null && !isNaN(stageApply) && stageApply >= 0;
+        
+        if (isNoParts && !hasPartsData && totalEscDays === 0) {
+          if (totalDuration !== null && totalDuration >= 0) {
+            mostImpact = `Repair TAT (${totalDuration.toFixed(2)} days)`;
+            mostImpactCategory = 'Repair';
+          } else {
+            mostImpact = 'No data available';
+            mostImpactCategory = 'Other';
+          }
+        } else {
+          const stages = [
+            { name: 'Part Apply TAT', value: stageApply },
+            { name: 'CWH TAT', value: stageAspHub },
+            { name: 'Country TAT', value: stageAvailCountry },
+            { name: 'CCI Receive TAT', value: stageCci },
+            { name: 'Repair TAT', value: stageFinish }
+          ];
+          
+          let maxStage = null;
+          let maxValue = -1;
+          let hasAnyStageData = false;
+          
+          stages.forEach(s => {
+            if (s.value !== null && !isNaN(s.value) && s.value >= 0) {
+              hasAnyStageData = true;
+              if (s.value > maxValue) {
+                maxValue = s.value;
+                maxStage = s.name;
+              }
+            }
+          });
+          
+          if (totalEscDays > maxValue) {
+            maxStage = 'Escalation';
+            maxValue = totalEscDays;
+            hasAnyStageData = true;
+          }
+          
+          if (!hasAnyStageData || maxValue <= 0) {
+            if (totalDuration !== null && totalDuration > 0) {
+              if (isNoParts) {
+                mostImpact = `Repair TAT (${totalDuration.toFixed(2)} days)`;
+                mostImpactCategory = 'Repair';
+              } else {
+                mostImpact = `Total: ${totalDuration.toFixed(2)} days`;
+                mostImpactCategory = 'Total';
+              }
+            } else {
+              mostImpact = 'No data available';
+              mostImpactCategory = 'Other';
+            }
+          } else {
+            mostImpact = maxStage + ` (${maxValue.toFixed(2)} days)`;
+            mostImpactCategory = getCategoryFromStage(maxStage);
+          }
+        }
+      }
+
+      const delayParts = [];
+      if (stageApply !== null && !isNaN(stageApply) && stageApply >= 0) delayParts.push(`Part Apply TAT(${stageApply})`);
+      if (stageAspHub !== null && !isNaN(stageAspHub) && stageAspHub >= 0) delayParts.push(`CWH TAT(${stageAspHub})`);
+      if (stageAvailCountry !== null && !isNaN(stageAvailCountry) && stageAvailCountry >= 0) delayParts.push(`Country TAT(${stageAvailCountry})`);
+      if (stageCci !== null && !isNaN(stageCci) && stageCci >= 0) delayParts.push(`CCI Receive TAT(${stageCci})`);
+      if (stageFinish !== null && !isNaN(stageFinish) && stageFinish >= 0) delayParts.push(`Repair TAT(${stageFinish})`);
+      if (totalEscDays > 0) delayParts.push(`Total Escalation Days(${totalEscDays})`);
+      
+      let delayAnalysis = delayParts.length ? delayParts.join(', ') : 
+        (totalDuration !== null && totalDuration >= 0 ? `Total Duration: ${totalDuration.toFixed(2)} days` : 'No stage data available');
+
+      const weekNum = soClose ? getWeekNumber(soClose) : null;
+      const monthName = soClose ? getMonthName(soClose) : null;
+      const year = soClose ? getYear(soClose) : null;
+      const monthYear = monthName && year ? `${monthName} ${year}` : null;
+
+      const stationCode = get('Station Code') || '';
+      const region = getRegion(stationCode);
+
+      return {
+        ...row,
+        _OTD: otd,
+        _TotalDays: totalDays,
+        _StageApply: stageApply,
+        _StageAspHub: stageAspHub,
+        _StageAvailCountry: stageAvailCountry,
+        _StageCci: stageCci,
+        _StageFinish: stageFinish,
+        _Esc1: esc1,
+        _Esc2: esc2,
+        _Esc3: esc3,
+        _TotalEscDays: totalEscDays,
+        _HasEsc: hasEsc,
+        _OTDFlag: otdFlag,
+        _MostImpact: mostImpact,
+        _MostImpactCategory: mostImpactCategory,
+        _DelayAnalysis: delayAnalysis,
+        _carryInDate: carryIn,
+        _finishDate: finishRepair,
+        _soCloseDate: soClose,
+        _WeekNum: weekNum,
+        _Month: monthYear,
+        _IsExcluded: isExcluded,
+        _RepairType: repairType,
+        _TotalDuration: totalDuration,
+        _IsNoParts: isNoPartsRepairType(repairType),
+        _Region: region,
+        _StationCode: stationCode,
+        _NormalizedStationCode: normalizeStationCode(stationCode)
+      };
+    }
+
+    // ---------- Filter functions ----------
+    window.selectAllWeeks = function() {
+      const select = document.getElementById('weekFilter');
+      Array.from(select.options).forEach(opt => opt.selected = true);
+    };
+    window.deselectAllWeeks = function() {
+      const select = document.getElementById('weekFilter');
+      Array.from(select.options).forEach(opt => opt.selected = false);
+    };
+    window.selectAllMonths = function() {
+      const select = document.getElementById('monthFilter');
+      Array.from(select.options).forEach(opt => opt.selected = true);
+    };
+    window.deselectAllMonths = function() {
+      const select = document.getElementById('monthFilter');
+      Array.from(select.options).forEach(opt => opt.selected = false);
+    };
+    window.selectAllRepairTypes = function() {
+      const select = document.getElementById('repairTypeFilter');
+      Array.from(select.options).forEach(opt => opt.selected = true);
+    };
+    window.deselectAllRepairTypes = function() {
+      const select = document.getElementById('repairTypeFilter');
+      Array.from(select.options).forEach(opt => opt.selected = false);
+    };
+    window.selectAllRegions = function() {
+      const select = document.getElementById('regionFilter');
+      Array.from(select.options).forEach(opt => opt.selected = true);
+    };
+    window.deselectAllRegions = function() {
+      const select = document.getElementById('regionFilter');
+      Array.from(select.options).forEach(opt => opt.selected = false);
+    };
+    window.selectAllWarranty = function() {
+      const select = document.getElementById('warrantyFilter');
+      Array.from(select.options).forEach(opt => opt.selected = true);
+    };
+    window.deselectAllWarranty = function() {
+      const select = document.getElementById('warrantyFilter');
+      Array.from(select.options).forEach(opt => opt.selected = false);
+    };
+    window.selectAllModels = function() {
+      const select = document.getElementById('modelFilter');
+      Array.from(select.options).forEach(opt => opt.selected = true);
+    };
+    window.deselectAllModels = function() {
+      const select = document.getElementById('modelFilter');
+      Array.from(select.options).forEach(opt => opt.selected = false);
+    };
+
+    function populateFilters(data) {
+      const weeks = [...new Set(data.map(r => r._WeekNum).filter(w => w !== null))].sort((a,b) => a-b);
+      const months = [...new Set(data.map(r => r._Month).filter(m => m !== null))].sort();
+      const repairTypes = [...new Set(data.map(r => r._RepairType).filter(r => r))].sort();
+      const regions = [...new Set(data.map(r => r._Region).filter(r => r))].sort();
+      const warranties = [...new Set(data.map(r => r['Warranty Status']).filter(w => w))].sort();
+      const models = [...new Set(data.map(r => r['Model']).filter(m => m))].sort();
+      
+      const weekSelect = document.getElementById('weekFilter');
+      weekSelect.innerHTML = '';
+      weeks.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w;
+        opt.text = `Week ${w}`;
+        opt.selected = true;
+        weekSelect.appendChild(opt);
+      });
+      
+      const monthSelect = document.getElementById('monthFilter');
+      monthSelect.innerHTML = '';
+      months.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.text = m;
+        opt.selected = true;
+        monthSelect.appendChild(opt);
+      });
+      
+      const repairSelect = document.getElementById('repairTypeFilter');
+      repairSelect.innerHTML = '';
+      repairTypes.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r;
+        opt.text = r;
+        opt.selected = true;
+        repairSelect.appendChild(opt);
+      });
+      
+      const regionSelect = document.getElementById('regionFilter');
+      regionSelect.innerHTML = '';
+      regions.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r;
+        opt.text = r;
+        opt.selected = true;
+        regionSelect.appendChild(opt);
+      });
+      
+      const warrantySelect = document.getElementById('warrantyFilter');
+      warrantySelect.innerHTML = '';
+      warranties.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w;
+        opt.text = w;
+        opt.selected = true;
+        warrantySelect.appendChild(opt);
+      });
+      
+      const modelSelect = document.getElementById('modelFilter');
+      modelSelect.innerHTML = '';
+      models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.text = m;
+        opt.selected = true;
+        modelSelect.appendChild(opt);
+      });
+    }
+
+    function applyFilters() {
+      const weekSelect = document.getElementById('weekFilter');
+      const monthSelect = document.getElementById('monthFilter');
+      const repairSelect = document.getElementById('repairTypeFilter');
+      const regionSelect = document.getElementById('regionFilter');
+      const warrantySelect = document.getElementById('warrantyFilter');
+      const modelSelect = document.getElementById('modelFilter');
+      
+      currentFilters.weeks = Array.from(weekSelect.selectedOptions).map(o => parseInt(o.value));
+      currentFilters.months = Array.from(monthSelect.selectedOptions).map(o => o.value);
+      currentFilters.repairTypes = Array.from(repairSelect.selectedOptions).map(o => o.value);
+      currentFilters.regions = Array.from(regionSelect.selectedOptions).map(o => o.value);
+      currentFilters.warranties = Array.from(warrantySelect.selectedOptions).map(o => o.value);
+      currentFilters.models = Array.from(modelSelect.selectedOptions).map(o => o.value);
+      
+      applyFiltersToData();
+    }
+
+    function applyFiltersToData() {
+      let filtered = rawData.filter(r => {
+        const weekMatch = currentFilters.weeks.length === 0 || (r._WeekNum !== null && currentFilters.weeks.includes(r._WeekNum));
+        const monthMatch = currentFilters.months.length === 0 || (r._Month !== null && currentFilters.months.includes(r._Month));
+        const repairMatch = currentFilters.repairTypes.length === 0 || (r._RepairType && currentFilters.repairTypes.includes(r._RepairType));
+        const regionMatch = currentFilters.regions.length === 0 || (r._Region && currentFilters.regions.includes(r._Region));
+        const warrantyMatch = currentFilters.warranties.length === 0 || (r['Warranty Status'] && currentFilters.warranties.includes(r['Warranty Status']));
+        const modelMatch = currentFilters.models.length === 0 || (r['Model'] && currentFilters.models.includes(r['Model']));
+        return weekMatch && monthMatch && repairMatch && regionMatch && warrantyMatch && modelMatch;
+      });
+      
+      filteredData = filtered;
+      updateKPI(filteredData);
+      renderCharts(filteredData);
+      updateStationTable(filteredData);
+      buildTable(filteredData);
+      if (dataTable) dataTable.draw();
+    }
+
+    // ---------- KPI update ----------
+    function updateKPI(data) {
+      const orders = data.length;
+      const otds = data.map(r => r._OTD).filter(v => v !== null && !isNaN(v));
+      const avg = otds.length ? otds.reduce((a,b)=>a+b,0)/otds.length : null;
+      
+      const totalDays = data.map(r => r._TotalDays).filter(v => v !== null && !isNaN(v));
+      const ect = totalDays.length > 0 ? totalDays.reduce((a,b)=>a+b,0) / totalDays.length : 0;
+      
+      const achieved = data.filter(r => r._OTDFlag === 'Achieved').length;
+      const missed = data.filter(r => r._OTDFlag === 'Missed').length;
+      
+      const totalWithOTD = achieved + missed;
+      const otdPercentage = totalWithOTD > 0 ? (achieved / totalWithOTD) * 100 : 0;
+
+      document.getElementById('kpiTotal').innerText = orders;
+      document.getElementById('kpiAvg').innerText = avg !== null ? avg.toFixed(2) : '-';
+      document.getElementById('kpiECT').innerText = ect.toFixed(2);
+      document.getElementById('kpiOTDPercentage').innerText = totalWithOTD > 0 ? otdPercentage.toFixed(1) + '%' : '0%';
+      document.getElementById('kpiAchieved').innerText = achieved;
+      document.getElementById('kpiMissed').innerText = missed;
+    }
+
+    // ---------- Station Table with color coding based on target 95.90% ----------
+    function updateStationTable(data) {
+      const stationData = {};
+      
+      data.forEach(r => {
+        const stationCode = r._StationCode || 'Unknown';
+        const stationName = r['Station Name'] || stationCode;
+        const region = r._Region || 'Unassigned';
+        const key = region + '|' + stationCode;
+        
+        if (!stationData[key]) {
+          stationData[key] = {
+            region: region,
+            code: stationCode,
+            name: stationName,
+            total: 0,
+            achieved: 0,
+            missed: 0
+          };
+        }
+        
+        stationData[key].total++;
+        if (r._OTDFlag === 'Achieved') stationData[key].achieved++;
+        else if (r._OTDFlag === 'Missed') stationData[key].missed++;
+      });
+      
+      const stationArray = Object.values(stationData);
+      
+      stationArray.sort((a, b) => {
+        if (a.region < b.region) return -1;
+        if (a.region > b.region) return 1;
+        const aPct = (a.achieved + a.missed) > 0 ? (a.achieved / (a.achieved + a.missed)) : 0;
+        const bPct = (b.achieved + b.missed) > 0 ? (b.achieved / (b.achieved + b.missed)) : 0;
+        return bPct - aPct;
+      });
+      
+      currentStationData = stationArray;
+      
+      const tbody = document.getElementById('stationTableBody');
+      tbody.innerHTML = '';
+      
+      let currentRegion = '';
+      const TARGET = 95.90;
+      
+      stationArray.forEach(st => {
+        if (st.region !== currentRegion) {
+          currentRegion = st.region;
+          const headerRow = document.createElement('tr');
+          headerRow.className = 'region-header';
+          headerRow.innerHTML = `<td colspan="8"><i class="fas fa-map-marker-alt" style="margin-right:8px;"></i> ${st.region}</td>`;
+          tbody.appendChild(headerRow);
+        }
+        
+        const totalWithOTD = st.achieved + st.missed;
+        const pct = totalWithOTD > 0 ? (st.achieved / totalWithOTD) * 100 : 0;
+        const pctDisplay = totalWithOTD > 0 ? pct.toFixed(1) + '%' : 'N/A';
+        
+        let barClass = '';
+        let barColor = '#22c55e';
+        if (pct >= TARGET) {
+          barClass = '';
+          barColor = '#22c55e';
+        } else if (pct >= 80) {
+          barClass = 'partial';
+          barColor = '#f59e0b';
+        } else {
+          barClass = 'missed';
+          barColor = '#ef4444';
+        }
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${st.region}</td>
+          <td><strong>${st.code}</strong></td>
+          <td>${st.name}</td>
+          <td>${st.total}</td>
+          <td style="color:#22c55e;">${st.achieved}</td>
+          <td style="color:#ef4444;">${st.missed}</td>
+          <td><strong>${pctDisplay}</strong></td>
+          <td>
+            <div style="width:100%; background:#e9edf2; border-radius:10px; overflow:hidden;">
+              <div class="station-otd-bar ${barClass}" style="width:${Math.min(pct, 100)}%; background:${barColor};">
+                ${pct >= 30 ? pctDisplay : ''}
+              </div>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // ---------- Export Station Table to Excel ----------
+    function exportStationExcel() {
+      if (currentStationData.length === 0) {
+        alert('No data to export');
+        return;
+      }
+      const headers = ['Region', 'Station Code', 'Station Name', 'Total Orders', 'Achieved', 'Missed', 'OTD %'];
+      const rows = currentStationData.map(st => {
+        const totalWithOTD = st.achieved + st.missed;
+        const pct = totalWithOTD > 0 ? (st.achieved / totalWithOTD) * 100 : 0;
+        return [st.region, st.code, st.name, st.total, st.achieved, st.missed, pct.toFixed(1) + '%'];
+      });
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Station_OTD');
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0,10).replace(/-/g,'') + '_' + now.toTimeString().slice(0,5).replace(':','');
+      const filename = `Station_OTD_Analysis_${dateStr}.xlsx`;
+      const wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+      const blob = new Blob([wbout], {type:'application/octet-stream'});
+      saveAs(blob, filename);
+    }
+
+    function exportStationPNG() {
+      const wrapper = document.getElementById('stationTableWrapper');
+      const table = document.getElementById('stationTable');
+      const originalHeight = wrapper.style.maxHeight;
+      wrapper.style.maxHeight = 'none';
+      html2canvas(table, {
+        scale: 2,
+        backgroundColor: document.body.classList.contains('dark') ? '#1e293b' : '#ffffff',
+        allowTaint: true,
+        useCORS: true,
+        logging: false
+      }).then(canvas => {
+        wrapper.style.maxHeight = originalHeight;
+        const link = document.createElement('a');
+        link.download = `Station_OTD_Analysis_${new Date().toISOString().slice(0,10)}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }).catch(err => {
+        wrapper.style.maxHeight = originalHeight;
+        alert('Error capturing table: ' + err.message);
+      });
+    }
+
+    // ---------- charts ----------
+    function renderCharts(data) {
+      Object.values(chartInstances).forEach(c => c.destroy());
+      chartInstances = {};
+
+      const ranges = ['0-2','2-5','5-10','10-20','20+'];
+      const bins = [0,0,0,0,0];
+      const totalOrders = data.length;
+      data.forEach(r => {
+        const v = r._OTD;
+        if (v === null || isNaN(v)) return;
+        if (v < 2) bins[0]++; else if (v < 5) bins[1]++; else if (v < 10) bins[2]++; else if (v < 20) bins[3]++; else bins[4]++;
+      });
+      const ctx1 = document.getElementById('chartOtd').getContext('2d');
+      chartInstances.otd = new Chart(ctx1, { type: 'bar', data: { labels: ranges, datasets: [{ label: 'Orders', data: bins, backgroundColor: '#3b82f6' }] }, options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { const pct = totalOrders > 0 ? ((context.parsed.y / totalOrders) * 100).toFixed(1) : 0; return `${context.parsed.y} orders (${pct}%)`; } } } }, scales: { y: { beginAtZero: true } } } });
+
+      const stageKeys = ['_StageApply','_StageAspHub','_StageAvailCountry','_StageCci','_StageFinish'];
+      const stageLabels = ['Part Apply TAT','CWH TAT','Country TAT','CCI Receive TAT','Repair TAT'];
+      const stageAvgs = stageKeys.map(k => {
+        const vals = data.map(r => r[k]).filter(v => v !== null && !isNaN(v));
+        return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+      });
+      const ctx2 = document.getElementById('chartStage').getContext('2d');
+      chartInstances.stage = new Chart(ctx2, { type: 'bar', data: { labels: stageLabels, datasets: [{ label: 'Avg days', data: stageAvgs, backgroundColor: ['#f59e0b','#8b5cf6','#10b981','#ec4899','#06b6d4'] }] }, options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { return `${context.parsed.y.toFixed(2)} days`; } } } }, scales: { y: { beginAtZero: true } } } });
+
+      const repairTypeData = {};
+      data.forEach(r => {
+        const rt = r._RepairType || 'Unknown';
+        if (!repairTypeData[rt]) repairTypeData[rt] = { achieved: 0, missed: 0, excluded: 0 };
+        if (r._OTDFlag === 'Achieved') repairTypeData[rt].achieved++;
+        else if (r._OTDFlag === 'Missed') repairTypeData[rt].missed++;
+        else if (r._OTDFlag === 'Excluded') repairTypeData[rt].excluded++;
+      });
+      const repairLabels = Object.keys(repairTypeData);
+      const achievedData = repairLabels.map(r => repairTypeData[r].achieved);
+      const missedData = repairLabels.map(r => repairTypeData[r].missed);
+      const excludedData = repairLabels.map(r => repairTypeData[r].excluded);
+      const totalPerType = repairLabels.map(r => repairTypeData[r].achieved + repairTypeData[r].missed + repairTypeData[r].excluded);
+      const ctx3 = document.getElementById('chartRepairType').getContext('2d');
+      chartInstances.repairType = new Chart(ctx3, { type: 'bar', data: { labels: repairLabels, datasets: [ { label: 'Achieved', data: achievedData, backgroundColor: '#22c55e' }, { label: 'Missed', data: missedData, backgroundColor: '#ef4444' }, { label: 'Excluded', data: excludedData, backgroundColor: '#94a3b8' } ] }, options: { responsive: true, plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: function(context) { const total = totalPerType[context.dataIndex] || 0; const pct = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : 0; return `${context.dataset.label}: ${context.parsed.y} (${pct}%)`; } } } }, scales: { x: { stacked: false }, y: { stacked: false, beginAtZero: true } } } });
+
+      const regionData = {};
+      data.forEach(r => {
+        const region = r._Region || 'Unassigned';
+        if (!regionData[region]) regionData[region] = { achieved: 0, missed: 0 };
+        if (r._OTDFlag === 'Achieved') regionData[region].achieved++;
+        else if (r._OTDFlag === 'Missed') regionData[region].missed++;
+      });
+      const regionLabels = Object.keys(regionData);
+      const regionPcts = regionLabels.map(region => {
+        const total = regionData[region].achieved + regionData[region].missed;
+        return total > 0 ? (regionData[region].achieved / total) * 100 : 0;
+      });
+      const regionColors = regionPcts.map(pct => {
+        if (pct >= 95.90) return '#22c55e';
+        if (pct >= 80) return '#f59e0b';
+        return '#ef4444';
+      });
+      const ctx4 = document.getElementById('chartRegionOTD').getContext('2d');
+      chartInstances.regionOTD = new Chart(ctx4, { type: 'bar', data: { labels: regionLabels, datasets: [{ label: 'OTD %', data: regionPcts, backgroundColor: regionColors, borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { const region = regionLabels[context.dataIndex]; const total = regionData[region].achieved + regionData[region].missed; return `OTD %: ${context.parsed.y.toFixed(1)}% (${regionData[region].achieved}/${total})`; } } } }, scales: { y: { max: 100, ticks: { callback: function(value) { return value + '%'; } } } } } });
+
+      const modelWarrantyData = {};
+      data.forEach(r => {
+        const model = r['Model'] || 'Unknown';
+        const warranty = r['Warranty Status'] || 'Unknown';
+        if (!modelWarrantyData[model]) modelWarrantyData[model] = {};
+        if (!modelWarrantyData[model][warranty]) modelWarrantyData[model][warranty] = 0;
+        modelWarrantyData[model][warranty]++;
+      });
+      const modelLabels = Object.keys(modelWarrantyData).sort();
+      const allWarrantyStatuses = new Set();
+      Object.values(modelWarrantyData).forEach(warrantyMap => { Object.keys(warrantyMap).forEach(w => allWarrantyStatuses.add(w)); });
+      const warrantyStatuses = Array.from(allWarrantyStatuses).sort();
+      const colorPalette = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+      const warrantyColors = {};
+      warrantyStatuses.forEach((status, index) => { warrantyColors[status] = colorPalette[index % colorPalette.length]; });
+      const datasets = warrantyStatuses.map(status => {
+        const dataValues = modelLabels.map(model => modelWarrantyData[model][status] || 0);
+        return { label: status, data: dataValues, backgroundColor: warrantyColors[status], borderColor: warrantyColors[status], borderWidth: 1 };
+      });
+      const ctx5 = document.getElementById('chartModelWarranty').getContext('2d');
+      chartInstances.modelWarranty = new Chart(ctx5, { type: 'bar', data: { labels: modelLabels, datasets: datasets }, options: { responsive: true, plugins: { legend: { position: 'top', labels: { font: { size: 11 } } }, tooltip: { callbacks: { label: function(context) { const total = context.dataset.data.reduce((a, b) => a + b, 0); const pct = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : 0; return `${context.dataset.label}: ${context.parsed.y} (${pct}%)`; } } } }, scales: { x: { stacked: true, ticks: { maxRotation: 45, minRotation: 30, font: { size: 10 } } }, y: { stacked: true, beginAtZero: true, ticks: { callback: function(value) { return value; } }, title: { display: true, text: 'Number of Orders' } } } } });
+    }
+
+    // ---------- table ----------
+    let dataTable = null;
+    function buildTable(data) {
+      const columns = [
+        'Service Order', 'IMEI1', 'IMEI2', 'SN', 'Model',
+        'Station Code','Station Name','Region','Warranty Status','DOA Status','Repair Type',
+        'Carry-In Time','Apply for Parts Time',
+        'Parts Available in ASP Hub Time',
+        'Parts Available in Country Time',
+        'Parts in CCI Time','Finish Repair Time','SO Close Time',
+        'Week Num','Month',
+        'Escalation Create Time 1','Escalation Approval/Rejection Time 1',
+        'Escalation Create Time 2','Escalation Approval/Rejection Time 2',
+        'Escalation Create Time 3','Escalation Approval/Rejection Time 3',
+        'OTD (days)','OTD Flag','Most Impact Category','Most Impact for OTD','Delay Analysis',
+        'Part Apply TAT','CWH TAT','Country TAT','CCI Receive TAT','Repair TAT',
+        'Total Esc Days','Esc1 (d)','Esc2 (d)','Esc3 (d)'
+      ];
+      
+      const mapped = data.map(r => {
+        let otdFlagDisplay = '';
+        if (r._OTDFlag === 'Achieved') otdFlagDisplay = `<span class="badge-achieved">Achieved</span>`;
+        else if (r._OTDFlag === 'Missed') otdFlagDisplay = `<span class="badge-missed">Missed</span>`;
+        else if (r._OTDFlag === 'Excluded') otdFlagDisplay = `<span class="badge-exclude">Excluded</span>`;
+        const regionDisplay = r._Region ? `<span class="region-badge">${r._Region}</span>` : '';
+        return [
+          r['Service Order'] || '', r['IMEI1'] || '', r['IMEI2'] || '', r['SN'] || '', r['Model'] || '',
+          r['Station Code'] || '', r['Station Name'] || '', regionDisplay,
+          r['Warranty Status'] || '', r['DOA Status'] || '', r['Repair Type'] || '',
+          r['Carry-In Time'] || '', r['Apply for Parts Time'] || '',
+          r['Parts Available in ASP Hub Time'] || '',
+          r['Parts Available in Country Time'] || '',
+          r['Parts in CCI Time'] || '', r['Finish Repair Time'] || '', r['SO Close Time'] || '',
+          r._WeekNum !== null ? `Week ${r._WeekNum}` : '',
+          r._Month || '',
+          r['Escalation Create Time 1'] || '', r['Escalation Approval/Rejection Time 1'] || '',
+          r['Escalation Create Time 2'] || '', r['Escalation Approval/Rejection Time 2'] || '',
+          r['Escalation Create Time 3'] || '', r['Escalation Approval/Rejection Time 3'] || '',
+          r._OTD !== null && !isNaN(r._OTD) ? r._OTD.toFixed(2) : '',
+          otdFlagDisplay,
+          r._MostImpactCategory || '',
+          r._MostImpact || '',
+          r._DelayAnalysis || '',
+          r._StageApply !== null && !isNaN(r._StageApply) ? r._StageApply.toFixed(2) : '',
+          r._StageAspHub !== null && !isNaN(r._StageAspHub) ? r._StageAspHub.toFixed(2) : '',
+          r._StageAvailCountry !== null && !isNaN(r._StageAvailCountry) ? r._StageAvailCountry.toFixed(2) : '',
+          r._StageCci !== null && !isNaN(r._StageCci) ? r._StageCci.toFixed(2) : '',
+          r._StageFinish !== null && !isNaN(r._StageFinish) ? r._StageFinish.toFixed(2) : '',
+          r._TotalEscDays !== null && !isNaN(r._TotalEscDays) ? r._TotalEscDays.toFixed(2) : '',
+          r._Esc1 !== null && !isNaN(r._Esc1) ? r._Esc1.toFixed(2) : '',
+          r._Esc2 !== null && !isNaN(r._Esc2) ? r._Esc2.toFixed(2) : '',
+          r._Esc3 !== null && !isNaN(r._Esc3) ? r._Esc3.toFixed(2) : ''
+        ];
+      });
+
+      if (dataTable) {
+        dataTable.clear();
+        dataTable.rows.add(mapped);
+        dataTable.draw();
+      } else {
+        dataTable = $('#dataTable').DataTable({
+          data: mapped,
+          columns: columns.map(c => ({ title: c })),
+          pageLength: 15,
+          lengthMenu: [[10,25,50,-1], [10,25,50,'All']],
+          scrollX: true,
+          scrollY: '400px',
+          scrollCollapse: true,
+          dom: 'Bfrtip',
+          buttons: [],
+          initComplete: function() {
+            const info = this.api().page.info();
+            document.getElementById('recordCount').innerText = info.recordsDisplay + ' records';
+          }
+        });
+        dataTable.on('draw', function() {
+          const info = dataTable.page.info();
+          document.getElementById('recordCount').innerText = info.recordsDisplay + ' records';
+        });
+      }
+      setTimeout(() => { if (dataTable) dataTable.draw(); }, 100);
+      document.getElementById('recordCount').innerText = data.length + ' records';
+    }
+
+    // ---------- export main data ----------
+    function exportFiltered() {
+      const rows = dataTable ? dataTable.rows({ search: 'applied' }).data() : [];
+      const exportData = rows.toArray().map(row => {
+        const so = row[0];
+        return rawData.find(r => r['Service Order'] === so);
+      }).filter(Boolean);
+      if (!exportData.length) { alert('No data to export'); return; }
+      
+      const headers = [
+        'Service Order', 'IMEI1', 'IMEI2', 'SN', 'Model',
+        'Station Code','Station Name','Region','Warranty Status','DOA Status','Repair Type',
+        'Carry-In Time','Apply for Parts Time',
+        'Parts Available in ASP Hub Time',
+        'Parts Available in Country Time',
+        'Parts in CCI Time','Finish Repair Time','SO Close Time',
+        'Week Num','Month',
+        'Escalation Create Time 1','Escalation Approval/Rejection Time 1',
+        'Escalation Create Time 2','Escalation Approval/Rejection Time 2',
+        'Escalation Create Time 3','Escalation Approval/Rejection Time 3',
+        'OTD (days)','OTD Flag','Most Impact Category','Most Impact for OTD','Delay Analysis',
+        'Part Apply TAT','CWH TAT','Country TAT','CCI Receive TAT','Repair TAT',
+        'Total Escalation Days','Escalation 1 Days','Escalation 2 Days','Escalation 3 Days'
+      ];
+      
+      const rowsData = exportData.map(r => [
+        r['Service Order']||'', r['IMEI1']||'', r['IMEI2']||'', r['SN']||'', r['Model']||'',
+        r['Station Code']||'', r['Station Name']||'', r._Region||'',
+        r['Warranty Status']||'', r['DOA Status']||'', r['Repair Type']||'',
+        r['Carry-In Time']||'', r['Apply for Parts Time']||'',
+        r['Parts Available in ASP Hub Time']||'',
+        r['Parts Available in Country Time']||'',
+        r['Parts in CCI Time']||'', r['Finish Repair Time']||'', r['SO Close Time']||'',
+        r._WeekNum !== null ? `Week ${r._WeekNum}` : '',
+        r._Month || '',
+        r['Escalation Create Time 1']||'', r['Escalation Approval/Rejection Time 1']||'',
+        r['Escalation Create Time 2']||'', r['Escalation Approval/Rejection Time 2']||'',
+        r['Escalation Create Time 3']||'', r['Escalation Approval/Rejection Time 3']||'',
+        r._OTD !== null && !isNaN(r._OTD) ? r._OTD : '', 
+        r._OTDFlag || '',
+        r._MostImpactCategory || '',
+        r._MostImpact || '',
+        r._DelayAnalysis || '',
+        r._StageApply !== null && !isNaN(r._StageApply) ? r._StageApply : '',
+        r._StageAspHub !== null && !isNaN(r._StageAspHub) ? r._StageAspHub : '',
+        r._StageAvailCountry !== null && !isNaN(r._StageAvailCountry) ? r._StageAvailCountry : '',
+        r._StageCci !== null && !isNaN(r._StageCci) ? r._StageCci : '',
+        r._StageFinish !== null && !isNaN(r._StageFinish) ? r._StageFinish : '',
+        r._TotalEscDays !== null && !isNaN(r._TotalEscDays) ? r._TotalEscDays : '',
+        r._Esc1 !== null && !isNaN(r._Esc1) ? r._Esc1 : '',
+        r._Esc2 !== null && !isNaN(r._Esc2) ? r._Esc2 : '',
+        r._Esc3 !== null && !isNaN(r._Esc3) ? r._Esc3 : ''
+      ]);
+      
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rowsData]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'OTD_Analysis');
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0,10).replace(/-/g,'') + '_' + now.toTimeString().slice(0,5).replace(':','');
+      const filename = `OTD_Repair_Analysis_${dateStr}.xlsx`;
+      const wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+      const blob = new Blob([wbout], {type:'application/octet-stream'});
+      saveAs(blob, filename);
+    }
+
+    // ---------- file handler for data ----------
+    function handleDataFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['xlsx','xls','csv'].includes(ext)) {
+        alert('Please upload .xlsx, .xls or .csv');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          let workbook;
+          if (ext === 'csv') {
+            const text = e.target.result;
+            workbook = XLSX.read(text, { type:'string', raw:true });
+          } else {
+            const data = new Uint8Array(e.target.result);
+            workbook = XLSX.read(data, { type:'array', raw:true });
+          }
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '', raw:false });
+          if (!json.length) { alert('No data found'); return; }
+          const header = Object.keys(json[0]);
+          const missing = requiredCols.filter(c => !header.includes(c));
+          if (missing.length) console.warn('Missing columns:', missing);
+          rawData = json.map(row => {
+            const newRow = {};
+            requiredCols.forEach(col => { newRow[col] = row[col] !== undefined ? row[col] : null; });
+            return newRow;
+          }).filter(r => r['Service Order']);
+          rawData = rawData.map(enrichRow);
+          document.getElementById('fileInfo').innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> ${rawData.length} records loaded (Carry-In Time base)`;
+          
+          populateFilters(rawData);
+          selectAllWeeks();
+          selectAllMonths();
+          selectAllRepairTypes();
+          selectAllRegions();
+          selectAllWarranty();
+          selectAllModels();
+          applyFiltersToData();
+        } catch(err) {
+          alert('Error processing file: ' + err.message);
+          console.error(err);
+        }
+      };
+      if (ext === 'csv') reader.readAsText(file);
+      else reader.readAsArrayBuffer(file);
+    }
+
+    // ---------- file handler for region mapping ----------
+    function handleRegionFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['xlsx','xls','csv'].includes(ext)) {
+        alert('Please upload .xlsx, .xls or .csv');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          let workbook;
+          if (ext === 'csv') {
+            const text = e.target.result;
+            workbook = XLSX.read(text, { type:'string', raw:true });
+          } else {
+            const data = new Uint8Array(e.target.result);
+            workbook = XLSX.read(data, { type:'array', raw:true });
+          }
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '', raw:false });
+          if (!json.length) { alert('No data found in region file'); return; }
+          
+          regionMap = {};
+          regionMapNormalized = {};
+          
+          json.forEach(row => {
+            const stationCode = row['Station Code'] || row['StationCode'] || row['Station'] || '';
+            const region = row['Region'] || row['region'] || '';
+            if (stationCode && region) {
+              const normalizedCode = normalizeStationCode(stationCode);
+              const normalizedRegion = normalizeRegion(region);
+              regionMap[normalizedCode] = region;
+              if (!regionMapNormalized[normalizedCode]) {
+                regionMapNormalized[normalizedCode] = region;
+              }
+            }
+          });
+          
+          document.getElementById('regionFileInfo').innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> ${Object.keys(regionMap).length} regions mapped (with normalization)`;
+          
+          if (rawData.length > 0) {
+            rawData = rawData.map(enrichRow);
+            populateFilters(rawData);
+            selectAllWeeks();
+            selectAllMonths();
+            selectAllRepairTypes();
+            selectAllRegions();
+            selectAllWarranty();
+            selectAllModels();
+            applyFiltersToData();
+          }
+        } catch(err) {
+          alert('Error processing region file: ' + err.message);
+          console.error(err);
+        }
+      };
+      if (ext === 'csv') reader.readAsText(file);
+      else reader.readAsArrayBuffer(file);
+    }
+
+    // ---------- init UI ----------
+    document.getElementById('uploadZone').addEventListener('click', () => document.getElementById('fileInput').click());
+    document.getElementById('uploadZone').addEventListener('dragover', (e) => { e.preventDefault(); e.currentTarget.style.borderColor='#2563eb'; });
+    document.getElementById('uploadZone').addEventListener('dragleave', (e) => { e.currentTarget.style.borderColor='#94a3b8'; });
+    document.getElementById('uploadZone').addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.currentTarget.style.borderColor='#94a3b8';
+      if (e.dataTransfer.files.length) handleDataFile(e.dataTransfer.files[0]);
+    });
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      if (this.files.length) handleDataFile(this.files[0]);
+      this.value = '';
+    });
+    
+    document.getElementById('uploadRegionZone').addEventListener('click', () => document.getElementById('regionFileInput').click());
+    document.getElementById('uploadRegionZone').addEventListener('dragover', (e) => { e.preventDefault(); e.currentTarget.style.borderColor='#2563eb'; });
+    document.getElementById('uploadRegionZone').addEventListener('dragleave', (e) => { e.currentTarget.style.borderColor='#94a3b8'; });
+    document.getElementById('uploadRegionZone').addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.currentTarget.style.borderColor='#94a3b8';
+      if (e.dataTransfer.files.length) handleRegionFile(e.dataTransfer.files[0]);
+    });
+    document.getElementById('regionFileInput').addEventListener('change', function(e) {
+      if (this.files.length) handleRegionFile(this.files[0]);
+      this.value = '';
+    });
+    
+    document.getElementById('exportExcelBtn').addEventListener('click', exportFiltered);
+    document.getElementById('applyFiltersBtn').addEventListener('click', applyFilters);
+    
+    document.getElementById('exportStationExcel').addEventListener('click', exportStationExcel);
+    document.getElementById('exportStationPNG').addEventListener('click', exportStationPNG);
+
+    // dark mode
+    document.getElementById('themeToggle').addEventListener('click', function() {
+      document.body.classList.toggle('dark');
+      this.innerHTML = document.body.classList.contains('dark') ? '<i class="fas fa-sun"></i> Light' : '<i class="fas fa-moon"></i> Dark';
+    });
+
+    // sample data with Carry-In Time
+    window.addEventListener('load', function() {
+      regionMap = {
+        '1': 'North America',
+        '2': 'Europe', 
+        '3': 'Asia Pacific',
+        '4': 'Latin America',
+        '5': 'Middle East',
+        '6': 'Africa'
+      };
+      regionMapNormalized = {
+        '1': 'North America',
+        '2': 'Europe',
+        '3': 'Asia Pacific',
+        '4': 'Latin America',
+        '5': 'Middle East',
+        '6': 'Africa'
+      };
+      document.getElementById('regionFileInfo').innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> 6 regions pre-loaded (with normalization)`;
+      
+      const sample = [
+        ['SO-101','IMEI-001','IMEI-002','SN-1001','iPhone 14','002','NYC','Warranty','DOA no','Hardware without parts',
+         '2026-06-22 14:43:09','','','','','2026-06-24 18:09:55','2026-06-25',
+         '','','','','',''],
+        ['SO-102','IMEI-003','IMEI-004','SN-1002','Samsung S23','003','LAX','Out of Warranty','DOA no','NTF',
+         '2026-06-20 09:00:00','','','','','2026-06-21 16:30:00','2026-06-22',
+         '','','','','',''],
+        ['SO-103','IMEI-005','IMEI-006','SN-1003','iPhone 14','004','CHI','Warranty','DOA no','Software',
+         '2026-06-18 11:00:00','','','','','2026-06-20 14:00:00','2026-06-21',
+         '','','','','',''],
+        ['SO-104','IMEI-007','IMEI-008','SN-1004','Pixel 7','1','DAL','Out of Warranty','DOA no','Standard',
+         '2025-01-10 09:00:00','2025-01-12 10:30:00','2025-01-14 11:15:00','2025-01-16 09:45:00','2025-01-18 14:20:00','2025-01-20 16:30:00','2025-01-21',
+         '2025-01-13','2025-01-15','','','',''],
+        ['SO-105','IMEI-009','IMEI-010','SN-1005','Samsung S23','5','SEA','Warranty','DOA yes','Exclude',
+         '2025-01-05','2025-01-07','','','2025-01-13','2025-01-15','2025-01-16',
+         '2025-01-08','2025-01-10','2025-01-12','2025-01-14','',''],
+        ['SO-106','IMEI-011','IMEI-012','SN-1006','Pixel 7','6','HOU','Out of Warranty','DOA no','Premium',
+         '2025-01-02','2025-01-04','','2025-01-08','2025-01-10','2025-01-12','2025-01-13',
+         '2025-01-05','2025-01-07','2025-01-09','2025-01-11','',''],
+        ['SO-107','IMEI-013','IMEI-014','SN-1007','iPhone 14','002','NYC','Warranty','DOA no','Standard',
+         '2025-01-03','2025-01-05','','2025-01-09','2025-01-11','2025-01-13','2025-01-14',
+         '2025-01-06','2025-01-08','','','',''],
+        ['SO-108','IMEI-015','IMEI-016','SN-1008','Samsung S23','003','LAX','Warranty','DOA no','Hardware without parts',
+         '2025-01-04','2025-01-06','','','','2025-01-14','2025-01-15',
+         '','','','','',''],
+      ];
+      const headers = requiredCols;
+      const json = sample.map(row => {
+        const obj = {};
+        headers.forEach((h,i) => obj[h] = row[i] || null);
+        return obj;
+      });
+      rawData = json.map(enrichRow);
+      populateFilters(rawData);
+      selectAllWeeks();
+      selectAllMonths();
+      selectAllRepairTypes();
+      selectAllRegions();
+      selectAllWarranty();
+      selectAllModels();
+      applyFiltersToData();
+      document.getElementById('fileInfo').innerHTML = `<i class="fas fa-info-circle"></i> Sample data loaded (8 records · Carry-In Time base)`;
+    });
+  })();
+</script>
+</body>
+</html>

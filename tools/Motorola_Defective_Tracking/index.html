@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compact Defect Ageing & Variance Tool</title>
+    <!-- SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- html2canvas for JPG image exports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f4f7fc; margin: 0; min-height: 100vh; display: flex; justify-content: center; padding: 1rem; }
+        .card { max-width: 1600px; width: 100%; background: white; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(0,20,40,0.1); padding: 1.2rem; }
+        h1 { font-weight: 600; font-size: 1.4rem; margin-top: 0; margin-bottom: 1rem; color: #0b2b4a; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        
+        .upload-row { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 0.8rem; }
+        .upload-area { flex: 1; min-width: 280px; background: #f0f5fe; border: 2px dashed #b6cce6; border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; align-items: center; text-align: center; }
+        .mapping-upload { flex: 1; min-width: 280px; background: #eaf4eb; border: 2px dashed #8bb49b; border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center; align-items: center; text-align: center; }
+        
+        label.btn-upload { color: white; padding: 0.4rem 1.2rem; border-radius: 40px; font-weight: 500; cursor: pointer; transition: 0.2s; box-shadow: 0 3px 6px rgba(0,40,80,0.1); display: inline-block; font-size: 0.8rem; }
+        .upload-area label.btn-upload { background: #1a4b77; }
+        .upload-area label.btn-upload:hover { background: #0d3557; }
+        .mapping-upload label.btn-upload { background: #2d6b4a; }
+        .mapping-upload label.btn-upload:hover { background: #1d4f33; }
+        
+        input[type="file"] { display: none; }
+        .file-list-box { background: white; border: 1px solid #d9e2ef; padding: 0.3rem 0.6rem; border-radius: 8px; font-size: 0.75rem; color: #1d3b5a; max-height: 65px; overflow-y: auto; width: 100%; text-align: left; }
+        .mapping-status { font-size: 0.8rem; color: #1d6b3a; font-weight: 500; }
+        
+        .filter-bar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.6rem 1rem; background: #f8faff; padding: 0.8rem 1rem; border-radius: 14px; margin: 0.8rem 0; border: 1px solid #e6edf8; }
+        .filter-group { display: flex; flex-direction: column; gap: 0.2rem; min-width: 140px; flex: 1; position: relative; }
+        .filter-group label { font-weight: 500; font-size: 0.7rem; letter-spacing: 0.3px; color: #2c4b6e; text-transform: uppercase; }
+        .filter-group select { background: white; border: 1px solid #d0ddee; border-radius: 40px; padding: 0.35rem 0.7rem; font-size: 0.8rem; color: #0a1f32; cursor: pointer; outline: none; transition: 0.15s; width: 100%; }
+        
+        .multiselect-box { background: white; border: 1px solid #d0ddee; border-radius: 20px; padding: 0.35rem 0.7rem; font-size: 0.8rem; color: #0a1f32; cursor: pointer; position: relative; display: flex; justify-content: space-between; align-items: center; user-select: none; min-height: 31px; }
+        .multiselect-options { display: none; position: absolute; top: 105%; left: 0; right: 0; background: white; border: 1px solid #c8d7e6; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-height: 230px; overflow-y: auto; z-index: 1000; padding: 0; }
+        .multiselect-options.show { display: block; }
+        .dropdown-controls { display: flex; justify-content: space-between; border-bottom: 1px solid #eef2f6; background: #f8fafd; padding: 0.35rem 0.7rem; position: sticky; top: 0; border-top-left-radius: 8px; border-top-right-radius: 8px; }
+        .dropdown-link { font-size: 0.7rem; color: #1a4b77; font-weight: 600; text-decoration: none; cursor: pointer; user-select: none; }
+        .dropdown-link:hover { text-decoration: underline; }
+        .multiselect-item-list { max-height: 185px; overflow-y: auto; padding: 0.2rem 0; }
+        .multiselect-item { display: flex; align-items: center; gap: 8px; padding: 0.35rem 0.7rem; font-size: 0.78rem; color: #333; cursor: pointer; }
+        .multiselect-item:hover { background-color: #f0f5fc; }
+        .multiselect-item input { cursor: pointer; margin: 0; }
+        
+        .btn-action { border: none; border-radius: 40px; padding: 0.35rem 1rem; font-weight: 500; cursor: pointer; transition: 0.15s; font-size: 0.8rem; }
+        .btn-reset { background: #eaf0f9; color: #1f4468; border: 1px solid transparent; }
+        .btn-reset:hover { background: #d5e0f0; border-color: #b0c7e0; }
+        .btn-clear { background: #fbebe9; color: #a62619; }
+        .btn-clear:hover { background: #f7d2cf; }
+
+        .landscape-capture-container { background: white; padding: 0.4rem; border-radius: 8px; width: 100%; }
+        .compact-pivot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem; width: 100%; }
+        .section-box { background: #fff; border: 1px solid #e2ebf6; border-radius: 12px; padding: 0.7rem; box-shadow: 0 1px 5px rgba(0,0,0,0.01); width: 100%; overflow: hidden; }
+        .section-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+        h2 { font-weight: 600; font-size: 0.9rem; color: #0b2b4a; margin: 0; display: flex; align-items: center; gap: 5px; border-left: 3px solid #1a4b77; padding-left: 5px; }
+        .search-box-container { display: flex; align-items: center; gap: 0.4rem; }
+        .search-input { padding: 0.3rem 0.8rem; font-size: 0.75rem; border: 1px solid #c8d7e6; border-radius: 20px; outline: none; width: 180px; transition: 0.2s; }
+        .search-input:focus { border-color: #1a4b77; box-shadow: 0 0 0 3px rgba(26,75,119,0.1); }
+
+        .pivot-wrap { width: 100%; border-radius: 8px; border: 1px solid #e2ebf6; background: white; overflow-x: auto; }
+        table.pivot-table { width: 100%; border-collapse: collapse; font-size: 0.6rem; table-layout: fixed; }
+        table.pivot-table th { background: #e8eff9; color: #1c3d5e; font-weight: 600; padding: 0.4rem 0.2rem; text-align: center; border-bottom: 2px solid #cbdae9; font-size: 0.6rem; white-space: normal; word-wrap: break-word; line-height: 1.1; vertical-align: middle; }
+        table.pivot-table th:first-child { text-align: left; padding-left: 0.4rem; }
+        table.pivot-table td { padding: 0.35rem 0.2rem; border-bottom: 1px solid #e2ebf6; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        table.pivot-table td:first-child { text-align: left; font-weight: 600; padding-left: 0.4rem; color: #1d3b5a; }
+        .total-row td { background: #f0f5fc; font-weight: 700; color: #0b2b4a; border-top: 2px solid #b6cce6; }
+        .total-cell { background: #f0f5fc; font-weight: bold; }
+        .pos-var { color: #a62619; background-color: #fff2f1; font-weight: 600; }
+        .neg-var { color: #1d6b3a; background-color: #edf7f0; font-weight: 600; }
+        .no-data { text-align: center; padding: 1rem; color: #5f7d9c; font-style: italic; font-size: 0.75rem; }
+        .badge { background: #dce6f2; border-radius: 40px; padding: 0.1rem 0.6rem; font-size: 0.7rem; color: #1e3d5e; font-weight: normal; }
+
+        table.raw-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; }
+        table.raw-table th { background: #f1f4f9; color: #2c4b6e; padding: 0.45rem; font-weight: 600; border-bottom: 2px solid #d0dee3; text-align: left; }
+        table.raw-table th.num-col, table.raw-table td.num-col { text-align: right; padding-right: 1rem; }
+        table.raw-table td { padding: 0.4rem 0.45rem; border-bottom: 1px solid #eef2f6; text-align: left; color: #333; }
+        table.raw-table tr:hover { background-color: #fafdff; }
+
+        .footer-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: space-between; align-items: center; margin-top: 0.8rem; }
+        .btn-export-group { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+        .export-btn { background: #1f5a3a; color: white; border: none; padding: 0.45rem 1rem; border-radius: 40px; font-weight: 500; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem; box-shadow: 0 2px 4px rgba(31,90,58,0.1); }
+        .export-btn:hover { background: #13462b; }
+        .inline-export-btn { padding: 0.25rem 0.8rem; font-size: 0.7rem; border-radius: 20px; background: #2d6b4a; }
+        .inline-export-btn:hover { background: #1f4a32; }
+        .jpg-btn { background: #7c4dff; box-shadow: 0 2px 4px rgba(124,77,255,0.1); }
+        .jpg-btn:hover { background: #651fff; }
+        .cci-export-btn { background: #b45309; box-shadow: 0 2px 4px rgba(180,83,9,0.2); }
+        .cci-export-btn:hover { background: #92400e; }
+
+        .confirmation-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .confirmation-overlay.show { display: flex; }
+        .confirmation-dialog {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .confirmation-dialog h3 { margin-top: 0; color: #0b2b4a; }
+        .confirmation-dialog p { margin: 1rem 0; color: #4a6a8a; }
+        .confirmation-dialog .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+        .confirmation-dialog .btn-confirm {
+            background: #a62619;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .confirmation-dialog .btn-confirm:hover { background: #8a1f14; }
+        .confirmation-dialog .btn-cancel {
+            background: #eaf0f9;
+            color: #1f4468;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .confirmation-dialog .btn-cancel:hover { background: #d5e0f0; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>📊 Compact Defect Ageing & Variance Dashboard</h1>
+    
+    <div class="upload-row">
+        <div class="upload-area">
+            <div>
+                <label class="btn-upload" for="fileInput">📂 Upload Defect Snapshots (Multiple)</label>
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple>
+            </div>
+            <div class="file-list-box" id="fileList">No snapshot files loaded yet.</div>
+        </div>
+
+        <div class="mapping-upload">
+            <div>
+                <label class="btn-upload" for="mappingInput">🗺️ Upload Region Mapping</label>
+                <input type="file" id="mappingInput" accept=".xlsx,.xls,.csv">
+            </div>
+            <span class="mapping-status" id="mappingStatus">⏳ No mapping loaded</span>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <div class="filter-group" style="flex: 1.5;">
+            <label>⏱️ Base Snapshot (Older)</label>
+            <select id="baseSnapshot"><option value="">-- Choose Base --</option></select>
+        </div>
+        <div class="filter-group" style="flex: 1.5;">
+            <label>🚀 Comparison Snapshot (Newer)</label>
+            <select id="compareSnapshot"><option value="">-- Choose Compare --</option></select>
+        </div>
+        
+        <div class="filter-group">
+            <label>📅 SR Close Month</label>
+            <div class="multiselect-box" id="monthBox">
+                <span id="monthBoxText">All Months</span> <span>▼</span>
+            </div>
+            <div class="multiselect-options" id="monthOptionsContainer">
+                <div class="dropdown-controls">
+                    <span class="dropdown-link" id="monthSelectAll">Check All</span>
+                    <span class="dropdown-link" id="monthUnselectAll">Uncheck All</span>
+                </div>
+                <div class="multiselect-item-list" id="monthItemsList"></div>
+            </div>
+        </div>
+        
+        <div class="filter-group">
+            <label>📂 Part Category</label>
+            <div class="multiselect-box" id="catBox">
+                <span id="catBoxText">All Categories</span> <span>▼</span>
+            </div>
+            <div class="multiselect-options" id="catOptionsContainer">
+                <div class="dropdown-controls">
+                    <span class="dropdown-link" id="catSelectAll">Check All</span>
+                    <span class="dropdown-link" id="catUnselectAll">Uncheck All</span>
+                </div>
+                <div class="multiselect-item-list" id="catItemsList"></div>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>🌍 Region</label>
+            <div class="multiselect-box" id="regionBox">
+                <span id="regionBoxText">All Regions</span> <span>▼</span>
+            </div>
+            <div class="multiselect-options" id="regionOptionsContainer">
+                <div class="dropdown-controls">
+                    <span class="dropdown-link" id="regionSelectAll">Check All</span>
+                    <span class="dropdown-link" id="regionUnselectAll">Uncheck All</span>
+                </div>
+                <div class="multiselect-item-list" id="regionItemsList"></div>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>🔧 Parts Status</label>
+            <div class="multiselect-box" id="statusBox">
+                <span id="statusBoxText">All Status</span> <span>▼</span>
+            </div>
+            <div class="multiselect-options" id="statusOptionsContainer">
+                <div class="dropdown-controls">
+                    <span class="dropdown-link" id="statusSelectAll">Check All</span>
+                    <span class="dropdown-link" id="statusUnselectAll">Uncheck All</span>
+                </div>
+                <div class="multiselect-item-list" id="statusItemsList"></div>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label>⏳ Ageing Bucket</label>
+            <div class="multiselect-box" id="ageingBox">
+                <span id="ageingBoxText">All Buckets</span> <span>▼</span>
+            </div>
+            <div class="multiselect-options" id="ageingOptionsContainer">
+                <div class="dropdown-controls">
+                    <span class="dropdown-link" id="ageingSelectAll">Check All</span>
+                    <span class="dropdown-link" id="ageingUnselectAll">Uncheck All</span>
+                </div>
+                <div class="multiselect-item-list" id="ageingItemsList"></div>
+            </div>
+        </div>
+        
+        <button class="btn-action btn-reset" id="resetFilters">⟲ Reset</button>
+        <button class="btn-action btn-clear" id="clearSnapshots">🗑️ Clear All</button>
+    </div>
+
+    <!-- LANDSCAPE CAPTURE AREA: Compact Pivot + Variance -->
+    <div id="landscapePivotCaptureArea" class="landscape-capture-container">
+        <div class="compact-pivot-grid">
+            <div class="section-box">
+                <div class="section-header-row">
+                    <h2>📊 Compact Pivot: Region × Ageing × Status</h2>
+                </div>
+                <div class="pivot-wrap">
+                    <table id="compactPivotTable" class="pivot-table">
+                        <colgroup id="compactPivotColGroup"></colgroup>
+                        <thead><tr><th>Region</th><th>Ageing</th><th class="no-data">No data</th></tr></thead>
+                        <tbody id="compactPivotBody"><tr><td colspan="3" class="no-data">Upload snapshots</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="section-box">
+                <div class="section-header-row">
+                    <h2>📈 Variance (Compare – Base)</h2>
+                </div>
+                <div class="pivot-wrap">
+                    <table id="compactVarTable" class="pivot-table">
+                        <colgroup id="compactVarColGroup"></colgroup>
+                        <thead><tr><th>Region</th><th>Ageing</th><th class="no-data">No data</th></tr></thead>
+                        <tbody id="compactVarBody"><tr><td colspan="3" class="no-data">Select base & compare</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- NEW CCI Send To CWH Ageing Pivot -->
+        <div class="section-box" style="margin-top: 0.4rem;">
+            <div class="section-header-row">
+                <h2>📦 CCI Send To CWH Ageing</h2>
+                <span style="font-size:0.7rem; color:#4a6a8a;">Filtered: Parts Status = "CCI Send To CWH"</span>
+            </div>
+            <div class="pivot-wrap">
+                <table id="cciPivotTable" class="pivot-table">
+                    <colgroup id="cciPivotColGroup"></colgroup>
+                    <thead><tr><th>Region</th><th>0-3</th><th>4-7</th><th>8-15</th><th>&gt;15</th><th>Total</th></tr></thead>
+                    <tbody id="cciPivotBody"><tr><td colspan="6" class="no-data">No CCI Send To CWH data</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Master summary table -->
+    <div class="section-box" style="margin-top: 0.8rem;">
+        <div class="section-header-row">
+            <h2>📋 Grouped Station Matrix <span class="badge" id="rowCount">Groups: 0</span></h2>
+            <div class="search-box-container">
+                <input type="text" id="stationSearchInput" class="search-input" placeholder="🔍 Search Station Name...">
+                <button class="export-btn inline-export-btn" id="exportMasterTableBtn">📥 Export Master</button>
+            </div>
+        </div>
+        <div class="table-wrap" style="overflow-x:auto; max-height: 400px;">
+            <table id="dataTable" class="raw-table">
+                <thead><tr><th>Station Code</th><th>Station Name</th><th>Region</th><th>Ageing Bucket</th><th>Parts Status</th><th class="num-col">Sum Qty</th></tr></thead>
+                <tbody id="tableBody"><tr><td colspan="6" class="no-data">Upload files</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer-actions">
+        <div class="btn-export-group">
+            <button class="export-btn" id="exportBtn">⬇ Export Filtered Data</button>
+            <button class="export-btn jpg-btn" id="exportJpgBtn">📸 Export Dashboard JPG</button>
+            <button class="export-btn cci-export-btn" id="exportCciBtn">⬇ Export CCI Send To CWH</button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Dialog -->
+<div class="confirmation-overlay" id="confirmationOverlay">
+    <div class="confirmation-dialog">
+        <h3>⚠️ Remove Column?</h3>
+        <p id="confirmationMessage">Do you want to remove this column from the pivot tables?</p>
+        <div class="btn-group">
+            <button class="btn-confirm" id="confirmRemove">Yes, Remove</button>
+            <button class="btn-cancel" id="cancelRemove">No, Keep</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        let rawSnapshotData = {}; 
+        let regionMap = {};
+        let mappingLoaded = false;
+        let currentAggregatedGroups = [];
+
+        let selectedMonths = [];
+        let selectedCategories = [];
+        let selectedRegions = [];
+        let selectedStatuses = [];
+        let selectedAgeingBuckets = [];
+
+        let showRegionColumn = true;
+        let showAgeingColumn = true;
+
+        const AGEING_BUCKETS = ['0-3', '4-7', '8-15', '>15'];
+
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const mappingInput = document.getElementById('mappingInput');
+        const mappingStatus = document.getElementById('mappingStatus');
+        
+        const baseSnapshotSel = document.getElementById('baseSnapshot');
+        const compareSnapshotSel = document.getElementById('compareSnapshot');
+        
+        const monthBox = document.getElementById('monthBox');
+        const monthBoxText = document.getElementById('monthBoxText');
+        const monthOptionsContainer = document.getElementById('monthOptionsContainer');
+        const monthItemsList = document.getElementById('monthItemsList');
+
+        const catBox = document.getElementById('catBox');
+        const catBoxText = document.getElementById('catBoxText');
+        const catOptionsContainer = document.getElementById('catOptionsContainer');
+        const catItemsList = document.getElementById('catItemsList');
+
+        const regionBox = document.getElementById('regionBox');
+        const regionBoxText = document.getElementById('regionBoxText');
+        const regionOptionsContainer = document.getElementById('regionOptionsContainer');
+        const regionItemsList = document.getElementById('regionItemsList');
+
+        const statusBox = document.getElementById('statusBox');
+        const statusBoxText = document.getElementById('statusBoxText');
+        const statusOptionsContainer = document.getElementById('statusOptionsContainer');
+        const statusItemsList = document.getElementById('statusItemsList');
+
+        const ageingBox = document.getElementById('ageingBox');
+        const ageingBoxText = document.getElementById('ageingBoxText');
+        const ageingOptionsContainer = document.getElementById('ageingOptionsContainer');
+        const ageingItemsList = document.getElementById('ageingItemsList');
+
+        const stationSearchInput = document.getElementById('stationSearchInput');
+        
+        const compactPivotBody = document.getElementById('compactPivotBody');
+        const compactVarBody = document.getElementById('compactVarBody');
+        const compactPivotColGroup = document.getElementById('compactPivotColGroup');
+        const compactVarColGroup = document.getElementById('compactVarColGroup');
+
+        const cciPivotBody = document.getElementById('cciPivotBody');
+        const cciPivotColGroup = document.getElementById('cciPivotColGroup');
+
+        const tableBody = document.getElementById('tableBody');
+        const rowCountSpan = document.getElementById('rowCount');
+
+        const confirmationOverlay = document.getElementById('confirmationOverlay');
+        const confirmationMessage = document.getElementById('confirmationMessage');
+        const confirmRemoveBtn = document.getElementById('confirmRemove');
+        const cancelRemoveBtn = document.getElementById('cancelRemove');
+        let pendingAction = null;
+
+        // ---- helpers ----
+        function parseSRCloseDate(value) {
+            if (!value) return null;
+            if (value instanceof Date && !isNaN(value)) return value;
+            if (typeof value === 'number' && value > 59 && value < 50000) {
+                return new Date((value - 25569) * 86400 * 1000);
+            }
+            if (typeof value === 'string') {
+                let cleaned = value.replace(/\s+/g, ' ').trim();
+                let d = new Date(cleaned);
+                if (!isNaN(d)) return d;
+                const match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})\s+(AM|PM)$/i);
+                if (match) {
+                    let month = parseInt(match[1],10)-1, day = parseInt(match[2],10), year = parseInt(match[3],10);
+                    let hour = parseInt(match[4],10), min = parseInt(match[5],10), sec = parseInt(match[6],10);
+                    let ampm = match[7].toUpperCase();
+                    if (ampm === 'PM' && hour < 12) hour += 12;
+                    if (ampm === 'AM' && hour === 12) hour = 0;
+                    return new Date(year, month, day, hour, min, sec);
+                }
+            }
+            return null;
+        }
+
+        function getAgeingBucket(dateObj) {
+            if (!dateObj) return null;
+            const now = new Date();
+            const diffDays = Math.floor((now - dateObj) / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) return null;
+            if (diffDays <= 3) return '0-3';
+            if (diffDays <= 7) return '4-7';
+            if (diffDays <= 15) return '8-15';
+            return '>15';
+        }
+
+        function getAgeingBucketFromCciShipDate(row) {
+            // try to find CCI-ASP Ship Date /Time
+            const keys = Object.keys(row);
+            const shipKey = keys.find(k => /cci.*asp.*ship.*date/i.test(k) || /cci-asp ship date/i.test(k));
+            if (!shipKey) return null;
+            const val = row[shipKey];
+            const dateObj = parseSRCloseDate(val);
+            return getAgeingBucket(dateObj);
+        }
+
+        function cleanStationCode(code) {
+            if (code === undefined || code === null) return '';
+            return String(code).trim().replace(/^0+/, '') || '0';
+        }
+
+        function enrichDataset(data) {
+            return data.map(row => {
+                const keys = Object.keys(row);
+                const closeDateKey = keys.find(k => k.toLowerCase().trim().replace(/\s/g,'') === 'srclosedate/time' || k.toLowerCase().trim() === 'sr close date / time');
+                let dateVal = closeDateKey ? row[closeDateKey] : null;
+                const parsedDate = parseSRCloseDate(dateVal);
+                const bucket = getAgeingBucket(parsedDate) || '>15';
+
+                let rawStation = row['Station Code'] || row['Station code'] || '';
+                let cleanCode = cleanStationCode(rawStation);
+                let mappedRegion = mappingLoaded && regionMap[cleanCode] ? regionMap[cleanCode] : (rawStation ? 'Unknown' : 'No mapping');
+
+                return {
+                    ...row,
+                    'Region': mappedRegion,
+                    'Ageing Bucket': bucket,
+                    'Parts Status': row['Parts Status'] || row['Parts status'] || 'Blank'
+                };
+            });
+        }
+
+        function isRowMatchingAllFilters(row) {
+            const m = row['SR Close Month'] || row['SR close month'] || '';
+            const c = row['Part Category'] || row['Part category'] || '';
+            const r = row['Region'] || '';
+            const s = row['Parts Status'] || '';
+            const a = row['Ageing Bucket'] || '';
+            if (selectedMonths.length > 0 && !selectedMonths.includes(m)) return false;
+            if (selectedCategories.length > 0 && !selectedCategories.includes(c)) return false;
+            if (selectedRegions.length > 0 && !selectedRegions.includes(r)) return false;
+            if (selectedStatuses.length > 0 && !selectedStatuses.includes(s)) return false;
+            if (selectedAgeingBuckets.length > 0 && !selectedAgeingBuckets.includes(a)) return false;
+            return true;
+        }
+
+        function buildCompactPivot(data) {
+            const statuses = new Set();
+            const regionAgeMap = {};
+            const regionAgeSet = new Set();
+
+            data.forEach(row => {
+                const reg = row['Region'] || 'Unknown';
+                const age = row['Ageing Bucket'] || '>15';
+                const stat = row['Parts Status'] || 'Blank';
+                let qty = parseFloat(row['SR Part Quantity'] || row['SR Part quantity'] || row['Part Quantity'] || 0);
+                if (isNaN(qty)) qty = 0;
+                
+                statuses.add(stat);
+                
+                let key;
+                if (showRegionColumn && showAgeingColumn) {
+                    key = `${reg}||${age}`;
+                } else if (showRegionColumn && !showAgeingColumn) {
+                    key = reg;
+                } else if (!showRegionColumn && showAgeingColumn) {
+                    key = age;
+                } else {
+                    key = 'Total';
+                }
+                
+                if (!regionAgeMap[key]) regionAgeMap[key] = {};
+                if (!regionAgeMap[key][stat]) regionAgeMap[key][stat] = 0;
+                regionAgeMap[key][stat] += qty;
+                regionAgeSet.add(key);
+            });
+
+            const sortedKeys = Array.from(regionAgeSet).sort((a,b) => {
+                if (showRegionColumn && showAgeingColumn) {
+                    const [regA, ageA] = a.split('||');
+                    const [regB, ageB] = b.split('||');
+                    if (regA !== regB) return regA.localeCompare(regB);
+                    return AGEING_BUCKETS.indexOf(ageA) - AGEING_BUCKETS.indexOf(ageB);
+                } else if (showRegionColumn && !showAgeingColumn) {
+                    return a.localeCompare(b);
+                } else if (!showRegionColumn && showAgeingColumn) {
+                    return AGEING_BUCKETS.indexOf(a) - AGEING_BUCKETS.indexOf(b);
+                } else {
+                    return 0;
+                }
+            });
+
+            const sortedStatuses = Array.from(statuses).sort();
+            return { regionAgeMap, sortedKeys, sortedStatuses };
+        }
+
+        function renderCompactPivot(data, tableBody, colGroup, isVariance, baseData) {
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="3" class="no-data">No data</td></tr>`;
+                colGroup.innerHTML = '';
+                return;
+            }
+
+            const { regionAgeMap, sortedKeys, sortedStatuses } = buildCompactPivot(data);
+            let baseMap = {};
+            if (isVariance && baseData && baseData.length > 0) {
+                const baseResult = buildCompactPivot(baseData);
+                baseMap = baseResult.regionAgeMap;
+            }
+
+            const allStatuses = sortedStatuses.length ? sortedStatuses : ['Blank'];
+            
+            const displayRegion = showRegionColumn;
+            const displayAgeing = showAgeingColumn;
+
+            let thead = '<tr>';
+            if (displayRegion) thead += '<th>Region</th>';
+            if (displayAgeing) thead += '<th>Ageing</th>';
+            allStatuses.forEach(s => thead += `<th>${s}</th>`);
+            thead += '<th>Total</th></tr>';
+            
+            document.querySelector(`#${tableBody.id}`).closest('table').querySelector('thead').innerHTML = thead;
+
+            let tbody = '';
+            let colTotals = {}; 
+            allStatuses.forEach(s => colTotals[s] = 0);
+            let grandTotalCol = 0;
+
+            sortedKeys.forEach(key => {
+                const rowData = regionAgeMap[key] || {};
+                let rowTotal = 0;
+                let cells = '';
+                
+                if (displayRegion && displayAgeing) {
+                    const [reg, age] = key.split('||');
+                    cells += `<td>${reg}</td><td>${age}</td>`;
+                } else if (displayRegion && !displayAgeing) {
+                    cells += `<td>${key}</td>`;
+                } else if (!displayRegion && displayAgeing) {
+                    cells += `<td>${key}</td>`;
+                } else {
+                    // no row label
+                }
+                
+                allStatuses.forEach(s => {
+                    let val = rowData[s] || 0;
+                    if (isVariance) {
+                        const baseRow = baseMap[key] || {};
+                        const baseVal = baseRow[s] || 0;
+                        const diff = val - baseVal;
+                        rowTotal += diff;
+                        colTotals[s] = (colTotals[s] || 0) + diff;
+                        if (diff === 0) cells += `<td>0</td>`;
+                        else if (diff > 0) cells += `<td class="pos-var">+${Math.round(diff)}</td>`;
+                        else cells += `<td class="neg-var">${Math.round(diff)}</td>`;
+                    } else {
+                        rowTotal += val;
+                        colTotals[s] = (colTotals[s] || 0) + val;
+                        cells += `<td>${Math.round(val)}</td>`;
+                    }
+                });
+                grandTotalCol += rowTotal;
+                
+                if (isVariance) {
+                    cells += (rowTotal === 0) ? `<td>0</td>` : (rowTotal > 0 ? `<td class="pos-var">+${Math.round(rowTotal)}</td>` : `<td class="neg-var">${Math.round(rowTotal)}</td>`);
+                } else {
+                    cells += `<td class="total-cell">${Math.round(rowTotal)}</td>`;
+                }
+                tbody += `<tr>${cells}</tr>`;
+            });
+
+            let totalRow = '<tr class="total-row">';
+            if (displayRegion) totalRow += '<td colspan="1">Grand Total</td>';
+            if (displayAgeing) totalRow += '<td colspan="1"></td>';
+            if (!displayRegion && !displayAgeing) totalRow += '<td colspan="1">Grand Total</td>';
+            
+            allStatuses.forEach(s => {
+                const v = colTotals[s] || 0;
+                if (isVariance) {
+                    totalRow += (v === 0) ? `<td>0</td>` : (v > 0 ? `<td class="pos-var">+${Math.round(v)}</td>` : `<td class="neg-var">${Math.round(v)}</td>`);
+                } else {
+                    totalRow += `<td>${Math.round(v)}</td>`;
+                }
+            });
+            if (isVariance) {
+                totalRow += (grandTotalCol === 0) ? `<td>0</td>` : (grandTotalCol > 0 ? `<td class="pos-var">+${Math.round(grandTotalCol)}</td>` : `<td class="neg-var">${Math.round(grandTotalCol)}</td>`);
+            } else {
+                totalRow += `<td class="total-cell">${Math.round(grandTotalCol)}</td>`;
+            }
+            totalRow += '</tr>';
+            tbody += totalRow;
+
+            tableBody.innerHTML = tbody;
+
+            let colHtml = '';
+            if (displayRegion) colHtml += `<col style="width:12%">`;
+            if (displayAgeing) colHtml += `<col style="width:10%">`;
+            const statusCols = allStatuses.length;
+            const remaining = (displayRegion ? 1 : 0) + (displayAgeing ? 1 : 0) + statusCols + 1 > 2 ? 78 / statusCols : 78;
+            allStatuses.forEach(() => colHtml += `<col style="width:${remaining}%">`);
+            colHtml += `<col style="width:10%">`;
+            colGroup.innerHTML = colHtml;
+        }
+
+        // ---- CCI Send To CWH Pivot ----
+        function buildCCICWHPivot(compareRows) {
+            // Filter: Parts Status === "CCI Send To CWH"
+            const cciRows = compareRows.filter(r => (r['Parts Status'] || '').trim() === 'CCI Send To CWH');
+            
+            if (!cciRows.length) {
+                cciPivotBody.innerHTML = `<tr><td colspan="6" class="no-data">No CCI Send To CWH data</td></tr>`;
+                cciPivotColGroup.innerHTML = '';
+                return;
+            }
+
+            // Group by Region and Ageing Bucket (calculated from CCI-ASP Ship Date)
+            const regionAgeMap = {};
+            const regions = new Set();
+            const buckets = new Set();
+
+            cciRows.forEach(row => {
+                const reg = row['Region'] || 'Unknown';
+                // Calculate ageing from CCI-ASP Ship Date
+                let ageBucket = getAgeingBucketFromCciShipDate(row);
+                if (!ageBucket) ageBucket = '>15'; // fallback
+                // Also respect ageing bucket filter
+                if (selectedAgeingBuckets.length > 0 && !selectedAgeingBuckets.includes(ageBucket)) return;
+                
+                let qty = parseFloat(row['SR Part Quantity'] || row['SR Part quantity'] || row['Part Quantity'] || 0);
+                if (isNaN(qty)) qty = 0;
+
+                const key = `${reg}||${ageBucket}`;
+                if (!regionAgeMap[key]) regionAgeMap[key] = 0;
+                regionAgeMap[key] += qty;
+                regions.add(reg);
+                buckets.add(ageBucket);
+            });
+
+            // Also apply region filter
+            if (selectedRegions.length > 0) {
+                const filteredKeys = Object.keys(regionAgeMap).filter(k => {
+                    const reg = k.split('||')[0];
+                    return selectedRegions.includes(reg);
+                });
+                // Rebuild regionAgeMap with only filtered keys
+                const newMap = {};
+                filteredKeys.forEach(k => { newMap[k] = regionAgeMap[k]; });
+                Object.assign(regionAgeMap, newMap);
+                // If no keys left, show empty
+                if (Object.keys(regionAgeMap).length === 0) {
+                    cciPivotBody.innerHTML = `<tr><td colspan="6" class="no-data">No data after filters</td></tr>`;
+                    cciPivotColGroup.innerHTML = '';
+                    return;
+                }
+            }
+
+            // Sort regions
+            const sortedRegions = Array.from(regions).filter(r => {
+                if (selectedRegions.length > 0) return selectedRegions.includes(r);
+                return true;
+            }).sort();
+
+            // Use all buckets that exist in data, fallback to AGEING_BUCKETS
+            const usedBuckets = Array.from(buckets).sort((a,b) => AGEING_BUCKETS.indexOf(a) - AGEING_BUCKETS.indexOf(b));
+            const allBuckets = usedBuckets.length ? usedBuckets : AGEING_BUCKETS;
+
+            // Build table
+            let thead = '<tr><th>Region</th>';
+            allBuckets.forEach(b => thead += `<th>${b}</th>`);
+            thead += '<th>Total</th></tr>';
+            document.querySelector('#cciPivotTable thead').innerHTML = thead;
+
+            let tbody = '';
+            let grandTotal = 0;
+            const bucketTotals = {};
+            allBuckets.forEach(b => bucketTotals[b] = 0);
+
+            sortedRegions.forEach(reg => {
+                let rowTotal = 0;
+                let cells = `<td>${reg}</td>`;
+                allBuckets.forEach(b => {
+                    const key = `${reg}||${b}`;
+                    const val = regionAgeMap[key] || 0;
+                    rowTotal += val;
+                    bucketTotals[b] = (bucketTotals[b] || 0) + val;
+                    cells += `<td>${Math.round(val)}</td>`;
+                });
+                grandTotal += rowTotal;
+                cells += `<td class="total-cell">${Math.round(rowTotal)}</td>`;
+                tbody += `<tr>${cells}</tr>`;
+            });
+
+            // Total row
+            let totalRow = '<tr class="total-row"><td>Grand Total</td>';
+            allBuckets.forEach(b => {
+                totalRow += `<td>${Math.round(bucketTotals[b] || 0)}</td>`;
+            });
+            totalRow += `<td class="total-cell">${Math.round(grandTotal)}</td></tr>`;
+            tbody += totalRow;
+            cciPivotBody.innerHTML = tbody;
+
+            // Colgroup
+            let colHtml = `<col style="width:14%">`;
+            allBuckets.forEach(() => colHtml += `<col style="width:${78 / allBuckets.length}%">`);
+            colHtml += `<col style="width:10%">`;
+            cciPivotColGroup.innerHTML = colHtml;
+        }
+
+        // ---- get CCI filtered data for export ----
+        function getCCIFilteredData(compareRows) {
+            return compareRows.filter(r => (r['Parts Status'] || '').trim() === 'CCI Send To CWH');
+        }
+
+        function exportCCICWHData() {
+            const comp = compareSnapshotSel.value;
+            if (!comp || !rawSnapshotData[comp]) { alert('No comparison snapshot active.'); return; }
+            
+            let compareRows = rawSnapshotData[comp].filter(isRowMatchingAllFilters);
+            let cciRows = getCCIFilteredData(compareRows);
+            
+            if (!cciRows.length) { alert('No CCI Send To CWH records found with current filters.'); return; }
+
+            // Map to required columns
+            const exportData = cciRows.map(row => {
+                // Calculate ageing bucket from CCI-ASP Ship Date
+                const ageBucket = getAgeingBucketFromCciShipDate(row) || '>15';
+                return {
+                    'SR Number': row['SR Number'] || '',
+                    'SR Part Number': row['SR Part Number'] || '',
+                    'New Part Number': row['New Part Number'] || '',
+                    'Part Category': row['Part Category'] || '',
+                    'SR Part Description': row['SR Part Description'] || '',
+                    'SR Part Quantity': row['SR Part Quantity'] || row['SR Part quantity'] || row['Part Quantity'] || 0,
+                    'Station Code': row['Station Code'] || row['Station code'] || '',
+                    'Station Name': row['Station Name'] || row['Station name'] || '',
+                    'CCI-ASP Shipping Order Code': row['CCI-ASP Shipping Order Code'] || row['CCI-ASP Shipping order code'] || '',
+                    'CCI-ASP Ship Date /Time': row['CCI-ASP Ship Date /Time'] || row['CCI-ASP Ship Date'] || '',
+                    'SR Close Date / Time': row['SR Close Date / Time'] || row['SR close date / time'] || '',
+                    'SR Close Month': row['SR Close Month'] || row['SR close month'] || '',
+                    'Parts Status': row['Parts Status'] || '',
+                    'Region': row['Region'] || '',
+                    'Ageing Bucket': ageBucket
+                };
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            XLSX.utils.book_append_sheet(wb, ws, 'CCI_Send_To_CWH');
+            const fileName = `CCI_Send_To_CWH_Ageing_${comp.split('.')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+
+        // ---- update UI ----
+        function updateUI() {
+            const baseFile = baseSnapshotSel.value;
+            const compareFile = compareSnapshotSel.value;
+
+            let compareRows = [];
+            if (compareFile && rawSnapshotData[compareFile]) {
+                compareRows = rawSnapshotData[compareFile].filter(isRowMatchingAllFilters);
+            }
+
+            let baseRows = [];
+            if (baseFile && rawSnapshotData[baseFile]) {
+                baseRows = rawSnapshotData[baseFile].filter(isRowMatchingAllFilters);
+            }
+
+            renderCompactPivot(compareRows, compactPivotBody, compactPivotColGroup, false, null);
+
+            if (baseFile && compareFile && compareRows.length > 0) {
+                renderCompactPivot(compareRows, compactVarBody, compactVarColGroup, true, baseRows);
+            } else {
+                compactVarBody.innerHTML = `<tr><td colspan="3" class="no-data">Select base & compare</td></tr>`;
+                compactVarColGroup.innerHTML = '';
+            }
+
+            // CCI Pivot
+            buildCCICWHPivot(compareRows);
+
+            currentAggregatedGroups = buildGroupedStationSummary(compareRows);
+            renderMasterTable();
+        }
+
+        function buildGroupedStationSummary(data) {
+            const dict = {};
+            data.forEach(row => {
+                const code = String(row['Station Code'] || row['Station code'] || '').trim() || 'Blank';
+                const name = String(row['Station Name'] || row['Station name'] || '').trim() || 'Blank';
+                const region = row['Region'] || 'Unknown';
+                const bucket = row['Ageing Bucket'] || '>15';
+                const status = row['Parts Status'] || 'Blank';
+                let qty = parseFloat(row['SR Part Quantity'] || row['SR Part quantity'] || row['Part Quantity'] || 0);
+                if (isNaN(qty)) qty = 0;
+                const key = `${code}||${name}||${region}||${bucket}||${status}`;
+                if (!dict[key]) dict[key] = { stationCode: code, stationName: name, region, ageingBucket: bucket, partsStatus: status, sumQuantity: 0 };
+                dict[key].sumQuantity += qty;
+            });
+            return Object.values(dict).sort((a,b) => a.stationCode.localeCompare(b.stationCode));
+        }
+
+        function renderMasterTable() {
+            const query = stationSearchInput.value.toLowerCase().trim();
+            const filtered = currentAggregatedGroups.filter(g => {
+                if (!query) return true;
+                return g.stationName.toLowerCase().includes(query);
+            });
+            if (!filtered.length) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="no-data">No records</td></tr>';
+                rowCountSpan.textContent = 'Groups: 0';
+                return;
+            }
+            let html = '';
+            filtered.forEach(g => {
+                html += `<tr><td>${g.stationCode}</td><td>${g.stationName}</td><td>${g.region}</td><td>${g.ageingBucket}</td><td>${g.partsStatus}</td><td class="num-col">${Math.round(g.sumQuantity)}</td></tr>`;
+            });
+            tableBody.innerHTML = html;
+            rowCountSpan.textContent = `Groups: ${filtered.length}`;
+        }
+
+        // ---- Confirmation ----
+        function showConfirmation(message, onConfirm) {
+            confirmationMessage.textContent = message;
+            confirmationOverlay.classList.add('show');
+            pendingAction = onConfirm;
+        }
+
+        function hideConfirmation() {
+            confirmationOverlay.classList.remove('show');
+            pendingAction = null;
+        }
+
+        confirmRemoveBtn.addEventListener('click', () => {
+            if (pendingAction) {
+                pendingAction(true);
+                hideConfirmation();
+            }
+        });
+
+        cancelRemoveBtn.addEventListener('click', () => {
+            if (pendingAction) {
+                pendingAction(false);
+                hideConfirmation();
+            }
+        });
+
+        // ---- dropdown builders ----
+        function buildCustomDropdowns() {
+            const files = Object.keys(rawSnapshotData);
+            const months = new Set(), categories = new Set(), statuses = new Set();
+            const regions = new Set();
+            
+            if (mappingLoaded && Object.keys(regionMap).length > 0) {
+                Object.values(regionMap).forEach(r => regions.add(r));
+            } else {
+                files.forEach(f => {
+                    rawSnapshotData[f].forEach(row => {
+                        const r = row['Region'] || '';
+                        if (r) regions.add(r);
+                    });
+                });
+            }
+
+            files.forEach(f => {
+                rawSnapshotData[f].forEach(row => {
+                    let m = row['SR Close Month'] || row['SR close month'] || ''; if (m) months.add(m);
+                    let c = row['Part Category'] || row['Part category'] || ''; if (c) categories.add(c);
+                    let s = row['Parts Status'] || ''; if (s) statuses.add(s);
+                });
+            });
+
+            selectedMonths = selectedMonths.filter(m => months.has(m));
+            selectedCategories = selectedCategories.filter(c => categories.has(c));
+            selectedRegions = selectedRegions.filter(r => regions.has(r));
+            selectedStatuses = selectedStatuses.filter(s => statuses.has(s));
+            selectedAgeingBuckets = selectedAgeingBuckets.filter(a => AGEING_BUCKETS.includes(a));
+
+            // Month
+            monthItemsList.innerHTML = '';
+            Array.from(months).sort().forEach(m => {
+                const checked = selectedMonths.includes(m);
+                const item = document.createElement('div');
+                item.className = 'multiselect-item';
+                item.innerHTML = `<input type="checkbox" value="${m}" ${checked?'checked':''}> <span>${m}</span>`;
+                item.addEventListener('click', (e) => { e.stopPropagation(); const cb = item.querySelector('input'); if (e.target.tagName !== 'INPUT') cb.checked = !cb.checked; updateMonthSelection(); });
+                monthItemsList.appendChild(item);
+            });
+            updateMonthLabel();
+
+            catItemsList.innerHTML = '';
+            Array.from(categories).sort().forEach(c => {
+                const checked = selectedCategories.includes(c);
+                const item = document.createElement('div');
+                item.className = 'multiselect-item';
+                item.innerHTML = `<input type="checkbox" value="${c}" ${checked?'checked':''}> <span>${c}</span>`;
+                item.addEventListener('click', (e) => { e.stopPropagation(); const cb = item.querySelector('input'); if (e.target.tagName !== 'INPUT') cb.checked = !cb.checked; updateCatSelection(); });
+                catItemsList.appendChild(item);
+            });
+            updateCatLabel();
+
+            regionItemsList.innerHTML = '';
+            Array.from(regions).sort().forEach(r => {
+                const checked = selectedRegions.includes(r);
+                const item = document.createElement('div');
+                item.className = 'multiselect-item';
+                item.innerHTML = `<input type="checkbox" value="${r}" ${checked?'checked':''}> <span>${r}</span>`;
+                item.addEventListener('click', (e) => { e.stopPropagation(); const cb = item.querySelector('input'); if (e.target.tagName !== 'INPUT') cb.checked = !cb.checked; updateRegionSelection(); });
+                regionItemsList.appendChild(item);
+            });
+            updateRegionLabel();
+
+            statusItemsList.innerHTML = '';
+            Array.from(statuses).sort().forEach(s => {
+                const checked = selectedStatuses.includes(s);
+                const item = document.createElement('div');
+                item.className = 'multiselect-item';
+                item.innerHTML = `<input type="checkbox" value="${s}" ${checked?'checked':''}> <span>${s}</span>`;
+                item.addEventListener('click', (e) => { e.stopPropagation(); const cb = item.querySelector('input'); if (e.target.tagName !== 'INPUT') cb.checked = !cb.checked; updateStatusSelection(); });
+                statusItemsList.appendChild(item);
+            });
+            updateStatusLabel();
+
+            ageingItemsList.innerHTML = '';
+            AGEING_BUCKETS.forEach(a => {
+                const checked = selectedAgeingBuckets.includes(a);
+                const item = document.createElement('div');
+                item.className = 'multiselect-item';
+                item.innerHTML = `<input type="checkbox" value="${a}" ${checked?'checked':''}> <span>${a}</span>`;
+                item.addEventListener('click', (e) => { e.stopPropagation(); const cb = item.querySelector('input'); if (e.target.tagName !== 'INPUT') cb.checked = !cb.checked; updateAgeingSelection(); });
+                ageingItemsList.appendChild(item);
+            });
+            updateAgeingLabel();
+        }
+
+        function updateMonthSelection() { const cbs = monthItemsList.querySelectorAll('input:checked'); selectedMonths = Array.from(cbs).map(cb=>cb.value); updateMonthLabel(); updateUI(); }
+        function updateMonthLabel() { const total = monthItemsList.querySelectorAll('input').length; const sel = selectedMonths.length; if (sel===0) monthBoxText.textContent='None'; else if (sel===total && total>0) monthBoxText.textContent='All Months'; else if (sel===1) monthBoxText.textContent=selectedMonths[0]; else monthBoxText.textContent=`${sel} Selected`; }
+        function updateCatSelection() { const cbs = catItemsList.querySelectorAll('input:checked'); selectedCategories = Array.from(cbs).map(cb=>cb.value); updateCatLabel(); updateUI(); }
+        function updateCatLabel() { const total = catItemsList.querySelectorAll('input').length; const sel = selectedCategories.length; if (sel===0) catBoxText.textContent='None'; else if (sel===total && total>0) catBoxText.textContent='All Categories'; else if (sel===1) catBoxText.textContent=selectedCategories[0]; else catBoxText.textContent=`${sel} Selected`; }
+        
+        function updateRegionSelection() { 
+            const cbs = regionItemsList.querySelectorAll('input:checked'); 
+            const newSelection = Array.from(cbs).map(cb=>cb.value);
+            if (newSelection.length === 0 && selectedRegions.length > 0) {
+                showConfirmation(
+                    'Do you want to remove the Region column from the pivot tables?',
+                    (confirmed) => {
+                        if (confirmed) {
+                            showRegionColumn = false;
+                            selectedRegions = [];
+                            updateRegionLabel();
+                            updateUI();
+                        } else {
+                            checkAll(regionItemsList, true);
+                            updateRegionSelection();
+                        }
+                    }
+                );
+                return;
+            }
+            selectedRegions = newSelection;
+            if (selectedRegions.length > 0) showRegionColumn = true;
+            updateRegionLabel();
+            updateUI();
+        }
+        
+        function updateRegionLabel() { 
+            const total = regionItemsList.querySelectorAll('input').length; 
+            const sel = selectedRegions.length; 
+            if (sel===0) regionBoxText.textContent='None'; 
+            else if (sel===total && total>0) regionBoxText.textContent='All Regions'; 
+            else if (sel===1) regionBoxText.textContent=selectedRegions[0]; 
+            else regionBoxText.textContent=`${sel} Selected`; 
+        }
+        
+        function updateStatusSelection() { const cbs = statusItemsList.querySelectorAll('input:checked'); selectedStatuses = Array.from(cbs).map(cb=>cb.value); updateStatusLabel(); updateUI(); }
+        function updateStatusLabel() { const total = statusItemsList.querySelectorAll('input').length; const sel = selectedStatuses.length; if (sel===0) statusBoxText.textContent='None'; else if (sel===total && total>0) statusBoxText.textContent='All Status'; else if (sel===1) statusBoxText.textContent=selectedStatuses[0]; else statusBoxText.textContent=`${sel} Selected`; }
+        
+        function updateAgeingSelection() {
+            const cbs = ageingItemsList.querySelectorAll('input:checked');
+            const newSelection = Array.from(cbs).map(cb=>cb.value);
+            if (newSelection.length === 0 && selectedAgeingBuckets.length > 0) {
+                showConfirmation(
+                    'Do you want to remove the Ageing Bucket column from the pivot tables?',
+                    (confirmed) => {
+                        if (confirmed) {
+                            showAgeingColumn = false;
+                            selectedAgeingBuckets = [];
+                            updateAgeingLabel();
+                            updateUI();
+                        } else {
+                            checkAll(ageingItemsList, true);
+                            updateAgeingSelection();
+                        }
+                    }
+                );
+                return;
+            }
+            selectedAgeingBuckets = newSelection;
+            if (selectedAgeingBuckets.length > 0) showAgeingColumn = true;
+            updateAgeingLabel();
+            updateUI();
+        }
+        
+        function updateAgeingLabel() { 
+            const total = ageingItemsList.querySelectorAll('input').length; 
+            const sel = selectedAgeingBuckets.length; 
+            if (sel===0) ageingBoxText.textContent='None'; 
+            else if (sel===total && total>0) ageingBoxText.textContent='All Buckets'; 
+            else if (sel===1) ageingBoxText.textContent=selectedAgeingBuckets[0]; 
+            else ageingBoxText.textContent=`${sel} Selected`; 
+        }
+
+        function checkAll(list, state) { list.querySelectorAll('input').forEach(cb => cb.checked = state); }
+
+        function syncControlDropdowns() {
+            const files = Object.keys(rawSnapshotData).sort();
+            const prevBase = baseSnapshotSel.value, prevComp = compareSnapshotSel.value;
+            baseSnapshotSel.innerHTML = '<option value="">-- Base --</option>';
+            compareSnapshotSel.innerHTML = '<option value="">-- Compare --</option>';
+            files.forEach(f => {
+                baseSnapshotSel.innerHTML += `<option value="${f}">${f}</option>`;
+                compareSnapshotSel.innerHTML += `<option value="${f}">${f}</option>`;
+            });
+            if (files.includes(prevBase)) baseSnapshotSel.value = prevBase;
+            else if (files.length) baseSnapshotSel.value = files[0];
+            if (files.includes(prevComp)) compareSnapshotSel.value = prevComp;
+            else if (files.length) compareSnapshotSel.value = files[files.length-1];
+            buildCustomDropdowns();
+            checkAll(monthItemsList, true); updateMonthSelection();
+            checkAll(catItemsList, true); updateCatSelection();
+            checkAll(regionItemsList, true); updateRegionSelection();
+            checkAll(statusItemsList, true); updateStatusSelection();
+            checkAll(ageingItemsList, true); updateAgeingSelection();
+            showRegionColumn = true;
+            showAgeingColumn = true;
+        }
+
+        // ---- file handlers ----
+        function handleDefectFiles(files) {
+            let loaded = 0;
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const wb = XLSX.read(data, { type: 'array', cellDates: true });
+                        const sheet = wb.Sheets[wb.SheetNames[0]];
+                        const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                        if (json && json.length) {
+                            rawSnapshotData[file.name] = enrichDataset(json);
+                        }
+                        loaded++;
+                        if (loaded === files.length) {
+                            fileList.innerHTML = Object.keys(rawSnapshotData).map(f => `🔹 ${f} (${rawSnapshotData[f].length} rows)`).join('<br>');
+                            syncControlDropdowns();
+                            updateUI();
+                        }
+                    } catch (err) { alert(`Error ${file.name}: ${err.message}`); }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function loadMappingFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type: 'array' });
+                    const sheet = wb.Sheets[wb.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                    if (!json.length) return;
+                    const headers = Object.keys(json[0]);
+                    const stationCol = headers.find(h => /station.*code/i.test(h));
+                    const regionCol = headers.find(h => /region/i.test(h));
+                    if (!stationCol || !regionCol) { alert('Mapping: Station Code or Region column missing.'); return; }
+                    regionMap = {};
+                    json.forEach(row => {
+                        let code = cleanStationCode(row[stationCol]);
+                        let reg = String(row[regionCol] || '').trim();
+                        if (code && reg) regionMap[code] = reg;
+                    });
+                    mappingLoaded = true;
+                    mappingStatus.textContent = `✅ Mapped ${Object.keys(regionMap).length} stations`;
+                    Object.keys(rawSnapshotData).forEach(f => rawSnapshotData[f] = enrichDataset(rawSnapshotData[f]));
+                    buildCustomDropdowns();
+                    checkAll(regionItemsList, true); updateRegionSelection();
+                    updateUI();
+                } catch (err) { alert('Mapping error: ' + err.message); }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ---- exports ----
+        function exportFilteredData() {
+            const comp = compareSnapshotSel.value;
+            if (!comp || !rawSnapshotData[comp]) { alert('No comparison snapshot active.'); return; }
+            const filtered = rawSnapshotData[comp].filter(isRowMatchingAllFilters);
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(filtered);
+            XLSX.utils.book_append_sheet(wb, ws, 'Data');
+            XLSX.writeFile(wb, `Filtered_${comp.split('.')[0]}.xlsx`);
+        }
+
+        function exportMasterTable() {
+            if (!currentAggregatedGroups.length) { alert('No data.'); return; }
+            const data = currentAggregatedGroups.map(g => ({ 'Station Code':g.stationCode, 'Station Name':g.stationName, Region:g.region, 'Ageing Bucket':g.ageingBucket, 'Parts Status':g.partsStatus, 'Sum Qty':Math.round(g.sumQuantity) }));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Summary');
+            XLSX.writeFile(wb, `Master_Summary_${compareSnapshotSel.value?.split('.')[0]||'export'}.xlsx`);
+        }
+
+        function exportJpg() {
+            const el = document.getElementById('landscapePivotCaptureArea');
+            html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#fff', logging: false }).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.download = `Dashboard_${compareSnapshotSel.value?.split('.')[0]||'snapshot'}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(() => alert('Could not generate JPG.'));
+        }
+
+        // ---- event binding ----
+        fileInput.addEventListener('change', (e) => handleDefectFiles(e.target.files));
+        mappingInput.addEventListener('change', (e) => loadMappingFile(e.target.files[0]));
+        baseSnapshotSel.addEventListener('change', updateUI);
+        compareSnapshotSel.addEventListener('change', updateUI);
+        stationSearchInput.addEventListener('input', renderMasterTable);
+
+        monthBox.addEventListener('click', (e) => { e.stopPropagation(); catOptionsContainer.classList.remove('show'); regionOptionsContainer.classList.remove('show'); statusOptionsContainer.classList.remove('show'); ageingOptionsContainer.classList.remove('show'); monthOptionsContainer.classList.toggle('show'); });
+        catBox.addEventListener('click', (e) => { e.stopPropagation(); monthOptionsContainer.classList.remove('show'); regionOptionsContainer.classList.remove('show'); statusOptionsContainer.classList.remove('show'); ageingOptionsContainer.classList.remove('show'); catOptionsContainer.classList.toggle('show'); });
+        regionBox.addEventListener('click', (e) => { e.stopPropagation(); monthOptionsContainer.classList.remove('show'); catOptionsContainer.classList.remove('show'); statusOptionsContainer.classList.remove('show'); ageingOptionsContainer.classList.remove('show'); regionOptionsContainer.classList.toggle('show'); });
+        statusBox.addEventListener('click', (e) => { e.stopPropagation(); monthOptionsContainer.classList.remove('show'); catOptionsContainer.classList.remove('show'); regionOptionsContainer.classList.remove('show'); ageingOptionsContainer.classList.remove('show'); statusOptionsContainer.classList.toggle('show'); });
+        ageingBox.addEventListener('click', (e) => { e.stopPropagation(); monthOptionsContainer.classList.remove('show'); catOptionsContainer.classList.remove('show'); regionOptionsContainer.classList.remove('show'); statusOptionsContainer.classList.remove('show'); ageingOptionsContainer.classList.toggle('show'); });
+        document.addEventListener('click', () => { monthOptionsContainer.classList.remove('show'); catOptionsContainer.classList.remove('show'); regionOptionsContainer.classList.remove('show'); statusOptionsContainer.classList.remove('show'); ageingOptionsContainer.classList.remove('show'); });
+        ['month','cat','region','status','ageing'].forEach(id => {
+            document.getElementById(`${id}OptionsContainer`)?.addEventListener('click', e => e.stopPropagation());
+        });
+
+        document.getElementById('monthSelectAll').addEventListener('click', () => { checkAll(monthItemsList, true); updateMonthSelection(); });
+        document.getElementById('monthUnselectAll').addEventListener('click', () => { checkAll(monthItemsList, false); updateMonthSelection(); });
+        document.getElementById('catSelectAll').addEventListener('click', () => { checkAll(catItemsList, true); updateCatSelection(); });
+        document.getElementById('catUnselectAll').addEventListener('click', () => { checkAll(catItemsList, false); updateCatSelection(); });
+        document.getElementById('regionSelectAll').addEventListener('click', () => { checkAll(regionItemsList, true); updateRegionSelection(); });
+        document.getElementById('regionUnselectAll').addEventListener('click', () => {
+            if (selectedRegions.length > 0) {
+                showConfirmation(
+                    'Do you want to remove the Region column from the pivot tables?',
+                    (confirmed) => {
+                        if (confirmed) {
+                            showRegionColumn = false;
+                            selectedRegions = [];
+                            checkAll(regionItemsList, false);
+                            updateRegionLabel();
+                            updateUI();
+                        } else {
+                            checkAll(regionItemsList, true);
+                            updateRegionSelection();
+                        }
+                    }
+                );
+            } else {
+                checkAll(regionItemsList, false);
+                updateRegionSelection();
+            }
+        });
+        document.getElementById('statusSelectAll').addEventListener('click', () => { checkAll(statusItemsList, true); updateStatusSelection(); });
+        document.getElementById('statusUnselectAll').addEventListener('click', () => { checkAll(statusItemsList, false); updateStatusSelection(); });
+        document.getElementById('ageingSelectAll').addEventListener('click', () => { checkAll(ageingItemsList, true); updateAgeingSelection(); });
+        document.getElementById('ageingUnselectAll').addEventListener('click', () => {
+            if (selectedAgeingBuckets.length > 0) {
+                showConfirmation(
+                    'Do you want to remove the Ageing Bucket column from the pivot tables?',
+                    (confirmed) => {
+                        if (confirmed) {
+                            showAgeingColumn = false;
+                            selectedAgeingBuckets = [];
+                            checkAll(ageingItemsList, false);
+                            updateAgeingLabel();
+                            updateUI();
+                        } else {
+                            checkAll(ageingItemsList, true);
+                            updateAgeingSelection();
+                        }
+                    }
+                );
+            } else {
+                checkAll(ageingItemsList, false);
+                updateAgeingSelection();
+            }
+        });
+
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            stationSearchInput.value = '';
+            showRegionColumn = true;
+            showAgeingColumn = true;
+            checkAll(monthItemsList, true); updateMonthSelection();
+            checkAll(catItemsList, true); updateCatSelection();
+            checkAll(regionItemsList, true); updateRegionSelection();
+            checkAll(statusItemsList, true); updateStatusSelection();
+            checkAll(ageingItemsList, true); updateAgeingSelection();
+            updateUI();
+        });
+
+        document.getElementById('clearSnapshots').addEventListener('click', () => {
+            rawSnapshotData = {}; currentAggregatedGroups = [];
+            selectedMonths = []; selectedCategories = []; selectedRegions = []; selectedStatuses = []; selectedAgeingBuckets = [];
+            showRegionColumn = true;
+            showAgeingColumn = true;
+            fileList.innerHTML = "No snapshot files loaded yet.";
+            baseSnapshotSel.innerHTML = '<option value="">-- Base --</option>';
+            compareSnapshotSel.innerHTML = '<option value="">-- Compare --</option>';
+            monthItemsList.innerHTML = ''; catItemsList.innerHTML = ''; regionItemsList.innerHTML = ''; statusItemsList.innerHTML = ''; ageingItemsList.innerHTML = '';
+            updateMonthLabel(); updateCatLabel(); updateRegionLabel(); updateStatusLabel(); updateAgeingLabel();
+            updateUI();
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', exportFilteredData);
+        document.getElementById('exportMasterTableBtn').addEventListener('click', exportMasterTable);
+        document.getElementById('exportJpgBtn').addEventListener('click', exportJpg);
+        document.getElementById('exportCciBtn').addEventListener('click', exportCCICWHData);
+
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZIP Excel consolidator · offline</title>
+  <!-- SheetJS & JSZip from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
+  </script>
+  <!-- Font & Material Icons (for UI) -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #f5f7fb;
+      font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+      padding: 16px;
+      color: #1e293b;
+    }
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+      padding: 16px 20px;
+      transition: box-shadow 0.2s;
+      margin-bottom: 16px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .card-header h2 {
+      font-weight: 500;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-header h2 .material-icons {
+      font-size: 1.2rem;
+    }
+    .upload-type-selector {
+      display: flex;
+      gap: 4px;
+      background: #f1f5f9;
+      border-radius: 30px;
+      padding: 3px;
+      flex-wrap: wrap;
+    }
+    .upload-type-btn {
+      padding: 4px 14px;
+      border: none;
+      border-radius: 28px;
+      background: transparent;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .upload-type-btn .material-icons {
+      font-size: 0.9rem;
+    }
+    .upload-type-btn.active {
+      background: #4f7df3;
+      color: white;
+      box-shadow: 0 2px 8px rgba(79, 125, 243, 0.3);
+    }
+    .upload-type-btn:hover:not(.active) {
+      background: #e2e8f0;
+    }
+    .upload-compact {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+    }
+    .drop-zone-compact {
+      border: 2px dashed #d0d9e8;
+      border-radius: 16px;
+      padding: 12px 20px;
+      text-align: center;
+      background: #fafcff;
+      transition: background 0.2s, border-color 0.2s;
+      cursor: pointer;
+      flex: 1;
+      min-width: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .drop-zone-compact.dragover {
+      background: #eef3fe;
+      border-color: #4f7df3;
+    }
+    .drop-zone-compact .material-icons {
+      font-size: 24px;
+      color: #64748b;
+    }
+    .drop-zone-compact .sub {
+      color: #64748b;
+      font-size: 0.8rem;
+    }
+    .file-input {
+      display: none;
+    }
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      flex: 2;
+      min-width: 120px;
+    }
+    .chip {
+      background: #eef2f6;
+      border-radius: 30px;
+      padding: 2px 12px 2px 8px;
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .chip .material-icons {
+      font-size: 0.9rem;
+    }
+    .chip .remove-file {
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-left: 2px;
+    }
+    .chip .remove-file:hover {
+      color: #ef4444;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .btn {
+      background: #f1f5f9;
+      border: none;
+      border-radius: 30px;
+      padding: 6px 16px;
+      font-weight: 500;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: background 0.15s, box-shadow 0.1s;
+      color: #1e293b;
+    }
+    .btn .material-icons {
+      font-size: 1rem;
+    }
+    .btn-primary {
+      background: #4f7df3;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #3b67d9;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #d0d9e8;
+    }
+    .btn-outline:hover {
+      background: #f1f5f9;
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .btn-sm {
+      padding: 4px 12px;
+      font-size: 0.75rem;
+    }
+    .text-muted {
+      color: #64748b;
+    }
+    .text-small {
+      font-size: 0.75rem;
+    }
+    .text-xs {
+      font-size: 0.7rem;
+    }
+    .progress-compact {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 16px;
+    }
+    .progress-compact .progress-wrap {
+      flex: 3;
+      min-width: 120px;
+      background: #e9edf3;
+      border-radius: 30px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .progress-compact .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #4f7df3;
+      border-radius: 30px;
+      transition: width 0.2s;
+    }
+    .progress-stats-compact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 12px;
+      font-size: 0.75rem;
+      color: #334155;
+      flex: 2;
+      min-width: 150px;
+    }
+    .progress-stats-compact span {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .stats-grid-compact {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 16px;
+      margin-top: 6px;
+    }
+    .stat-item-compact {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      background: #f8fafc;
+      padding: 2px 10px;
+      border-radius: 16px;
+    }
+    .stat-item-compact .label {
+      color: #475569;
+    }
+    .stat-item-compact .value {
+      font-weight: 600;
+    }
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid #e9edf3;
+      max-height: 420px;
+      overflow-y: auto;
+      position: relative;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th {
+      background: #f1f5f9;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: 8px 6px;
+      text-align: left;
+      font-weight: 500;
+      border-bottom: 2px solid #dbe0e8;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 0.8rem;
+    }
+    td {
+      padding: 6px 6px;
+      border-bottom: 1px solid #ecf0f5;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.8rem;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .search-box input {
+      flex: 1;
+      min-width: 140px;
+      padding: 6px 14px;
+      border-radius: 30px;
+      border: 1px solid #d0d9e8;
+      background: #fff;
+      font-size: 0.85rem;
+    }
+    .search-box input:focus {
+      outline: 2px solid #4f7df3;
+      border-color: transparent;
+    }
+    .file-size-badge {
+      background: #eef2f6;
+      border-radius: 30px;
+      padding: 2px 10px;
+      font-size: 0.7rem;
+      color: #475569;
+    }
+    .footer-note {
+      font-size: 0.75rem;
+      color: #64748b;
+      text-align: right;
+      margin-top: 4px;
+    }
+    .flex {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .gap-4 {
+      gap: 4px;
+    }
+    .mt-4 {
+      margin-top: 4px;
+    }
+    .mb-4 {
+      margin-bottom: 4px;
+    }
+    .w-full {
+      width: 100%;
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .card {
+        padding: 12px 14px;
+      }
+      .upload-compact {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .drop-zone-compact {
+        min-width: unset;
+      }
+      .chip-group {
+        flex: unset;
+      }
+      .progress-compact {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .progress-stats-compact {
+        flex: unset;
+      }
+      .stats-grid-compact {
+        justify-content: center;
+      }
+      .upload-type-selector {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- Upload Section -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span class="material-icons">folder_zip</span> Upload</h2>
+        <div class="flex gap-4">
+          <span id="fileCount" class="chip">0 files</span>
+        </div>
+      </div>
+      <div class="upload-type-selector" id="uploadTypeSelector">
+        <button class="upload-type-btn active" data-type="zip">
+          <span class="material-icons">folder_zip</span> ZIP
+        </button>
+        <button class="upload-type-btn" data-type="direct">
+          <span class="material-icons">insert_drive_file</span> Excel/CSV
+        </button>
+        <button class="upload-type-btn" data-type="both">
+          <span class="material-icons">layers</span> Both
+        </button>
+      </div>
+      <div class="upload-compact">
+        <div class="drop-zone-compact" id="dropZone">
+          <span class="material-icons" id="dropIcon">cloud_upload</span>
+          <span id="dropText">Drop or click</span>
+          <span class="sub" id="dropSub">(.zip, .xlsx, .xls, .csv)</span>
+          <input type="file" id="fileInput" multiple class="file-input" accept=".zip,.xlsx,.xls,.csv,.xlsb">
+        </div>
+        <div class="chip-group" id="fileList">
+          <span class="text-muted text-small">No files selected</span>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary btn-sm" id="processBtn" disabled>
+            <span class="material-icons">play_arrow</span> Run
+          </button>
+          <button class="btn btn-outline btn-sm" id="clearBtn">
+            <span class="material-icons">clear</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div class="card" id="progressCard">
+      <div class="card-header">
+        <h2><span class="material-icons">bar_chart</span> Progress</h2>
+        <span class="file-size-badge" id="dataSizeBadge">0 MB</span>
+      </div>
+      <div class="progress-compact">
+        <div class="progress-wrap">
+          <div class="progress-bar" id="progressBar" style="width:0%"></div>
+        </div>
+        <div class="progress-stats-compact" id="progressMeta">
+          <span>Files <span id="fileProgress">0</span></span>
+          <span>WB <span id="wbProgress">0</span></span>
+          <span>WS <span id="wsProgress">0</span></span>
+          <span>Rows <span id="rowProgress">0</span></span>
+          <span>⏱️ <span id="timeElapsed">0s</span></span>
+        </div>
+      </div>
+      <div class="stats-grid-compact" id="statsGrid">
+        <span class="stat-item-compact"><span class="label">Files</span> <span class="value" id="statFiles">0</span></span>
+        <span class="stat-item-compact"><span class="label">Excel</span> <span class="value" id="statExcel">0</span></span>
+        <span class="stat-item-compact"><span class="label">Skipped</span> <span class="value" id="statSkipped">0</span></span>
+        <span class="stat-item-compact"><span class="label">Rows</span> <span class="value" id="statRows">0</span></span>
+        <span class="stat-item-compact"><span class="label">Sheets</span> <span class="value" id="statSheets">0</span></span>
+      </div>
+    </div>
+
+    <!-- Preview & Export -->
+    <div class="card">
+      <div class="card-header">
+        <h2><span class="material-icons">table_view</span> Preview</h2>
+        <span class="text-muted text-small" id="previewCount">0 rows</span>
+      </div>
+      <div class="search-box">
+        <span class="material-icons" style="font-size:1.1rem;">search</span>
+        <input type="text" id="searchInput" placeholder="Search...">
+        <span class="chip" id="sortIndicator" style="font-size:0.7rem;">↕ unsorted</span>
+      </div>
+      <div class="table-wrap" id="tableWrap">
+        <table id="previewTable">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="btn-group" style="margin-top:10px;">
+        <button class="btn btn-primary btn-sm" id="exportXLSX">
+          <span class="material-icons">file_download</span> .xlsx
+        </button>
+        <button class="btn btn-primary btn-sm" id="exportCSV">
+          <span class="material-icons">file_download</span> .csv
+        </button>
+        <button class="btn btn-outline btn-sm" id="copyBtn">
+          <span class="material-icons">content_copy</span> Copy
+        </button>
+        <span class="file-size-badge" id="exportSizeBadge">size: -</span>
+      </div>
+      <div class="footer-note">Combined Data · preserves original formats</div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // ---------- DOM refs ----------
+      const dropZone = document.getElementById('dropZone');
+      const fileInput = document.getElementById('fileInput');
+      const fileList = document.getElementById('fileList');
+      const fileCount = document.getElementById('fileCount');
+      const processBtn = document.getElementById('processBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const dropIcon = document.getElementById('dropIcon');
+      const dropText = document.getElementById('dropText');
+      const dropSub = document.getElementById('dropSub');
+
+      const progressBar = document.getElementById('progressBar');
+      const fileProgress = document.getElementById('fileProgress');
+      const wbProgress = document.getElementById('wbProgress');
+      const wsProgress = document.getElementById('wsProgress');
+      const rowProgress = document.getElementById('rowProgress');
+      const timeElapsed = document.getElementById('timeElapsed');
+
+      const statFiles = document.getElementById('statFiles');
+      const statExcel = document.getElementById('statExcel');
+      const statSkipped = document.getElementById('statSkipped');
+      const statRows = document.getElementById('statRows');
+      const statSheets = document.getElementById('statSheets');
+
+      const searchInput = document.getElementById('searchInput');
+      const tableHead = document.getElementById('tableHead');
+      const tableBody = document.getElementById('tableBody');
+      const previewCount = document.getElementById('previewCount');
+      const sortIndicator = document.getElementById('sortIndicator');
+
+      const exportXLSX = document.getElementById('exportXLSX');
+      const exportCSV = document.getElementById('exportCSV');
+      const copyBtn = document.getElementById('copyBtn');
+      const dataSizeBadge = document.getElementById('dataSizeBadge');
+      const exportSizeBadge = document.getElementById('exportSizeBadge');
+
+      const uploadTypeBtns = document.querySelectorAll('.upload-type-btn');
+
+      // ---------- state ----------
+      let selectedFiles = [];
+      let masterData = [];
+      let masterColumns = [];
+      let masterFormats = {};
+      let stats = { files: 0, excel: 0, skipped: 0, rows: 0, sheets: 0 };
+      let processing = false;
+      let startTime = 0;
+      let uploadType = 'zip';
+
+      const METADATA_COLS = ['ZIP File Name', 'Excel File Name', 'Worksheet Name', 'Imported Time'];
+
+      let previewRows = [];
+      let sortKey = null;
+      let sortAsc = true;
+
+      const ZIP_EXTS = ['.zip'];
+      const EXCEL_EXTS = ['.xlsx', '.xls', '.csv', '.xlsb'];
+
+      // ---------- Upload Type Selector ----------
+      uploadTypeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          uploadTypeBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          uploadType = btn.dataset.type;
+          updateDropZoneText();
+          updateFileInputAccept();
+          updateFileUI();
+        });
+      });
+
+      function updateDropZoneText() {
+        const iconMap = { 'zip': 'folder_zip', 'direct': 'insert_drive_file', 'both': 'layers' };
+        const textMap = {
+          'zip': 'Drop ZIP or click',
+          'direct': 'Drop Excel/CSV or click',
+          'both': 'Drop files or click'
+        };
+        const subMap = {
+          'zip': '(.zip)',
+          'direct': '(.xlsx, .xls, .csv, .xlsb)',
+          'both': '(.zip, .xlsx, .xls, .csv, .xlsb)'
+        };
+        dropIcon.textContent = iconMap[uploadType] || 'cloud_upload';
+        dropText.textContent = textMap[uploadType] || 'Drop or click';
+        dropSub.textContent = subMap[uploadType] || '';
+      }
+
+      function updateFileInputAccept() {
+        const acceptMap = {
+          'zip': '.zip',
+          'direct': '.xlsx,.xls,.csv,.xlsb',
+          'both': '.zip,.xlsx,.xls,.csv,.xlsb'
+        };
+        fileInput.accept = acceptMap[uploadType] || '.zip,.xlsx,.xls,.csv,.xlsb';
+      }
+
+      function isFileTypeAllowed(file) {
+        const name = file.name.toLowerCase();
+        const isZip = ZIP_EXTS.some(ext => name.endsWith(ext));
+        const isExcel = EXCEL_EXTS.some(ext => name.endsWith(ext));
+        if (uploadType === 'zip') return isZip;
+        if (uploadType === 'direct') return isExcel;
+        return isZip || isExcel;
+      }
+
+      function updateFileUI() {
+        const filteredFiles = selectedFiles.filter(f => isFileTypeAllowed(f));
+        fileList.innerHTML = '';
+        if (filteredFiles.length === 0) {
+          fileList.innerHTML = '<span class="text-muted text-small">No files selected</span>';
+          fileCount.textContent = '0 files';
+          processBtn.disabled = true;
+          return;
+        }
+        const showFiles = filteredFiles.slice(0, 3);
+        showFiles.forEach(f => {
+          const span = document.createElement('span');
+          span.className = 'chip';
+          const icon = f.name.toLowerCase().endsWith('.zip') ? 'folder_zip' : 'description';
+          span.innerHTML = `
+            <span class="material-icons" style="font-size:0.9rem;">${icon}</span> 
+            ${f.name.length > 20 ? f.name.substring(0, 20) + '...' : f.name}
+            <span class="remove-file material-icons" data-filename="${f.name}" style="font-size:0.9rem;">close</span>
+          `;
+          span.querySelector('.remove-file').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const filename = e.target.dataset.filename;
+            selectedFiles = selectedFiles.filter(f => f.name !== filename);
+            updateFileUI();
+            if (selectedFiles.length === 0) {
+              masterData = [];
+              masterColumns = [];
+              masterFormats = {};
+              resetStats();
+              renderTable();
+              updateStatsUI();
+              progressBar.style.width = '0%';
+              timeElapsed.textContent = '0s';
+              previewCount.textContent = '0 rows';
+            }
+          });
+          fileList.appendChild(span);
+        });
+        if (filteredFiles.length > 3) {
+          const span = document.createElement('span');
+          span.className = 'chip';
+          span.textContent = `+${filteredFiles.length - 3} more`;
+          fileList.appendChild(span);
+        }
+        fileCount.textContent = `${filteredFiles.length} files`;
+        processBtn.disabled = false;
+      }
+
+      function handleFiles(files) {
+        for (const f of files) {
+          const name = f.name.toLowerCase();
+          const isZip = ZIP_EXTS.some(ext => name.endsWith(ext));
+          const isExcel = EXCEL_EXTS.some(ext => name.endsWith(ext));
+          if ((uploadType === 'zip' && isZip) ||
+            (uploadType === 'direct' && isExcel) ||
+            (uploadType === 'both' && (isZip || isExcel))) {
+            if (!selectedFiles.some(x => x.name === f.name && x.size === f.size)) {
+              selectedFiles.push(f);
+            }
+          }
+        }
+        updateFileUI();
+      }
+
+      dropZone.addEventListener('dragover', (e) => { e.preventDefault();
+        dropZone.classList.add('dragover'); });
+      dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+      });
+      dropZone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files) handleFiles(e.target.files);
+        fileInput.value = '';
+      });
+
+      clearBtn.addEventListener('click', () => {
+        selectedFiles = [];
+        masterData = [];
+        masterColumns = [];
+        masterFormats = {};
+        resetStats();
+        updateFileUI();
+        renderTable();
+        updateStatsUI();
+        progressBar.style.width = '0%';
+        timeElapsed.textContent = '0s';
+        previewCount.textContent = '0 rows';
+        dataSizeBadge.textContent = '0 MB';
+        exportSizeBadge.textContent = 'size: -';
+      });
+
+      function resetStats() {
+        stats = { files: 0, excel: 0, skipped: 0, rows: 0, sheets: 0 };
+        updateStatsUI();
+      }
+
+      function updateStatsUI() {
+        statFiles.textContent = stats.files;
+        statExcel.textContent = stats.excel;
+        statSkipped.textContent = stats.skipped;
+        statRows.textContent = stats.rows;
+        statSheets.textContent = stats.sheets;
+        const sizeInMB = (masterData.length * Math.max(masterColumns.length, 1) * 0.00001).toFixed(2);
+        dataSizeBadge.textContent = `${sizeInMB} MB`;
+        estimateExportSize();
+      }
+
+      function estimateExportSize() {
+        if (masterData.length === 0 || masterColumns.length === 0) {
+          exportSizeBadge.textContent = 'size: -';
+          return;
+        }
+        const displayCols = getDisplayColumns();
+        const cellCount = masterData.length * displayCols.length;
+        const estimatedBytes = cellCount * 8 + (masterData.length * 20);
+        exportSizeBadge.textContent = `size: ${formatFileSize(estimatedBytes)}`;
+      }
+
+      function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1048576) return (bytes / 1024).toFixed(0) + ' KB';
+        if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
+        return (bytes / 1073741824).toFixed(1) + ' GB';
+      }
+
+      // ---------- Process files with format preservation ----------
+      async function processFile(file) {
+        const name = file.name.toLowerCase();
+        const isZip = ZIP_EXTS.some(ext => name.endsWith(ext));
+        if (isZip) {
+          return await processZipFile(file);
+        } else {
+          return await processDirectFile(file);
+        }
+      }
+
+      async function processZipFile(zipFile) {
+        const allRows = [];
+        try {
+          const arrayBuffer = await zipFile.arrayBuffer();
+          const zip = await JSZip.loadAsync(arrayBuffer);
+          const entries = Object.keys(zip.files);
+
+          const excelEntries = entries.filter(name => {
+            const lower = name.toLowerCase();
+            return EXCEL_EXTS.some(ext => lower.endsWith(ext));
+          });
+
+          for (const entryName of excelEntries) {
+            try {
+              const fileData = await zip.files[entryName].async('arraybuffer');
+              const result = await processExcelData(fileData, zipFile.name, entryName);
+              if (result && result.rows && result.rows.length > 0) {
+                allRows.push(...result.rows);
+                if (result.formats) {
+                  Object.assign(masterFormats, result.formats);
+                }
+                stats.excel++;
+                // Update sheets count from result
+                if (result.sheetCount) {
+                  stats.sheets += result.sheetCount;
+                }
+              }
+            } catch (e) {
+              console.warn('Skip file:', entryName, e);
+              stats.skipped++;
+            }
+          }
+        } catch (e) {
+          console.warn('ZIP error:', zipFile.name, e);
+          stats.skipped++;
+        }
+        return allRows;
+      }
+
+      async function processDirectFile(file) {
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await processExcelData(arrayBuffer, file.name, file.name);
+          if (result && result.rows && result.rows.length > 0) {
+            if (result.formats) {
+              Object.assign(masterFormats, result.formats);
+            }
+            stats.excel++;
+            if (result.sheetCount) {
+              stats.sheets += result.sheetCount;
+            }
+            return result.rows;
+          }
+        } catch (e) {
+          console.warn('Skip file:', file.name, e);
+          stats.skipped++;
+        }
+        return [];
+      }
+
+      async function processExcelData(arrayBuffer, zipName, fileName) {
+        try {
+          const workbook = XLSX.read(arrayBuffer, {
+            type: 'array',
+            cellDates: true,
+            dateNF: 'yyyy-mm-dd hh:mm:ss',
+            cellStyles: true,
+            raw: true
+          });
+
+          const sheetNames = workbook.SheetNames;
+          const allRows = [];
+          const formats = {};
+          const importedTime = new Date().toISOString().replace('T', ' ').slice(0, 19);
+          let sheetCount = 0;
+
+          for (const sheetName of sheetNames) {
+            const sheet = workbook.Sheets[sheetName];
+            if (!sheet) continue;
+
+            const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+            
+            const data = XLSX.utils.sheet_to_json(sheet, {
+              defval: '',
+              header: 1,
+              raw: true,
+              dateNF: 'yyyy-mm-dd hh:mm:ss'
+            });
+
+            if (data.length < 2) continue;
+
+            const headerRow = data[0].map(h => String(h || '').trim());
+            let hasData = false;
+
+            for (let rowIdx = 1; rowIdx < data.length; rowIdx++) {
+              const rowData = data[rowIdx];
+              if (!rowData || rowData.every(cell => cell === '' || cell === undefined || cell === null)) continue;
+
+              const newRow = {
+                'ZIP File Name': zipName,
+                'Excel File Name': fileName,
+                'Worksheet Name': sheetName,
+                'Imported Time': importedTime
+              };
+
+              for (let colIdx = 0; colIdx < headerRow.length; colIdx++) {
+                const header = headerRow[colIdx];
+                if (!header) continue;
+                
+                let cellValue = rowData[colIdx];
+                const cellRef = XLSX.utils.encode_cell({ r: rowIdx, c: colIdx });
+                const cell = sheet[cellRef];
+
+                if (cell) {
+                  if (cell.t === 'd' && cell.v instanceof Date) {
+                    cellValue = cell.v;
+                  } else if (cell.t === 'n' && cell.z) {
+                    cellValue = cell.v;
+                  }
+                }
+
+                newRow[header] = cellValue !== undefined && cellValue !== null ? cellValue : '';
+              }
+
+              const dataKeys = Object.keys(newRow).filter(k => !METADATA_COLS.includes(k));
+              if (dataKeys.length > 0) {
+                const headerVals = headerRow.map(h => h);
+                const rowVals = dataKeys.map(k => newRow[k] || '');
+                if (rowVals.length === headerVals.length && rowVals.every((v, i) => String(v) === String(headerVals[i]))) {
+                  continue;
+                }
+              }
+
+              allRows.push(newRow);
+              hasData = true;
+            }
+
+            if (hasData) {
+              sheetCount++;
+            }
+          }
+
+          return { rows: allRows, formats: formats, sheetCount: sheetCount };
+        } catch (e) {
+          console.error('Error parsing Excel:', e);
+          return { rows: [], formats: {}, sheetCount: 0 };
+        }
+      }
+
+      // ---------- core processing ----------
+      processBtn.addEventListener('click', async () => {
+        if (processing || selectedFiles.length === 0) return;
+        processing = true;
+        processBtn.disabled = true;
+        startTime = performance.now();
+        masterData = [];
+        masterColumns = [];
+        masterFormats = {};
+        resetStats();
+
+        const filteredFiles = selectedFiles.filter(f => isFileTypeAllowed(f));
+        stats.files = filteredFiles.length;
+        updateStatsUI();
+
+        for (let fIdx = 0; fIdx < filteredFiles.length; fIdx++) {
+          const file = filteredFiles[fIdx];
+          fileProgress.textContent = fIdx + 1;
+
+          try {
+            const rows = await processFile(file);
+
+            if (rows && rows.length > 0) {
+              const allKeys = new Set(masterColumns);
+              rows.forEach(r => Object.keys(r).forEach(k => allKeys.add(k)));
+              const newMaster = [];
+              METADATA_COLS.forEach(m => { if (allKeys.has(m)) newMaster.push(m); });
+              const dataKeys = Array.from(allKeys).filter(k => !METADATA_COLS.includes(k));
+              newMaster.push(...dataKeys);
+              masterColumns = newMaster;
+
+              for (const r of rows) {
+                const finalRow = {};
+                for (const col of masterColumns) {
+                  finalRow[col] = (r[col] !== undefined && r[col] !== null) ? r[col] : '';
+                }
+                masterData.push(finalRow);
+              }
+
+              stats.rows = masterData.length;
+              updateStatsUI();
+              wbProgress.textContent = stats.excel;
+              wsProgress.textContent = stats.sheets;
+              rowProgress.textContent = masterData.length;
+            }
+          } catch (e) {
+            console.warn('Error processing file:', file.name, e);
+            stats.skipped++;
+            updateStatsUI();
+          }
+
+          const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+          timeElapsed.textContent = elapsed + 's';
+          progressBar.style.width = Math.min(100, ((fIdx + 1) / filteredFiles.length) * 100) + '%';
+          await new Promise(r => setTimeout(r, 0));
+        }
+
+        progressBar.style.width = '100%';
+        timeElapsed.textContent = ((performance.now() - startTime) / 1000).toFixed(1) + 's';
+        fileProgress.textContent = filteredFiles.length;
+        wbProgress.textContent = stats.excel;
+        wsProgress.textContent = stats.sheets;
+        rowProgress.textContent = masterData.length;
+        updateStatsUI();
+
+        renderTable();
+        processing = false;
+        processBtn.disabled = false;
+      });
+
+      function getDisplayColumns() {
+        return masterColumns.filter(col => !METADATA_COLS.includes(col));
+      }
+
+      function renderTable() {
+        const displayCols = getDisplayColumns();
+        const search = searchInput.value.toLowerCase().trim();
+
+        let rows = masterData.map(row => {
+          const displayRow = {};
+          displayCols.forEach(col => {
+            let value = row[col] !== undefined ? row[col] : '';
+            if (value instanceof Date) {
+              value = value.toLocaleString();
+            }
+            displayRow[col] = value;
+          });
+          return displayRow;
+        });
+
+        if (search) {
+          rows = rows.filter(row => {
+            return Object.values(row).some(v => String(v).toLowerCase().includes(search));
+          });
+        }
+
+        if (sortKey && displayCols.includes(sortKey)) {
+          rows = [...rows].sort((a, b) => {
+            const va = String(a[sortKey] || '').toLowerCase();
+            const vb = String(b[sortKey] || '').toLowerCase();
+            if (va < vb) return sortAsc ? -1 : 1;
+            if (va > vb) return sortAsc ? 1 : -1;
+            return 0;
+          });
+        }
+
+        previewRows = rows.slice(0, 100);
+        previewCount.textContent = `${previewRows.length} of ${rows.length}`;
+
+        const cols = displayCols.length ? displayCols : ['No data'];
+        tableHead.innerHTML = '';
+        const headRow = document.createElement('tr');
+        cols.forEach(col => {
+          const th = document.createElement('th');
+          th.textContent = col;
+          th.dataset.col = col;
+          th.addEventListener('click', () => {
+            if (sortKey === col) sortAsc = !sortAsc;
+            else { sortKey = col;
+              sortAsc = true; }
+            sortIndicator.textContent = sortAsc ? '↑' : '↓';
+            renderTable();
+          });
+          headRow.appendChild(th);
+        });
+        tableHead.appendChild(headRow);
+
+        tableBody.innerHTML = '';
+        if (previewRows.length === 0) {
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          td.colSpan = cols.length;
+          td.textContent = 'No data';
+          td.style.textAlign = 'center';
+          td.style.padding = '20px';
+          tr.appendChild(td);
+          tableBody.appendChild(tr);
+          return;
+        }
+        previewRows.forEach(row => {
+          const tr = document.createElement('tr');
+          cols.forEach(col => {
+            const td = document.createElement('td');
+            let value = row[col] !== undefined && row[col] !== null ? String(row[col]) : '';
+            td.textContent = value;
+            tr.appendChild(td);
+          });
+          tableBody.appendChild(tr);
+        });
+      }
+
+      searchInput.addEventListener('input', renderTable);
+
+      function getExportData() {
+        if (masterData.length === 0 || masterColumns.length === 0) return null;
+        const displayCols = getDisplayColumns();
+        if (displayCols.length === 0) return null;
+
+        const wb = XLSX.utils.book_new();
+        const wsData = [];
+        wsData.push(displayCols);
+
+        masterData.forEach(row => {
+          const rowData = [];
+          displayCols.forEach(col => {
+            let value = row[col];
+            if (value instanceof Date) {
+              rowData.push(value);
+            } else {
+              rowData.push(value !== undefined && value !== null ? value : '');
+            }
+          });
+          wsData.push(rowData);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        const colWidths = [];
+        for (let i = 0; i < displayCols.length; i++) {
+          let maxLen = displayCols[i].length;
+          for (let j = 0; j < Math.min(100, masterData.length); j++) {
+            const cell = masterData[j]?.[displayCols[i]];
+            let cellStr = '';
+            if (cell instanceof Date) {
+              cellStr = cell.toISOString().replace('T', ' ').slice(0, 19);
+            } else {
+              cellStr = String(cell || '');
+            }
+            maxLen = Math.max(maxLen, cellStr.length);
+          }
+          colWidths.push({ wch: Math.min(Math.max(maxLen + 2, 10), 30) });
+        }
+        ws['!cols'] = colWidths;
+
+        const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+        for (let R = range.s.r; R <= range.e.r; R++) {
+          for (let C = range.s.c; C <= range.e.c; C++) {
+            const addr = XLSX.utils.encode_cell({ r: R, c: C });
+            const cell = ws[addr];
+            if (cell && cell.v instanceof Date) {
+              cell.t = 'd';
+              cell.z = 'yyyy-mm-dd hh:mm:ss';
+            }
+          }
+        }
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Combined Data');
+        return wb;
+      }
+
+      exportXLSX.addEventListener('click', () => {
+        const wb = getExportData();
+        if (!wb) return alert('No data to export');
+
+        const wbOptions = {
+          bookType: 'xlsx',
+          type: 'array',
+          bookSST: false,
+          compression: true,
+          cellStyles: true,
+          cellDates: true,
+          dateNF: 'yyyy-mm-dd hh:mm:ss'
+        };
+
+        const wbout = XLSX.write(wb, wbOptions);
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'combined_data.xlsx';
+        link.click();
+        URL.revokeObjectURL(link.href);
+
+        exportSizeBadge.textContent = `size: ${formatFileSize(blob.size)}`;
+      });
+
+      exportCSV.addEventListener('click', () => {
+        const data = getExportData();
+        if (!data) return alert('No data to export');
+        
+        const ws = data.Sheets[data.SheetNames[0]];
+        const csvData = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const csv = XLSX.utils.json_to_sheet(csvData);
+        const csvStr = XLSX.utils.sheet_to_csv(csv);
+        
+        const blob = new Blob([csvStr], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'combined_data.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        exportSizeBadge.textContent = `size: ${formatFileSize(blob.size)}`;
+      });
+
+      copyBtn.addEventListener('click', () => {
+        const data = getExportData();
+        if (!data) return alert('No data to copy');
+        const ws = data.Sheets[data.SheetNames[0]];
+        const csvData = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        const csv = XLSX.utils.json_to_sheet(csvData);
+        const csvStr = XLSX.utils.sheet_to_csv(csv);
+        navigator.clipboard.writeText(csvStr).then(() => {
+          alert('Copied to clipboard');
+        }).catch(() => alert('Copy failed'));
+      });
+
+      // Initialize
+      updateDropZoneText();
+      updateFileInputAccept();
+      updateFileUI();
+      resetStats();
+      renderTable();
+    })();
+  </script>
+</body>
+</html>
