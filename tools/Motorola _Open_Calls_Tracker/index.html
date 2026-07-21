@@ -38,28 +38,22 @@
             background-color: #f3f4f6;
         }
         
-        .pivot-table-wrapper .sticky-col {
+        .pivot-table-wrapper .sticky-col-1 {
             position: sticky;
+            left: 0;
             z-index: 5;
             background-color: white;
-        }
-        
-        .pivot-table-wrapper .sticky-col-header {
-            position: sticky;
-            z-index: 15;
-            background-color: #f3f4f6;
-        }
-        
-        .pivot-table-wrapper .sticky-col-1 {
-            left: 0;
-            min-width: 200px;
-            max-width: 300px;
+            min-width: 160px;
+            max-width: 250px;
         }
         
         .pivot-table-wrapper .sticky-col-1-header {
+            position: sticky;
             left: 0;
-            min-width: 200px;
-            max-width: 300px;
+            z-index: 15;
+            background-color: #f3f4f6;
+            min-width: 160px;
+            max-width: 250px;
         }
         
         .pivot-table-wrapper .grand-total-col {
@@ -75,10 +69,22 @@
         .pivot-table-wrapper .parent-row {
             background-color: #f3f4f6 !important;
             font-weight: 700;
+            cursor: pointer;
+        }
+
+        .pivot-table-wrapper .sub-parent-row {
+            background-color: #f9fafb !important;
+            font-weight: 600;
+            cursor: pointer;
         }
         
         .pivot-table-wrapper .child-row {
             padding-left: 24px !important;
+            font-weight: 400;
+        }
+
+        .pivot-table-wrapper .deep-child-row {
+            padding-left: 36px !important;
             font-weight: 400;
         }
         
@@ -205,16 +211,32 @@
                 </div>
             </section>
 
-            <!-- Pivot 1: Region - Full Width -->
-            <section class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
-                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide border-b pb-2 text-indigo-800">Consolidated Pivot: Actionable To × Current Status × Region</h3>
-                <div class="pivot-table-wrapper" id="pivotConsolidatedContainer"></div>
-            </section>
-
-            <!-- Pivot 2: Ageing Bucket - Full Width -->
+            <!-- Consolidated Pivot: Actionable To x Current Status x Ageing Bucket -->
             <section class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
                 <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide border-b pb-2 text-emerald-800">Consolidated Pivot: Actionable To × Current Status × Ageing Bucket</h3>
                 <div class="pivot-table-wrapper" id="pivotAgeingContainer"></div>
+            </section>
+
+            <!-- Hierarchical Pivot 1: Region x Actionable To x Current Status x Ageing Bucket -->
+            <section class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="text-sm font-bold text-purple-800 uppercase tracking-wide">Detailed Hierarchical Pivot: Region × Actionable To × Current Status × Ageing Bucket</h3>
+                    <button id="toggleExpandPivotBtn" class="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-300 font-semibold text-xs px-3 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1">
+                        <span id="expandToggleIcon">➕ Expand All</span>
+                    </button>
+                </div>
+                <div class="pivot-table-wrapper" id="pivotHierarchicalContainer"></div>
+            </section>
+
+            <!-- Hierarchical Pivot 2 (3rd Pivot): Separate Columns for Region | Station Code | Station Name x Current Status -->
+            <section class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h3 class="text-sm font-bold text-teal-800 uppercase tracking-wide">Station Pivot: Region × Station Code × Station Name × Current Status</h3>
+                    <button id="toggleExpandPivotStationBtn" class="bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-300 font-semibold text-xs px-3 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1">
+                        <span id="expandStationToggleIcon">➕ Expand All</span>
+                    </button>
+                </div>
+                <div class="pivot-table-wrapper" id="pivotStationContainer"></div>
             </section>
 
             <!-- Detailed Report -->
@@ -247,6 +269,8 @@
         let selectedFilters = {};
         let latestCallDateString = "LatestDate";
         let ageingReferenceDate = null;
+        let isPivotExpanded = false;
+        let isPivotStationExpanded = false;
 
         const AGEING_BUCKETS = ["0-1Days", "2-4Days", "5-7Days", "8-15Days", "16-30Days", ">30days"];
         const DATE_COLUMNS = new Set([
@@ -259,12 +283,10 @@
             "Parts Available in ASP Hub Time"
         ]);
 
-        // Step 1: Status Mapping Function
         function getOpenCallStatus(serviceStatus, partsStatus) {
             serviceStatus = String(serviceStatus || "").trim();
             partsStatus = String(partsStatus || "").trim();
 
-            // In Escalation
             if (serviceStatus === "In Escalation") {
                 switch(partsStatus){
                     case "ASP CWH to CCI":
@@ -286,96 +308,55 @@
                 }
             }
 
-            // Pre Submitted
             if (serviceStatus === "Pre Submitted") {
-                return {
-                    currentStatus: "Pre Submitted",
-                    actionableTo: "CCI"
-                };
+                return { currentStatus: "Pre Submitted", actionableTo: "CCI" };
             }
 
-            // Repair in progress
             if (serviceStatus === "Repair in progress") {
                 switch(partsStatus){
                     case "ASP CWH to CCI":
-                        return {
-                            currentStatus: "ASP CWH to CCI",
-                            actionableTo: "CCI"
-                        };
+                        return { currentStatus: "ASP CWH to CCI", actionableTo: "CCI" };
                     case "":
-                        return {
-                            currentStatus: "Repair In Progress - Without Parts",
-                            actionableTo: "CCI"
-                        };
+                        return { currentStatus: "Repair In Progress - Without Parts", actionableTo: "CCI" };
                     case "CCI TO ASP CWH":
-                        return {
-                            currentStatus: "CCI to Escalate - Parts Shortage",
-                            actionableTo: "CCI"
-                        };
+                        return { currentStatus: "CCI to Escalate - Parts Shortage", actionableTo: "CCI" };
                     case "Parts shortage":
-                        return {
-                            currentStatus: "CCI to Escalate - Parts Shortage",
-                            actionableTo: "CCI"
-                        };
+                        return { currentStatus: "CCI to Escalate - Parts Shortage", actionableTo: "CCI" };
                     case "Parts in ASP CWH":
-                        return {
-                            currentStatus: "Parts in ASP CWH",
-                            actionableTo: "CWH"
-                        };
+                        return { currentStatus: "Parts in ASP CWH", actionableTo: "CWH" };
                     case "Parts in other CCI":
-                        return {
-                            currentStatus: "Parts in Other CCI",
-                            actionableTo: "CWH"
-                        };
+                        return { currentStatus: "Parts in Other CCI", actionableTo: "CWH" };
                     case "Parts in service center":
-                        return {
-                            currentStatus: "Parts in Service Center",
-                            actionableTo: "CCI"
-                        };
+                        return { currentStatus: "Parts in Service Center", actionableTo: "CCI" };
                     default:
-                        return {
-                            currentStatus: "Repair In Progress - Vendor Hub",
-                            actionableTo: "Motorola"
-                        };
+                        return { currentStatus: "Repair In Progress - Vendor Hub", actionableTo: "Motorola" };
                 }
             }
 
-            // Submitted
             if (serviceStatus === "Submitted") {
-                return {
-                    currentStatus: "Submitted",
-                    actionableTo: "CCI"
-                };
+                return { currentStatus: "Submitted", actionableTo: "CCI" };
             }
 
-            // Waiting for Pickup
             if (serviceStatus === "Waiting for pickup" || serviceStatus === "Waiting for pick up") {
-                return {
-                    currentStatus: "RFPU",
-                    actionableTo: "CCI"
-                };
+                return { currentStatus: "RFPU", actionableTo: "CCI" };
             }
 
-            // Default
-            return {
-                currentStatus: serviceStatus || "Unknown",
-                actionableTo: "Others"
-            };
+            return { currentStatus: serviceStatus || "Unknown", actionableTo: "Others" };
         }
 
         // Initialization & event binding hooks
         document.getElementById('processBtn').addEventListener('click', startDataPipeline);
         document.getElementById('exportCsvBtn').addEventListener('click', exportToExcel);
         document.getElementById('resetFiltersBtn').addEventListener('click', resetAllFilters);
+        document.getElementById('toggleExpandPivotBtn').addEventListener('click', togglePivotExpand);
+        document.getElementById('toggleExpandPivotStationBtn').addEventListener('click', togglePivotStationExpand);
 
-        // Click-outside dynamic setup for custom filter elements
         document.addEventListener('click', function (e) {
             if (!e.target.closest('.filter-dropdown')) {
                 document.querySelectorAll('.custom-dropdown-content').forEach(d => d.classList.remove('show'));
             }
         });
 
-        // Trigger execution pipeline
         async function startDataPipeline() {
             const openCallsInput = document.getElementById('openCallsFile').files[0];
             const mappingInput = document.getElementById('regionMappingFile').files[0];
@@ -386,7 +367,6 @@
             }
 
             try {
-                // Read Mapping table if provided
                 if (mappingInput) {
                     const mappingData = await parseFile(mappingInput);
                     buildMappingDictionary(mappingData);
@@ -394,7 +374,6 @@
                     regionalMapping = {};
                 }
 
-                // Process Base Data Model
                 rawOpenCalls = await parseFile(openCallsInput);
                 if (rawOpenCalls.length === 0) {
                     alert("The uploaded Open Calls spreadsheet contains no data rows.");
@@ -413,7 +392,6 @@
             }
         }
 
-        // Standardized File Parser Factory
         function parseFile(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -427,10 +405,7 @@
                         const workbook = XLSX.read(data, { type: 'array', raw: true });
                         const firstSheetName = workbook.SheetNames[0];
                         const sheet = workbook.Sheets[firstSheetName];
-                        const json = XLSX.utils.sheet_to_json(sheet, {
-                            defval: "",
-                            raw: false
-                        });
+                        const json = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
                         resolve(json);
                     }
                 };
@@ -493,11 +468,8 @@
 
         function buildMappingDictionary(data) {
             regionalMapping = {};
-            console.log("Building mapping dictionary from", data.length, "rows");
-            
             const firstRow = data[0] || {};
             const columnNames = Object.keys(firstRow);
-            console.log("Available columns in mapping file:", columnNames);
             
             let stationCodeCol = null;
             let regionCol = null;
@@ -513,48 +485,30 @@
             }
             
             if (!stationCodeCol || !regionCol) {
-                console.warn("Could not find Station Code or Region columns in mapping file. Available columns:", columnNames);
                 if (columnNames.length >= 2) {
                     stationCodeCol = columnNames[0];
                     regionCol = columnNames[1];
-                    console.log(`Using fallback: "${stationCodeCol}" as Station Code and "${regionCol}" as Region`);
                 } else {
-                    console.error("Mapping file has insufficient columns");
                     return;
                 }
             }
             
-            console.log(`Using mapping: Station Code column = "${stationCodeCol}", Region column = "${regionCol}"`);
-            
             data.forEach(row => {
                 let code = String(row[stationCodeCol] || "").trim();
                 const region = String(row[regionCol] || "").trim();
-                
                 code = normalizeStationCode(code);
-                
                 if (code && region) {
                     regionalMapping[code] = region;
                 }
             });
-            
-            console.log("Total mappings:", Object.keys(regionalMapping).length);
         }
 
         function normalizeStationCode(code) {
             if (!code) return "";
-            
             let normalized = code.trim();
-            
-            if (normalized.endsWith('.0')) {
-                normalized = normalized.slice(0, -2);
-            }
-            
+            if (normalized.endsWith('.0')) normalized = normalized.slice(0, -2);
             normalized = normalized.replace(/^0+/, '');
-            
-            if (normalized === '') {
-                normalized = '0';
-            }
-            
+            if (normalized === '') normalized = '0';
             return normalized;
         }
 
@@ -635,9 +589,7 @@
             return isNaN(fallbackDate.getTime()) ? null : fallbackDate;
         }
 
-        // Updated: Calculate ageing from Carry-In Time if available, otherwise from SO Submitted Time
         function calculateAgeingAndBucket(row, referenceDate = ageingReferenceDate) {
-            // Check if Carry-In Time is available
             let timeStr = null;
             let timeSource = "SO Submitted Time";
             
@@ -652,12 +604,10 @@
             const parsedDate = parseDashboardDate(timeStr);
 
             if (!parsedDate || isNaN(parsedDate.getTime())) {
-                console.warn('Invalid date for ageing:', timeStr, '(source:', timeSource, ')');
                 return { days: null, bucket: "", source: timeSource };
             }
 
             if (!referenceDate || isNaN(referenceDate.getTime())) {
-                console.warn('Missing ageing reference date');
                 return { days: null, bucket: "", source: timeSource };
             }
 
@@ -675,13 +625,11 @@
             return { days: daysDiff, bucket: bucket, source: timeSource };
         }
 
-        // Step 2: Process data with derived columns
         function processDataEngine() {
             finalReportData = [];
             let trackedLatestDate = null;
 
             rawOpenCalls.forEach(row => {
-                // Find the latest date from either Carry-In Time or SO Submitted Time
                 let dateToCheck = null;
                 if (row["Carry-In Time"] && String(row["Carry-In Time"]).trim() !== "") {
                     dateToCheck = row["Carry-In Time"];
@@ -699,9 +647,6 @@
 
             ageingReferenceDate = trackedLatestDate;
 
-            console.log("Regional mapping entries:", Object.keys(regionalMapping).length);
-            console.log("Ageing reference date:", formatDashboardDate(ageingReferenceDate));
-
             rawOpenCalls.forEach(row => {
                 let stationCode = String(row["Station Code"] || "").trim();
                 const normalizedStationCode = normalizeStationCode(stationCode);
@@ -711,13 +656,11 @@
                     regionComputed = regionalMapping[normalizedStationCode];
                 }
 
-                // Step 2: Get status mapping
                 const statusMap = getOpenCallStatus(
                     row["Service Order Status"],
                     row["Parts Status"]
                 );
 
-                // Calculate ageing using Carry-In Time if available
                 const ageingResult = calculateAgeingAndBucket(row, ageingReferenceDate);
                 const pickupAgeing = row["Finish Repair Time"] ? calculateAgeingAndBucket({ "SO Submitted Time": row["Finish Repair Time"] }, ageingReferenceDate) : { bucket: "", source: "N/A" };
 
@@ -752,28 +695,12 @@
                     "Waiting for pickup Ageing Bucket": pickupAgeing.bucket,
                     "Region": regionComputed,
                     
-                    // Step 2: Add derived columns
                     "Current Status - Open Call": statusMap.currentStatus,
                     "Actionable To": statusMap.actionableTo
                 };
 
                 finalReportData.push(newRow);
             });
-
-            // Log mapping statistics
-            const mappedCount = finalReportData.filter(r => r["Region"] !== "Unmapped").length;
-            const unmappedCount = finalReportData.filter(r => r["Region"] === "Unmapped").length;
-            console.log(`Region mapping: ${mappedCount} mapped, ${unmappedCount} unmapped`);
-
-            // Log ageing source statistics
-            const carryInCount = finalReportData.filter(r => r["Ageing Source"] === "Carry-In Time").length;
-            const submittedCount = finalReportData.filter(r => r["Ageing Source"] === "SO Submitted Time").length;
-            console.log(`Ageing source: ${carryInCount} used Carry-In Time, ${submittedCount} used SO Submitted Time`);
-
-            console.table(AGEING_BUCKETS.map(bucket => ({
-                bucket,
-                count: finalReportData.filter(row => row["Open Call Ageing Bucket"] === bucket).length
-            })));
 
             if (trackedLatestDate) {
                 const pad = (n) => String(n).padStart(2, '0');
@@ -783,7 +710,6 @@
             }
         }
 
-        // Setup filter structures
         function initFilterSchemas() {
             const keysToFilter = [
                 "Region", 
@@ -910,12 +836,12 @@
             const filteredData = getFilteredReportData();
 
             calculateKPIMetrics(filteredData);
-            renderConsolidatedPivot(filteredData);
             renderAgeingPivot(filteredData);
+            renderHierarchicalPivot(filteredData);
+            renderStationPivot(filteredData);
             renderMasterTableUI(filteredData);
         }
 
-        // KPI metric parsing engines
         function calculateKPIMetrics(data) {
             let totalOpen = data.length;
             let waitingPickup = 0;
@@ -929,29 +855,12 @@
                 const currentStatus = row["Current Status - Open Call"];
                 const actionableTo = row["Actionable To"];
 
-                if (currentStatus === "RFPU") {
-                    waitingPickup++;
-                }
-
-                if (actionableTo === "CCI") {
-                    actionableCCI++;
-                }
-
-                if (actionableTo === "CWH") {
-                    aspCwh++;
-                }
-
-                if (currentStatus === "ASP CWH to CCI") {
-                    transitCCI++;
-                }
-
-                if (currentStatus === "Parts in Service Center") {
-                    partsServiceCenter++;
-                }
-
-                if (actionableTo === "Motorola") {
-                    motorolaActionable++;
-                }
+                if (currentStatus === "RFPU") waitingPickup++;
+                if (actionableTo === "CCI") actionableCCI++;
+                if (actionableTo === "CWH") aspCwh++;
+                if (currentStatus === "ASP CWH to CCI") transitCCI++;
+                if (currentStatus === "Parts in Service Center") partsServiceCenter++;
+                if (actionableTo === "Motorola") motorolaActionable++;
             });
 
             document.getElementById('kpi-total-open').innerText = totalOpen.toLocaleString();
@@ -963,149 +872,7 @@
             document.getElementById('kpi-motorola').innerText = motorolaActionable.toLocaleString();
         }
 
-        // Pivot 1: Region Pivot with grouped rows
-        function renderConsolidatedPivot(data) {
-            const container = document.getElementById('pivotConsolidatedContainer');
-            
-            if (data.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-400 italic py-4 text-center">No matching data found.</p>`;
-                return;
-            }
-
-            const regions = [...new Set(data.map(r => r["Region"]))].sort();
-            
-            // Build pivot data
-            const pivotData = {};
-            data.forEach(row => {
-                const actionableTo = row["Actionable To"] || "Unknown";
-                const currentStatus = row["Current Status - Open Call"] || "Unknown";
-                const key = `${actionableTo}|||${currentStatus}`;
-                
-                if (!pivotData[key]) {
-                    pivotData[key] = {
-                        actionableTo: actionableTo,
-                        currentStatus: currentStatus,
-                        regions: {}
-                    };
-                    regions.forEach(r => pivotData[key].regions[r] = 0);
-                }
-                if (pivotData[key].regions[row["Region"]] !== undefined) {
-                    pivotData[key].regions[row["Region"]]++;
-                }
-            });
-
-            // Group by Actionable To
-            const groupedData = {};
-            Object.values(pivotData).forEach(item => {
-                if (!groupedData[item.actionableTo]) {
-                    groupedData[item.actionableTo] = [];
-                }
-                groupedData[item.actionableTo].push(item);
-            });
-
-            // Sort statuses within each group
-            Object.keys(groupedData).forEach(key => {
-                groupedData[key].sort((a, b) => a.currentStatus.localeCompare(b.currentStatus));
-            });
-
-            // Sort actionable to keys
-            const sortedActionableKeys = Object.keys(groupedData).sort();
-
-            // Calculate grand totals
-            const grandTotals = {};
-            regions.forEach(r => grandTotals[r] = 0);
-            let overallTotal = 0;
-
-            // First pass to calculate totals
-            Object.values(pivotData).forEach(item => {
-                regions.forEach(region => {
-                    grandTotals[region] += item.regions[region] || 0;
-                    overallTotal += item.regions[region] || 0;
-                });
-            });
-
-            // Build HTML
-            let html = `
-                <table class="min-w-full text-left border border-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="sticky-col-1-header text-xs font-bold text-gray-700 uppercase bg-gray-100 px-3 py-2 border-b border-gray-300">Current Status - Open Call</th>
-            `;
-            
-            regions.forEach(region => {
-                html += `<th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300">${region}</th>`;
-            });
-            
-            html += `
-                            <th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300 grand-total-col">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white">
-            `;
-
-            let rowIndex = 0;
-            sortedActionableKeys.forEach(actionableTo => {
-                const statuses = groupedData[actionableTo];
-                let actionableTotal = 0;
-                const actionableTotals = {};
-                regions.forEach(r => actionableTotals[r] = 0);
-
-                // Calculate actionable total
-                statuses.forEach(item => {
-                    regions.forEach(region => {
-                        actionableTotals[region] += item.regions[region] || 0;
-                        actionableTotal += item.regions[region] || 0;
-                    });
-                });
-
-                // Only show actionable row if total > 0
-                if (actionableTotal > 0) {
-                    // Parent row - Actionable To
-                    const isEven = rowIndex % 2 === 0;
-                    html += `<tr class="parent-row ${isEven ? 'alternate-row-even' : 'alternate-row'}">`;
-                    html += `<td class="sticky-col-1 text-xs font-bold text-gray-900 px-3 py-1.5 border-b border-gray-200">${actionableTo}</td>`;
-                    regions.forEach(region => {
-                        const val = actionableTotals[region] || 0;
-                        html += `<td class="text-xs text-center font-bold text-gray-800 px-3 py-1.5 border-b border-gray-200 parent-total">${val > 0 ? val.toLocaleString() : ''}</td>`;
-                    });
-                    html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col parent-total">${actionableTotal.toLocaleString()}</td>`;
-                    html += `</tr>`;
-                    rowIndex++;
-
-                    // Child rows (Current Status)
-                    statuses.forEach(item => {
-                        const itemTotal = regions.reduce((sum, r) => sum + (item.regions[r] || 0), 0);
-                        
-                        // Skip rows with zero total
-                        if (itemTotal === 0) return;
-
-                        const isEvenChild = rowIndex % 2 === 0;
-                        html += `<tr class="${isEvenChild ? 'alternate-row-even' : 'alternate-row'}">`;
-                        html += `<td class="sticky-col-1 text-xs text-gray-700 px-3 py-1.5 border-b border-gray-200 child-row">${item.currentStatus}</td>`;
-                        regions.forEach(region => {
-                            const val = item.regions[region] || 0;
-                            html += `<td class="text-xs text-center text-gray-600 px-3 py-1.5 border-b border-gray-200 ${val > 0 ? '' : 'zero-value'}">${val > 0 ? val.toLocaleString() : ''}</td>`;
-                        });
-                        html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col">${itemTotal.toLocaleString()}</td>`;
-                        html += `</tr>`;
-                        rowIndex++;
-                    });
-                }
-            });
-
-            // Grand Total row
-            html += `<tr class="grand-total-row">`;
-            html += `<td class="sticky-col-1 text-xs font-bold text-gray-800 uppercase tracking-wide px-3 py-1.5 border-t-2 border-gray-300">Grand Total</td>`;
-            regions.forEach(region => {
-                html += `<td class="text-xs text-center text-gray-900 font-black px-3 py-1.5 border-t-2 border-gray-300 grand-total-col">${grandTotals[region].toLocaleString()}</td>`;
-            });
-            html += `<td class="text-xs text-center text-blue-900 font-black bg-blue-100 px-3 py-1.5 border-t-2 border-gray-300 grand-total-col">${overallTotal.toLocaleString()}</td>`;
-            html += `</tr></tbody></table>`;
-
-            container.innerHTML = html;
-        }
-
-        // Pivot 2: Ageing Bucket Pivot with grouped rows
+        // Consolidated Pivot: Actionable To x Current Status x Ageing Bucket
         function renderAgeingPivot(data) {
             const container = document.getElementById('pivotAgeingContainer');
             
@@ -1114,10 +881,8 @@
                 return;
             }
 
-            // Use fixed ageing bucket order
             const ageingBuckets = AGEING_BUCKETS;
             
-            // Build pivot data
             const pivotData = {};
             data.forEach(row => {
                 const actionableTo = row["Actionable To"] || "Unknown";
@@ -1134,13 +899,11 @@
                     ageingBuckets.forEach(b => pivotData[key].buckets[b] = 0);
                 }
                 
-                // Only count if bucket is in our defined list, otherwise ignore
                 if (pivotData[key].buckets[bucket] !== undefined) {
                     pivotData[key].buckets[bucket]++;
                 }
             });
 
-            // Group by Actionable To
             const groupedData = {};
             Object.values(pivotData).forEach(item => {
                 if (!groupedData[item.actionableTo]) {
@@ -1149,20 +912,16 @@
                 groupedData[item.actionableTo].push(item);
             });
 
-            // Sort statuses within each group
             Object.keys(groupedData).forEach(key => {
                 groupedData[key].sort((a, b) => a.currentStatus.localeCompare(b.currentStatus));
             });
 
-            // Sort actionable to keys
             const sortedActionableKeys = Object.keys(groupedData).sort();
 
-            // Calculate grand totals
             const grandTotals = {};
             ageingBuckets.forEach(b => grandTotals[b] = 0);
             let overallTotal = 0;
 
-            // First pass to calculate totals
             Object.values(pivotData).forEach(item => {
                 ageingBuckets.forEach(bucket => {
                     grandTotals[bucket] += item.buckets[bucket] || 0;
@@ -1170,7 +929,6 @@
                 });
             });
 
-            // Build HTML
             let html = `
                 <table class="min-w-full text-left border border-gray-200">
                     <thead class="bg-gray-50">
@@ -1196,7 +954,6 @@
                 const actionableTotals = {};
                 ageingBuckets.forEach(b => actionableTotals[b] = 0);
 
-                // Calculate actionable total
                 statuses.forEach(item => {
                     ageingBuckets.forEach(bucket => {
                         actionableTotals[bucket] += item.buckets[bucket] || 0;
@@ -1204,9 +961,7 @@
                     });
                 });
 
-                // Only show actionable row if total > 0
                 if (actionableTotal > 0) {
-                    // Parent row - Actionable To
                     const isEven = rowIndex % 2 === 0;
                     html += `<tr class="parent-row ${isEven ? 'alternate-row-even' : 'alternate-row'}">`;
                     html += `<td class="sticky-col-1 text-xs font-bold text-gray-900 px-3 py-1.5 border-b border-gray-200">${actionableTo}</td>`;
@@ -1218,11 +973,9 @@
                     html += `</tr>`;
                     rowIndex++;
 
-                    // Child rows (Current Status)
                     statuses.forEach(item => {
                         const itemTotal = ageingBuckets.reduce((sum, b) => sum + (item.buckets[b] || 0), 0);
                         
-                        // Skip rows with zero total
                         if (itemTotal === 0) return;
 
                         const isEvenChild = rowIndex % 2 === 0;
@@ -1239,7 +992,6 @@
                 }
             });
 
-            // Grand Total row
             html += `<tr class="grand-total-row">`;
             html += `<td class="sticky-col-1 text-xs font-bold text-gray-800 uppercase tracking-wide px-3 py-1.5 border-t-2 border-gray-300">Grand Total</td>`;
             ageingBuckets.forEach(bucket => {
@@ -1249,6 +1001,330 @@
             html += `</tr></tbody></table>`;
 
             container.innerHTML = html;
+        }
+
+        // Hierarchical Pivot 1: Region x Actionable To x Current Status x Ageing Bucket
+        function renderHierarchicalPivot(data) {
+            const container = document.getElementById('pivotHierarchicalContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 italic py-4 text-center">No matching data found.</p>`;
+                return;
+            }
+
+            const ageingBuckets = AGEING_BUCKETS;
+            const tree = {};
+
+            data.forEach(row => {
+                const region = row["Region"] || "Unmapped";
+                const actionableTo = row["Actionable To"] || "Unknown";
+                const currentStatus = row["Current Status - Open Call"] || "Unknown";
+                const bucket = row["Open Call Ageing Bucket"] || "Unknown";
+
+                if (!tree[region]) tree[region] = {};
+                if (!tree[region][actionableTo]) tree[region][actionableTo] = {};
+                if (!tree[region][actionableTo][currentStatus]) {
+                    tree[region][actionableTo][currentStatus] = {};
+                    ageingBuckets.forEach(b => tree[region][actionableTo][currentStatus][b] = 0);
+                }
+
+                if (tree[region][actionableTo][currentStatus][bucket] !== undefined) {
+                    tree[region][actionableTo][currentStatus][bucket]++;
+                }
+            });
+
+            let html = `
+                <table class="min-w-full divide-y divide-gray-200 text-left border border-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="sticky-col-1-header text-xs font-bold text-purple-900 uppercase bg-purple-50 px-3 py-2 border-b border-gray-300">Hierarchy (Region / Actionable / Status)</th>
+            `;
+            
+            ageingBuckets.forEach(bucket => {
+                html += `<th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300">${bucket}</th>`;
+            });
+            
+            html += `
+                            <th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300 grand-total-col">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+            `;
+
+            const sortedRegions = Object.keys(tree).sort();
+            const grandTotals = {};
+            ageingBuckets.forEach(b => grandTotals[b] = 0);
+            let overallTotal = 0;
+
+            const hiddenClass = isPivotExpanded ? "" : "hidden";
+            const symbol = isPivotExpanded ? "➖" : "➕";
+
+            sortedRegions.forEach((region, rIdx) => {
+                const regData = tree[region];
+                const regionTotals = {};
+                ageingBuckets.forEach(b => regionTotals[b] = 0);
+                let regionTotal = 0;
+
+                Object.values(regData).forEach(actData => {
+                    Object.values(actData).forEach(statusData => {
+                        ageingBuckets.forEach(b => {
+                            const count = statusData[b] || 0;
+                            regionTotals[b] += count;
+                            regionTotal += count;
+                            grandTotals[b] += count;
+                            overallTotal += count;
+                        });
+                    });
+                });
+
+                if (regionTotal === 0) return;
+
+                const regRowId = `p-reg-${rIdx}`;
+
+                // Level 1: Region Row
+                html += `<tr class="parent-row bg-purple-100/60 hover:bg-purple-100 transition cursor-pointer" onclick="togglePivotRow('${regRowId}')">`;
+                html += `<td class="sticky-col-1 text-xs font-bold text-purple-950 px-3 py-2 border-b border-gray-200"><span id="icon-${regRowId}" class="mr-1.5 text-[10px]">${symbol}</span>${region}</td>`;
+                ageingBuckets.forEach(bucket => {
+                    const val = regionTotals[bucket];
+                    html += `<td class="text-xs text-center font-bold text-purple-900 px-3 py-2 border-b border-gray-200">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                });
+                html += `<td class="text-xs text-center font-black text-purple-950 bg-purple-200/50 px-3 py-2 border-b border-gray-200 grand-total-col">${regionTotal.toLocaleString()}</td>`;
+                html += `</tr>`;
+
+                const sortedActionables = Object.keys(regData).sort();
+                sortedActionables.forEach((actionableTo, aIdx) => {
+                    const actData = regData[actionableTo];
+                    const actTotals = {};
+                    ageingBuckets.forEach(b => actTotals[b] = 0);
+                    let actTotal = 0;
+
+                    Object.values(actData).forEach(statusData => {
+                        ageingBuckets.forEach(b => {
+                            const count = statusData[b] || 0;
+                            actTotals[b] += count;
+                            actTotal += count;
+                        });
+                    });
+
+                    if (actTotal === 0) return;
+
+                    const actRowId = `p-act-${rIdx}-${aIdx}`;
+
+                    // Level 2: Actionable To Row
+                    html += `<tr class="sub-parent-row ${regRowId} ${hiddenClass} bg-gray-100/70 hover:bg-gray-200/60 transition cursor-pointer" onclick="togglePivotRow('${actRowId}')">`;
+                    html += `<td class="sticky-col-1 text-xs font-bold text-gray-800 px-3 py-1.5 border-b border-gray-200 child-row"><span id="icon-${actRowId}" class="mr-1.5 text-[10px]">${symbol}</span>${actionableTo}</td>`;
+                    ageingBuckets.forEach(bucket => {
+                        const val = actTotals[bucket];
+                        html += `<td class="text-xs text-center font-semibold text-gray-800 px-3 py-1.5 border-b border-gray-200">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                    });
+                    html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-100 px-3 py-1.5 border-b border-gray-200 grand-total-col">${actTotal.toLocaleString()}</td>`;
+                    html += `</tr>`;
+
+                    const sortedStatuses = Object.keys(actData).sort();
+                    sortedStatuses.forEach((status) => {
+                        const statusData = actData[status];
+                        const statusTotal = ageingBuckets.reduce((sum, b) => sum + (statusData[b] || 0), 0);
+
+                        if (statusTotal === 0) return;
+
+                        // Level 3: Current Status Row
+                        html += `<tr class="${regRowId} ${actRowId} ${hiddenClass} hover:bg-gray-50 transition">`;
+                        html += `<td class="sticky-col-1 text-xs text-gray-600 px-3 py-1.5 border-b border-gray-200 deep-child-row">${status}</td>`;
+                        ageingBuckets.forEach(bucket => {
+                            const val = statusData[bucket] || 0;
+                            html += `<td class="text-xs text-center text-gray-600 px-3 py-1.5 border-b border-gray-200 ${val > 0 ? '' : 'zero-value'}">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                        });
+                        html += `<td class="text-xs text-center font-medium text-gray-800 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col">${statusTotal.toLocaleString()}</td>`;
+                        html += `</tr>`;
+                    });
+                });
+            });
+
+            // Grand Total Row
+            html += `<tr class="grand-total-row">`;
+            html += `<td class="sticky-col-1 text-xs font-bold text-purple-950 uppercase tracking-wide px-3 py-2 border-t-2 border-gray-300">Grand Total</td>`;
+            ageingBuckets.forEach(bucket => {
+                html += `<td class="text-xs text-center text-purple-950 font-black px-3 py-2 border-t-2 border-gray-300 grand-total-col">${grandTotals[bucket].toLocaleString()}</td>`;
+            });
+            html += `<td class="text-xs text-center text-blue-900 font-black bg-blue-100 px-3 py-2 border-t-2 border-gray-300 grand-total-col">${overallTotal.toLocaleString()}</td>`;
+            html += `</tr></tbody></table>`;
+
+            container.innerHTML = html;
+        }
+
+        // Hierarchical Pivot 2 (3rd Pivot): 3 Separate Columns [Region | Station Code | Station Name] x Current Status Columns
+        function renderStationPivot(data) {
+            const container = document.getElementById('pivotStationContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 italic py-4 text-center">No matching data found.</p>`;
+                return;
+            }
+
+            // Columns are unique values of Current Status - Open Call
+            const statusColumns = [...new Set(data.map(r => r["Current Status - Open Call"] || "Unknown"))].sort();
+
+            // Tree structure: Region -> Station Code -> Station Name -> Status Counts
+            const tree = {};
+
+            data.forEach(row => {
+                const region = row["Region"] || "Unmapped";
+                const stationCode = row["Station Code"] || "Unknown";
+                const stationName = row["Station Name"] || "Unknown";
+                const status = row["Current Status - Open Call"] || "Unknown";
+
+                if (!tree[region]) tree[region] = {};
+                if (!tree[region][stationCode]) tree[region][stationCode] = {};
+                if (!tree[region][stationCode][stationName]) {
+                    tree[region][stationCode][stationName] = {};
+                    statusColumns.forEach(s => tree[region][stationCode][stationName][s] = 0);
+                }
+
+                if (tree[region][stationCode][stationName][status] !== undefined) {
+                    tree[region][stationCode][stationName][status]++;
+                }
+            });
+
+            let html = `
+                <table class="min-w-full divide-y divide-gray-200 text-left border border-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="sticky-col-1-header text-xs font-bold text-teal-900 uppercase bg-teal-50 px-3 py-2 border-b border-gray-300">Region</th>
+                            <th class="text-xs font-bold text-teal-900 uppercase bg-teal-50 px-3 py-2 border-b border-gray-300">Station Code</th>
+                            <th class="text-xs font-bold text-teal-900 uppercase bg-teal-50 px-3 py-2 border-b border-gray-300">Station Name</th>
+            `;
+            
+            statusColumns.forEach(status => {
+                html += `<th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300">${status}</th>`;
+            });
+            
+            html += `
+                            <th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300 grand-total-col">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 bg-white">
+            `;
+
+            const sortedRegions = Object.keys(tree).sort();
+            const grandTotals = {};
+            statusColumns.forEach(s => grandTotals[s] = 0);
+            let overallTotal = 0;
+
+            const hiddenClass = isPivotStationExpanded ? "" : "hidden";
+            const symbol = isPivotStationExpanded ? "➖" : "➕";
+
+            sortedRegions.forEach((region, rIdx) => {
+                const regData = tree[region];
+                const regionTotals = {};
+                statusColumns.forEach(s => regionTotals[s] = 0);
+                let regionTotal = 0;
+
+                Object.values(regData).forEach(codeObj => {
+                    Object.values(codeObj).forEach(statusCounts => {
+                        statusColumns.forEach(s => {
+                            const count = statusCounts[s] || 0;
+                            regionTotals[s] += count;
+                            regionTotal += count;
+                            grandTotals[s] += count;
+                            overallTotal += count;
+                        });
+                    });
+                });
+
+                if (regionTotal === 0) return;
+
+                const regRowId = `st-reg-${rIdx}`;
+
+                // Level 1: Region Header Row (Spans across Region, Station Code, and Station Name columns)
+                html += `<tr class="parent-row bg-teal-100/60 hover:bg-teal-100 transition cursor-pointer" onclick="togglePivotRow('${regRowId}')">`;
+                html += `<td colspan="3" class="sticky-col-1 text-xs font-bold text-teal-950 px-3 py-2 border-b border-gray-200"><span id="icon-${regRowId}" class="mr-1.5 text-[10px]">${symbol}</span>${region}</td>`;
+                statusColumns.forEach(status => {
+                    const val = regionTotals[status];
+                    html += `<td class="text-xs text-center font-bold text-teal-900 px-3 py-2 border-b border-gray-200">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                });
+                html += `<td class="text-xs text-center font-black text-teal-950 bg-teal-200/50 px-3 py-2 border-b border-gray-200 grand-total-col">${regionTotal.toLocaleString()}</td>`;
+                html += `</tr>`;
+
+                // Level 2: Detailed Station Rows with 3 explicit columns [Region | Station Code | Station Name]
+                const sortedCodes = Object.keys(regData).sort();
+                sortedCodes.forEach(stationCode => {
+                    const codeObj = regData[stationCode];
+                    const sortedNames = Object.keys(codeObj).sort();
+
+                    sortedNames.forEach(stationName => {
+                        const statusCounts = codeObj[stationName];
+                        const stationTotal = statusColumns.reduce((sum, s) => sum + (statusCounts[s] || 0), 0);
+
+                        if (stationTotal === 0) return;
+
+                        html += `<tr class="${regRowId} ${hiddenClass} hover:bg-gray-50 transition">`;
+                        html += `<td class="sticky-col-1 text-xs text-gray-500 italic px-3 py-1.5 border-b border-gray-200">${region}</td>`;
+                        html += `<td class="text-xs font-medium text-gray-800 px-3 py-1.5 border-b border-gray-200">${stationCode}</td>`;
+                        html += `<td class="text-xs text-gray-700 px-3 py-1.5 border-b border-gray-200">${stationName}</td>`;
+                        
+                        statusColumns.forEach(status => {
+                            const val = statusCounts[status] || 0;
+                            html += `<td class="text-xs text-center text-gray-600 px-3 py-1.5 border-b border-gray-200 ${val > 0 ? '' : 'zero-value'}">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                        });
+                        html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col">${stationTotal.toLocaleString()}</td>`;
+                        html += `</tr>`;
+                    });
+                });
+            });
+
+            // Grand Total Row
+            html += `<tr class="grand-total-row">`;
+            html += `<td colspan="3" class="sticky-col-1 text-xs font-bold text-teal-950 uppercase tracking-wide px-3 py-2 border-t-2 border-gray-300">Grand Total</td>`;
+            statusColumns.forEach(status => {
+                html += `<td class="text-xs text-center text-teal-950 font-black px-3 py-2 border-t-2 border-gray-300 grand-total-col">${grandTotals[status].toLocaleString()}</td>`;
+            });
+            html += `<td class="text-xs text-center text-blue-900 font-black bg-blue-100 px-3 py-2 border-t-2 border-gray-300 grand-total-col">${overallTotal.toLocaleString()}</td>`;
+            html += `</tr></tbody></table>`;
+
+            container.innerHTML = html;
+        }
+
+        function togglePivotRow(groupId) {
+            const rows = document.querySelectorAll(`.${groupId}`);
+            const icon = document.getElementById(`icon-${groupId}`);
+            let isHiding = false;
+
+            rows.forEach(r => {
+                if (r.classList.contains('hidden')) {
+                    r.classList.remove('hidden');
+                } else {
+                    r.classList.add('hidden');
+                    isHiding = true;
+                }
+            });
+
+            if (icon) {
+                icon.innerText = isHiding ? "➕" : "➖";
+            }
+        }
+
+        function togglePivotExpand() {
+            isPivotExpanded = !isPivotExpanded;
+            const btnIcon = document.getElementById('expandToggleIcon');
+            if (isPivotExpanded) {
+                btnIcon.innerText = "➖ Collapse All";
+            } else {
+                btnIcon.innerText = "➕ Expand All";
+            }
+            const filteredData = getFilteredReportData();
+            renderHierarchicalPivot(filteredData);
+        }
+
+        function togglePivotStationExpand() {
+            isPivotStationExpanded = !isPivotStationExpanded;
+            const btnIcon = document.getElementById('expandStationToggleIcon');
+            if (isPivotStationExpanded) {
+                btnIcon.innerText = "➖ Collapse All";
+            } else {
+                btnIcon.innerText = "➕ Expand All";
+            }
+            const filteredData = getFilteredReportData();
+            renderStationPivot(filteredData);
         }
 
         function renderMasterTableUI(data) {
@@ -1287,100 +1363,7 @@
             }).join('');
         }
 
-        // Excel export functions with grouped hierarchy
-        function buildConsolidatedPivotSheet(data) {
-            if (data.length === 0) {
-                return [["No matching data"]];
-            }
-
-            const regions = [...new Set(data.map(r => r["Region"]))].sort();
-            
-            const pivotData = {};
-            data.forEach(row => {
-                const actionableTo = row["Actionable To"] || "Unknown";
-                const currentStatus = row["Current Status - Open Call"] || "Unknown";
-                const key = `${actionableTo}|||${currentStatus}`;
-                
-                if (!pivotData[key]) {
-                    pivotData[key] = {
-                        actionableTo: actionableTo,
-                        currentStatus: currentStatus,
-                        regions: {}
-                    };
-                    regions.forEach(r => pivotData[key].regions[r] = 0);
-                }
-                if (pivotData[key].regions[row["Region"]] !== undefined) {
-                    pivotData[key].regions[row["Region"]]++;
-                }
-            });
-
-            // Group by Actionable To
-            const groupedData = {};
-            Object.values(pivotData).forEach(item => {
-                if (!groupedData[item.actionableTo]) {
-                    groupedData[item.actionableTo] = [];
-                }
-                groupedData[item.actionableTo].push(item);
-            });
-
-            const sortedActionableKeys = Object.keys(groupedData).sort();
-
-            const aoa = [["Current Status - Open Call", ...regions, "Total"]];
-            const grandTotals = {};
-            regions.forEach(r => grandTotals[r] = 0);
-            let overallTotal = 0;
-
-            sortedActionableKeys.forEach(actionableTo => {
-                const statuses = groupedData[actionableTo];
-                let actionableTotal = 0;
-                const actionableTotals = {};
-                regions.forEach(r => actionableTotals[r] = 0);
-
-                statuses.forEach(item => {
-                    regions.forEach(region => {
-                        actionableTotals[region] += item.regions[region] || 0;
-                        actionableTotal += item.regions[region] || 0;
-                    });
-                });
-
-                if (actionableTotal > 0) {
-                    // Parent row - Actionable To (bold in Excel)
-                    const parentRow = [actionableTo];
-                    regions.forEach(region => {
-                        const val = actionableTotals[region] || 0;
-                        parentRow.push(val);
-                        grandTotals[region] += val;
-                        overallTotal += val;
-                    });
-                    parentRow.push(actionableTotal);
-                    aoa.push(parentRow);
-
-                    // Child rows
-                    statuses.forEach(item => {
-                        const itemTotal = regions.reduce((sum, r) => sum + (item.regions[r] || 0), 0);
-                        if (itemTotal > 0) {
-                            const childRow = [item.currentStatus];
-                            regions.forEach(region => {
-                                childRow.push(item.regions[region] || 0);
-                            });
-                            childRow.push(itemTotal);
-                            aoa.push(childRow);
-                        }
-                    });
-                }
-            });
-
-            // Grand Total row
-            const grandTotalRow = ["Grand Total"];
-            regions.forEach(region => {
-                grandTotalRow.push(grandTotals[region]);
-            });
-            grandTotalRow.push(overallTotal);
-            aoa.push(grandTotalRow);
-
-            return aoa;
-        }
-
+        // Export Builder for Consolidated Pivot: Actionable To x Current Status x Ageing Bucket
         function buildAgeingPivotSheet(data) {
             if (data.length === 0) {
                 return [["No matching data"]];
@@ -1409,7 +1392,6 @@
                 }
             });
 
-            // Group by Actionable To
             const groupedData = {};
             Object.values(pivotData).forEach(item => {
                 if (!groupedData[item.actionableTo]) {
@@ -1439,7 +1421,6 @@
                 });
 
                 if (actionableTotal > 0) {
-                    // Parent row - Actionable To
                     const parentRow = [actionableTo];
                     ageingBuckets.forEach(bucket => {
                         const val = actionableTotals[bucket] || 0;
@@ -1450,7 +1431,6 @@
                     parentRow.push(actionableTotal);
                     aoa.push(parentRow);
 
-                    // Child rows
                     statuses.forEach(item => {
                         const itemTotal = ageingBuckets.reduce((sum, b) => sum + (item.buckets[b] || 0), 0);
                         if (itemTotal > 0) {
@@ -1465,7 +1445,6 @@
                 }
             });
 
-            // Grand Total row
             const grandTotalRow = ["Grand Total"];
             ageingBuckets.forEach(bucket => {
                 grandTotalRow.push(grandTotals[bucket]);
@@ -1476,13 +1455,209 @@
             return aoa;
         }
 
-        function buildPivotWorkbookSheets(data) {
-            const consolidatedSheet = buildConsolidatedPivotSheet(data);
-            const ageingSheet = buildAgeingPivotSheet(data);
-            return [
-                { name: "Pivot_Region", rows: consolidatedSheet },
-                { name: "Pivot_Ageing", rows: ageingSheet }
-            ];
+        // Export Builder for Hierarchical Pivot 1: Region x Actionable To x Current Status x Ageing Bucket
+        function buildHierarchicalPivotSheet(data) {
+            if (data.length === 0) {
+                return [["No matching data"]];
+            }
+
+            const ageingBuckets = AGEING_BUCKETS;
+            const tree = {};
+
+            data.forEach(row => {
+                const region = row["Region"] || "Unmapped";
+                const actionableTo = row["Actionable To"] || "Unknown";
+                const currentStatus = row["Current Status - Open Call"] || "Unknown";
+                const bucket = row["Open Call Ageing Bucket"] || "Unknown";
+
+                if (!tree[region]) tree[region] = {};
+                if (!tree[region][actionableTo]) tree[region][actionableTo] = {};
+                if (!tree[region][actionableTo][currentStatus]) {
+                    tree[region][actionableTo][currentStatus] = {};
+                    ageingBuckets.forEach(b => tree[region][actionableTo][currentStatus][b] = 0);
+                }
+
+                if (tree[region][actionableTo][currentStatus][bucket] !== undefined) {
+                    tree[region][actionableTo][currentStatus][bucket]++;
+                }
+            });
+
+            const aoa = [["Region / Actionable To / Current Status", ...ageingBuckets, "Total"]];
+            const grandTotals = {};
+            ageingBuckets.forEach(b => grandTotals[b] = 0);
+            let overallTotal = 0;
+
+            const sortedRegions = Object.keys(tree).sort();
+
+            sortedRegions.forEach(region => {
+                const regData = tree[region];
+                const regionTotals = {};
+                ageingBuckets.forEach(b => regionTotals[b] = 0);
+                let regionTotal = 0;
+
+                Object.values(regData).forEach(actData => {
+                    Object.values(actData).forEach(statusData => {
+                        ageingBuckets.forEach(b => {
+                            const count = statusData[b] || 0;
+                            regionTotals[b] += count;
+                            regionTotal += count;
+                        });
+                    });
+                });
+
+                if (regionTotal === 0) return;
+
+                const regionRow = [region];
+                ageingBuckets.forEach(bucket => {
+                    regionRow.push(regionTotals[bucket] || 0);
+                    grandTotals[bucket] += regionTotals[bucket] || 0;
+                });
+                regionRow.push(regionTotal);
+                overallTotal += regionTotal;
+                aoa.push(regionRow);
+
+                const sortedActionables = Object.keys(regData).sort();
+                sortedActionables.forEach(actionableTo => {
+                    const actData = regData[actionableTo];
+                    const actTotals = {};
+                    ageingBuckets.forEach(b => actTotals[b] = 0);
+                    let actTotal = 0;
+
+                    Object.values(actData).forEach(statusData => {
+                        ageingBuckets.forEach(b => {
+                            const count = statusData[b] || 0;
+                            actTotals[b] += count;
+                            actTotal += count;
+                        });
+                    });
+
+                    if (actTotal === 0) return;
+
+                    const actRow = [`  ${actionableTo}`];
+                    ageingBuckets.forEach(bucket => {
+                        actRow.push(actTotals[bucket] || 0);
+                    });
+                    actRow.push(actTotal);
+                    aoa.push(actRow);
+
+                    const sortedStatuses = Object.keys(actData).sort();
+                    sortedStatuses.forEach(status => {
+                        const statusData = actData[status];
+                        const statusTotal = ageingBuckets.reduce((sum, b) => sum + (statusData[b] || 0), 0);
+
+                        if (statusTotal === 0) return;
+
+                        const statusRow = [`    ${status}`];
+                        ageingBuckets.forEach(bucket => {
+                            statusRow.push(statusData[bucket] || 0);
+                        });
+                        statusRow.push(statusTotal);
+                        aoa.push(statusRow);
+                    });
+                });
+            });
+
+            const grandTotalRow = ["Grand Total"];
+            ageingBuckets.forEach(bucket => {
+                grandTotalRow.push(grandTotals[bucket]);
+            });
+            grandTotalRow.push(overallTotal);
+            aoa.push(grandTotalRow);
+
+            return aoa;
+        }
+
+        // Export Builder for 3rd Pivot: 3 Distinct Columns [Region | Station Code | Station Name] x Current Status Columns
+        function buildStationPivotSheet(data) {
+            if (data.length === 0) {
+                return [["No matching data"]];
+            }
+
+            const statusColumns = [...new Set(data.map(r => r["Current Status - Open Call"] || "Unknown"))].sort();
+            const tree = {};
+
+            data.forEach(row => {
+                const region = row["Region"] || "Unmapped";
+                const stationCode = row["Station Code"] || "Unknown";
+                const stationName = row["Station Name"] || "Unknown";
+                const status = row["Current Status - Open Call"] || "Unknown";
+
+                if (!tree[region]) tree[region] = {};
+                if (!tree[region][stationCode]) tree[region][stationCode] = {};
+                if (!tree[region][stationCode][stationName]) {
+                    tree[region][stationCode][stationName] = {};
+                    statusColumns.forEach(s => tree[region][stationCode][stationName][s] = 0);
+                }
+
+                if (tree[region][stationCode][stationName][status] !== undefined) {
+                    tree[region][stationCode][stationName][status]++;
+                }
+            });
+
+            const aoa = [["Region", "Station Code", "Station Name", ...statusColumns, "Total"]];
+            const grandTotals = {};
+            statusColumns.forEach(s => grandTotals[s] = 0);
+            let overallTotal = 0;
+
+            const sortedRegions = Object.keys(tree).sort();
+
+            sortedRegions.forEach(region => {
+                const regData = tree[region];
+                const regionTotals = {};
+                statusColumns.forEach(s => regionTotals[s] = 0);
+                let regionTotal = 0;
+
+                Object.values(regData).forEach(codeObj => {
+                    Object.values(codeObj).forEach(statusCounts => {
+                        statusColumns.forEach(s => {
+                            const count = statusCounts[s] || 0;
+                            regionTotals[s] += count;
+                            regionTotal += count;
+                        });
+                    });
+                });
+
+                if (regionTotal === 0) return;
+
+                // Region Header Subtotal Row
+                const regionRow = [region, "", ""];
+                statusColumns.forEach(status => {
+                    regionRow.push(regionTotals[status] || 0);
+                    grandTotals[status] += regionTotals[status] || 0;
+                });
+                regionRow.push(regionTotal);
+                overallTotal += regionTotal;
+                aoa.push(regionRow);
+
+                const sortedCodes = Object.keys(regData).sort();
+                sortedCodes.forEach(stationCode => {
+                    const codeObj = regData[stationCode];
+                    const sortedNames = Object.keys(codeObj).sort();
+
+                    sortedNames.forEach(stationName => {
+                        const statusCounts = codeObj[stationName];
+                        const stationTotal = statusColumns.reduce((sum, s) => sum + (statusCounts[s] || 0), 0);
+
+                        if (stationTotal === 0) return;
+
+                        const detailRow = [region, stationCode, stationName];
+                        statusColumns.forEach(status => {
+                            detailRow.push(statusCounts[status] || 0);
+                        });
+                        detailRow.push(stationTotal);
+                        aoa.push(detailRow);
+                    });
+                });
+            });
+
+            const grandTotalRow = ["Grand Total", "", ""];
+            statusColumns.forEach(status => {
+                grandTotalRow.push(grandTotals[status]);
+            });
+            grandTotalRow.push(overallTotal);
+            aoa.push(grandTotalRow);
+
+            return aoa;
         }
 
         function setWorksheetWidths(ws, aoa) {
@@ -1491,7 +1666,7 @@
                     const val = row[colIndex] === undefined || row[colIndex] === null ? "" : String(row[colIndex]);
                     return Math.max(max, val.length);
                 }, 10);
-                return { wch: Math.min(Math.max(maxLen + 2, 10), 35) };
+                return { wch: Math.min(Math.max(maxLen + 2, 10), 40) };
             });
         }
 
@@ -1508,6 +1683,8 @@
 
             const filteredData = getFilteredReportData();
             const workbook = XLSX.utils.book_new();
+            
+            // Sheet 1: Master Raw Report
             const reportRows = [
                 columnsToLoad,
                 ...filteredData.map(row => columnsToLoad.map(col => {
@@ -1521,11 +1698,23 @@
             setWorksheetWidths(reportWs, reportRows);
             XLSX.utils.book_append_sheet(workbook, reportWs, "Open_Calls_Report");
 
-            buildPivotWorkbookSheets(filteredData).forEach(sheetConfig => {
-                const ws = XLSX.utils.aoa_to_sheet(sheetConfig.rows);
-                setWorksheetWidths(ws, sheetConfig.rows);
-                XLSX.utils.book_append_sheet(workbook, ws, sheetConfig.name);
-            });
+            // Sheet 2: Consolidated Ageing Pivot (Actionable To x Current Status x Ageing Bucket)
+            const ageingSheetRows = buildAgeingPivotSheet(filteredData);
+            const ageingWs = XLSX.utils.aoa_to_sheet(ageingSheetRows);
+            setWorksheetWidths(ageingWs, ageingSheetRows);
+            XLSX.utils.book_append_sheet(workbook, ageingWs, "Pivot_Ageing");
+
+            // Sheet 3: Hierarchical Pivot 1 (Region x Actionable To x Current Status x Ageing Bucket)
+            const hierarchicalSheetRows = buildHierarchicalPivotSheet(filteredData);
+            const pivotWs = XLSX.utils.aoa_to_sheet(hierarchicalSheetRows);
+            setWorksheetWidths(pivotWs, hierarchicalSheetRows);
+            XLSX.utils.book_append_sheet(workbook, pivotWs, "Pivot_Region_Ageing");
+
+            // Sheet 4: Station Pivot (Region | Station Code | Station Name x Current Status)
+            const stationSheetRows = buildStationPivotSheet(filteredData);
+            const stationWs = XLSX.utils.aoa_to_sheet(stationSheetRows);
+            setWorksheetWidths(stationWs, stationSheetRows);
+            XLSX.utils.book_append_sheet(workbook, stationWs, "Pivot_Station_Status");
 
             XLSX.writeFile(workbook, `Open_Calls_Report_${latestCallDateString}_Export.xlsx`);
         }
