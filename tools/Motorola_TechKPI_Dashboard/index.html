@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BI Data Analytics Dashboard</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Material Symbols Outlined -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <!-- SheetJS (xlsx) CDN with Binary support -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- PapaParse (CSV) CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+    <!-- AG Grid Community CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/dist/ag-grid-community.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/styles/ag-grid.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/styles/ag-theme-alpine.css">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --surface: #ffffff;
+            --background: #f8fafc;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--primary);
+        }
+
+        .brand .material-symbols-outlined {
+            font-size: 1.75rem;
+        }
+
+        /* Dashboard Navigation Tabs */
+        .tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            background: #f1f5f9;
+            padding: 0.25rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.85rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--surface);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        main {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow);
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--primary);
+            background-color: var(--primary-light);
+            border-radius: var(--radius);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            background-color: #dbeafe;
+            border-color: var(--primary-hover);
+        }
+
+        .drop-zone .material-symbols-outlined {
+            font-size: 3rem;
+            color: var(--primary);
+        }
+
+        .drop-zone h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .drop-zone p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            border-color: var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--background);
+            border-color: #cbd5e1;
+        }
+
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .alert-danger {
+            background-color: var(--danger-light);
+            border: 1px solid #fca5a5;
+            color: #b91c1c;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .metric-card {
+            background: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .metric-card .material-symbols-outlined {
+            padding: 0.5rem;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 6px;
+            font-size: 1.25rem;
+        }
+
+        .metric-val {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .metric-lbl {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+            text-align: left;
+        }
+
+        .preview-table th {
+            background: #f1f5f9;
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            white-space: normal;
+        }
+
+        .preview-table td {
+            padding: 0.4rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .filter-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+
+        .filter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            position: relative;
+        }
+
+        .filter-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .dropdown-select {
+            position: relative;
+            min-width: 180px;
+        }
+
+        .dropdown-btn {
+            width: 100%;
+            padding: 0.4rem 0.6rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-shadow: var(--shadow-lg);
+            z-index: 50;
+            padding: 0.5rem;
+            display: none;
+            max-height: 250px;
+            flex-direction: column;
+        }
+
+        .dropdown-menu.show {
+            display: flex;
+        }
+
+        .dropdown-search {
+            width: 100%;
+            padding: 0.35rem 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-bottom: 0.4rem;
+            outline: none;
+        }
+
+        .dropdown-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.4rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .dropdown-actions button {
+            font-size: 0.7rem;
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .dropdown-options {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            max-height: 160px;
+        }
+
+        .dropdown-option {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.3rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .dropdown-option:hover {
+            background: var(--background);
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .grid-container {
+            height: 520px;
+            width: 100%;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* AG Grid Compact Typography Styling */
+        .ag-theme-alpine {
+            --ag-header-background-color: #f8fafc;
+            --ag-header-foreground-color: #0f172a;
+            --ag-border-color: #e2e8f0;
+            --ag-row-hover-color: #f1f5f9;
+            --ag-selected-row-background-color: #eff6ff;
+            --ag-font-family: 'Inter', sans-serif;
+            --ag-font-size: 11px;
+            --ag-grid-size: 3px;
+        }
+
+        .ag-theme-alpine .ag-header-cell-text {
+            white-space: normal !important;
+            word-break: break-word;
+            line-height: 1.2;
+            font-weight: 600;
+            font-size: 11px;
+        }
+
+        .kpi-cell-green {
+            background-color: #d1fae5 !important;
+            color: #065f46 !important;
+            font-weight: 600;
+        }
+
+        .kpi-cell-yellow {
+            background-color: #fef3c7 !important;
+            color: #92400e !important;
+            font-weight: 600;
+        }
+
+        .kpi-cell-red {
+            background-color: #fee2e2 !important;
+            color: #991b1b !important;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <span class="material-symbols-outlined">analytics</span>
+            <span>BI Performance Analytics</span>
+        </div>
+
+        <!-- Dashboard Switcher Tabs -->
+        <div id="tabNav" class="tab-nav hidden">
+            <button id="tabPerfBtn" class="tab-btn active">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;">monitoring</span>
+                Performance Analytics
+            </button>
+            <button id="tabRsdMdsBtn" class="tab-btn">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;">sync_alt</span>
+                RSD vs MDS
+            </button>
+        </div>
+
+        <button id="resetAppBtn" class="btn btn-secondary hidden">
+            <span class="material-symbols-outlined">restart_alt</span> Upload New File
+        </button>
+    </header>
+
+    <main>
+        <div id="errorAlert" class="alert alert-danger hidden">
+            <span class="material-symbols-outlined">error</span>
+            <span id="errorMessage">An error occurred during file processing.</span>
+        </div>
+
+        <!-- 1. Upload View -->
+        <div id="uploadView" class="card">
+            <div id="dropZone" class="drop-zone">
+                <span class="material-symbols-outlined">cloud_upload</span>
+                <div>
+                    <h3>Drag and drop your Excel or CSV file here</h3>
+                    <p>Supports <strong>.xlsx, .xlsb, .xls, and .csv</strong> files (Sheets: <strong>CCI Wise - KPI</strong> and <strong>RSD Vs MDS DATA MTD</strong>)</p>
+                </div>
+                <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Browse File</button>
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xlsb, .xls, .csv">
+            </div>
+        </div>
+
+        <!-- 2. Data Preview & Validation View -->
+        <div id="previewView" class="card hidden">
+            <div class="preview-header">
+                <div>
+                    <h2>Data Preview & Validation</h2>
+                    <p style="color: var(--text-muted); font-size: 0.8rem;">Review the merged structure across sheets before rendering</p>
+                </div>
+                <button id="confirmNormalizeBtn" class="btn btn-primary">
+                    <span class="material-symbols-outlined">check_circle</span> Proceed to Dashboard
+                </button>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="material-symbols-outlined">location_on</span>
+                    <div>
+                        <div id="metricStations" class="metric-val">0</div>
+                        <div class="metric-lbl">Stations Detected</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <span class="material-symbols-outlined">view_column</span>
+                    <div>
+                        <div id="metricKPIs" class="metric-val">0</div>
+                        <div class="metric-lbl">Total Merged KPIs</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <span class="material-symbols-outlined">calendar_month</span>
+                    <div>
+                        <div id="metricPeriods" class="metric-val">0</div>
+                        <div class="metric-lbl">Periods Detected</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <span class="material-symbols-outlined">dataset</span>
+                    <div>
+                        <div id="metricRecords" class="metric-val">0</div>
+                        <div class="metric-lbl">Normalized Records</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <span class="material-symbols-outlined">warning</span>
+                    <div>
+                        <div id="metricSkipped" class="metric-val">0</div>
+                        <div class="metric-lbl">Skipped / Invalid Rows</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>First 10 Normalized Records</h3>
+            <div class="table-responsive">
+                <table class="preview-table">
+                    <thead>
+                        <tr id="previewTableHeader"></tr>
+                    </thead>
+                    <tbody id="previewTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. TAB 1: Performance Analytics View -->
+        <div id="dashboardView" class="hidden" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="filter-toolbar">
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label>Period</label>
+                        <div class="dropdown-select" id="periodDropdown">
+                            <div class="dropdown-btn" id="periodDropdownBtn">
+                                <span>Select Period</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="periodDropdownMenu">
+                                <input type="text" class="dropdown-search" id="periodSearch" placeholder="Search periods...">
+                                <div class="dropdown-actions">
+                                    <button id="periodSelectAll">Select All</button>
+                                    <button id="periodUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="periodOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Station Name</label>
+                        <div class="dropdown-select" id="stationDropdown">
+                            <div class="dropdown-btn" id="stationDropdownBtn">
+                                <span>Select Stations</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="stationDropdownMenu">
+                                <input type="text" class="dropdown-search" id="stationSearch" placeholder="Search stations...">
+                                <div class="dropdown-actions">
+                                    <button id="stationSelectAll">Select All</button>
+                                    <button id="stationUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="stationOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="resetFiltersBtn" class="btn btn-secondary" style="align-self: flex-end;">
+                        <span class="material-symbols-outlined">filter_alt_off</span> Reset Filters
+                    </button>
+                </div>
+
+                <div class="export-actions">
+                    <button id="exportFilteredXlsx" class="btn btn-secondary">
+                        <span class="material-symbols-outlined">download</span> Export Filtered (Excel)
+                    </button>
+                    <button id="exportFilteredCsv" class="btn btn-secondary">
+                        <span class="material-symbols-outlined">download</span> Export Filtered (CSV)
+                    </button>
+                    <button id="exportMasterXlsx" class="btn btn-primary">
+                        <span class="material-symbols-outlined">file_download</span> Export All (Excel)
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 0.75rem;">
+                <div id="mainGrid" class="ag-theme-alpine grid-container"></div>
+            </div>
+        </div>
+
+        <!-- 4. TAB 2: RSD vs MDS Dashboard View -->
+        <div id="rsdMdsView" class="hidden" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <!-- RSD vs MDS Filters -->
+            <div class="filter-toolbar">
+                <div class="filter-controls">
+                    <!-- Week No Filter -->
+                    <div class="filter-group">
+                        <label>Week No</label>
+                        <div class="dropdown-select" id="rmWeekDropdown">
+                            <div class="dropdown-btn" id="rmWeekDropdownBtn">
+                                <span>Select Week</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="rmWeekDropdownMenu">
+                                <input type="text" class="dropdown-search" id="rmWeekSearch" placeholder="Search weeks...">
+                                <div class="dropdown-actions">
+                                    <button id="rmWeekSelectAll">Select All</button>
+                                    <button id="rmWeekUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="rmWeekOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Station Name Filter -->
+                    <div class="filter-group">
+                        <label>Station Name</label>
+                        <div class="dropdown-select" id="rmStationDropdown">
+                            <div class="dropdown-btn" id="rmStationDropdownBtn">
+                                <span>Select Station</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="rmStationDropdownMenu">
+                                <input type="text" class="dropdown-search" id="rmStationSearch" placeholder="Search stations...">
+                                <div class="dropdown-actions">
+                                    <button id="rmStationSelectAll">Select All</button>
+                                    <button id="rmStationUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="rmStationOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Use Case Filter -->
+                    <div class="filter-group">
+                        <label>Use Case</label>
+                        <div class="dropdown-select" id="rmUseCaseDropdown">
+                            <div class="dropdown-btn" id="rmUseCaseDropdownBtn">
+                                <span>Select Use Case</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="rmUseCaseDropdownMenu">
+                                <input type="text" class="dropdown-search" id="rmUseCaseSearch" placeholder="Search use cases...">
+                                <div class="dropdown-actions">
+                                    <button id="rmUseCaseSelectAll">Select All</button>
+                                    <button id="rmUseCaseUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="rmUseCaseOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RSD vs MDS Status Filter -->
+                    <div class="filter-group">
+                        <label>RSD vs MDS</label>
+                        <div class="dropdown-select" id="rmStatusDropdown">
+                            <div class="dropdown-btn" id="rmStatusDropdownBtn">
+                                <span>Select Status</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="rmStatusDropdownMenu">
+                                <input type="text" class="dropdown-search" id="rmStatusSearch" placeholder="Search status...">
+                                <div class="dropdown-actions">
+                                    <button id="rmStatusSelectAll">Select All</button>
+                                    <button id="rmStatusUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="rmStatusOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="resetRsdMdsFiltersBtn" class="btn btn-secondary" style="align-self: flex-end;">
+                        <span class="material-symbols-outlined">filter_alt_off</span> Reset Filters
+                    </button>
+                </div>
+
+                <div class="export-actions">
+                    <button id="exportPivotXlsx" class="btn btn-secondary">
+                        <span class="material-symbols-outlined">download</span> Export Pivot (Excel)
+                    </button>
+                    <button id="exportMissedXlsx" class="btn btn-primary">
+                        <span class="material-symbols-outlined">file_download</span> Export Missed Cases (Excel)
+                    </button>
+                </div>
+            </div>
+
+            <!-- RSD vs MDS Pivot Table Section -->
+            <div class="card" style="padding: 1rem;">
+                <div class="section-header">
+                    <h3>
+                        <span class="material-symbols-outlined" style="color:var(--primary);">table_chart</span>
+                        RSD vs MDS Use Case Summary (Pivot Count)
+                    </h3>
+                </div>
+                <div id="pivotGrid" class="ag-theme-alpine grid-container" style="height: 380px;"></div>
+            </div>
+
+            <!-- RSD vs MDS Missed Cases Table Section -->
+            <div class="card" style="padding: 1rem;">
+                <div class="section-header">
+                    <h3>
+                        <span class="material-symbols-outlined" style="color:var(--danger);">warning</span>
+                        Missed Cases Table (RSD vs MDS = "Not Created")
+                    </h3>
+                </div>
+                <div id="missedGrid" class="ag-theme-alpine grid-container" style="height: 380px;"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const KPITargets = {
+            'rr 30 days': { target: 2.0, isPercent: true, label: '<= 2%' },
+            'rr 90 days': { target: 6.0, isPercent: true, label: '<= 6%' },
+            'pcb':        { target: 15.0, isPercent: true, label: '<= 15%' },
+            'lcm':        { target: 20.0, isPercent: true, label: '<= 20%' },
+            'ppi':        { target: 1.05, isPercent: false, label: '<= 1.05' },
+            'cit':        { target: 100.0, isPercent: true, label: '100%' },
+            'audit':      { target: 100.0, isPercent: true, label: '100%' },
+            'fsb':        { target: 100.0, isPercent: true, label: '100%' },
+            'focus':      { target: 100.0, isPercent: true, label: '100%' },
+            'l-2.5':      { target: 100.0, isPercent: true, label: '100%' },
+            'l2.5':       { target: 100.0, isPercent: true, label: '100%' }
+        };
+
+        const AppState = {
+            normalizedData: [],
+            filteredData: [],
+            dynamicKPIs: [],
+            detectedPeriods: [],
+            detectedStations: [],
+            selectedPeriods: new Set(),
+            selectedStations: new Set(),
+            skippedCount: 0,
+            gridOptions: null,
+            gridApi: null,
+
+            // RSD vs MDS Specific Data
+            rsdMdsRaw: [],
+            rsdMdsWeeks: [],
+            rsdMdsStations: [],
+            rsdMdsUseCases: [],
+            rsdMdsStatuses: [],
+            selectedRsdWeeks: new Set(),
+            selectedRsdStations: new Set(),
+            selectedRsdUseCases: new Set(),
+            selectedRsdStatuses: new Set(),
+            pivotGridApi: null,
+            missedGridApi: null
+        };
+
+        const DOM = {
+            dropZone: document.getElementById('dropZone'),
+            fileInput: document.getElementById('fileInput'),
+            errorAlert: document.getElementById('errorAlert'),
+            errorMessage: document.getElementById('errorMessage'),
+            uploadView: document.getElementById('uploadView'),
+            previewView: document.getElementById('previewView'),
+            dashboardView: document.getElementById('dashboardView'),
+            rsdMdsView: document.getElementById('rsdMdsView'),
+            tabNav: document.getElementById('tabNav'),
+            tabPerfBtn: document.getElementById('tabPerfBtn'),
+            tabRsdMdsBtn: document.getElementById('tabRsdMdsBtn'),
+            resetAppBtn: document.getElementById('resetAppBtn'),
+            confirmNormalizeBtn: document.getElementById('confirmNormalizeBtn'),
+            
+            metricStations: document.getElementById('metricStations'),
+            metricKPIs: document.getElementById('metricKPIs'),
+            metricPeriods: document.getElementById('metricPeriods'),
+            metricRecords: document.getElementById('metricRecords'),
+            metricSkipped: document.getElementById('metricSkipped'),
+            previewTableHeader: document.getElementById('previewTableHeader'),
+            previewTableBody: document.getElementById('previewTableBody'),
+
+            // Tab 1 Filters
+            periodDropdownBtn: document.getElementById('periodDropdownBtn'),
+            periodDropdownMenu: document.getElementById('periodDropdownMenu'),
+            periodSearch: document.getElementById('periodSearch'),
+            periodOptionsContainer: document.getElementById('periodOptionsContainer'),
+            periodSelectAll: document.getElementById('periodSelectAll'),
+            periodUnselectAll: document.getElementById('periodUnselectAll'),
+
+            stationDropdownBtn: document.getElementById('stationDropdownBtn'),
+            stationDropdownMenu: document.getElementById('stationDropdownMenu'),
+            stationSearch: document.getElementById('stationSearch'),
+            stationOptionsContainer: document.getElementById('stationOptionsContainer'),
+            stationSelectAll: document.getElementById('stationSelectAll'),
+            stationUnselectAll: document.getElementById('stationUnselectAll'),
+            resetFiltersBtn: document.getElementById('resetFiltersBtn'),
+
+            // Tab 2 Filters
+            rmWeekDropdownBtn: document.getElementById('rmWeekDropdownBtn'),
+            rmWeekDropdownMenu: document.getElementById('rmWeekDropdownMenu'),
+            rmWeekSearch: document.getElementById('rmWeekSearch'),
+            rmWeekOptionsContainer: document.getElementById('rmWeekOptionsContainer'),
+            rmWeekSelectAll: document.getElementById('rmWeekSelectAll'),
+            rmWeekUnselectAll: document.getElementById('rmWeekUnselectAll'),
+
+            rmStationDropdownBtn: document.getElementById('rmStationDropdownBtn'),
+            rmStationDropdownMenu: document.getElementById('rmStationDropdownMenu'),
+            rmStationSearch: document.getElementById('rmStationSearch'),
+            rmStationOptionsContainer: document.getElementById('rmStationOptionsContainer'),
+            rmStationSelectAll: document.getElementById('rmStationSelectAll'),
+            rmStationUnselectAll: document.getElementById('rmStationUnselectAll'),
+
+            rmUseCaseDropdownBtn: document.getElementById('rmUseCaseDropdownBtn'),
+            rmUseCaseDropdownMenu: document.getElementById('rmUseCaseDropdownMenu'),
+            rmUseCaseSearch: document.getElementById('rmUseCaseSearch'),
+            rmUseCaseOptionsContainer: document.getElementById('rmUseCaseOptionsContainer'),
+            rmUseCaseSelectAll: document.getElementById('rmUseCaseSelectAll'),
+            rmUseCaseUnselectAll: document.getElementById('rmUseCaseUnselectAll'),
+
+            rmStatusDropdownBtn: document.getElementById('rmStatusDropdownBtn'),
+            rmStatusDropdownMenu: document.getElementById('rmStatusDropdownMenu'),
+            rmStatusSearch: document.getElementById('rmStatusSearch'),
+            rmStatusOptionsContainer: document.getElementById('rmStatusOptionsContainer'),
+            rmStatusSelectAll: document.getElementById('rmStatusSelectAll'),
+            rmStatusUnselectAll: document.getElementById('rmStatusUnselectAll'),
+
+            resetRsdMdsFiltersBtn: document.getElementById('resetRsdMdsFiltersBtn'),
+            
+            exportFilteredXlsx: document.getElementById('exportFilteredXlsx'),
+            exportFilteredCsv: document.getElementById('exportFilteredCsv'),
+            exportMasterXlsx: document.getElementById('exportMasterXlsx'),
+            exportPivotXlsx: document.getElementById('exportPivotXlsx'),
+            exportMissedXlsx: document.getElementById('exportMissedXlsx')
+        };
+
+        function showError(msg) {
+            DOM.errorMessage.textContent = msg;
+            DOM.errorAlert.classList.remove('hidden');
+        }
+
+        function clearError() {
+            DOM.errorAlert.classList.add('hidden');
+            DOM.errorMessage.textContent = '';
+        }
+
+        function normalizeString(str) {
+            if (!str) return '';
+            return String(str).replace(/[\u00A0\s\-_]/g, '').toLowerCase();
+        }
+
+        function normalizePeriodName(rawPeriod) {
+            if (!rawPeriod) return '';
+            let str = String(rawPeriod).trim();
+            str = str.replace(/^([A-Za-z]{3})['\s](\d{2})$/i, '$1-$2');
+            const wkMatch = str.match(/^WK\s*(\d+)$/i);
+            if (wkMatch) return `Wk ${wkMatch[1]}`;
+            return str;
+        }
+
+        function parseStationCode(rawCode) {
+            if (rawCode === null || rawCode === undefined || rawCode === '') return '';
+            const str = String(rawCode).trim();
+            const matches = str.match(/\d+/g);
+            if (!matches) return '';
+            const lastNumStr = matches[matches.length - 1];
+            const parsedNum = parseInt(lastNumStr, 10);
+            return isNaN(parsedNum) ? '' : parsedNum;
+        }
+
+        function formatCellValue(val, kpiName) {
+            if (val === undefined || val === null || val === '') return '';
+            const strVal = String(val).trim();
+            if (strVal === '') return '';
+
+            const isPPI = kpiName.toLowerCase().includes('ppi');
+            const isPercentKPI = (kpiName.includes('%') || kpiName.toLowerCase().includes('rr') || kpiName.toLowerCase().includes('pcb') || kpiName.toLowerCase().includes('lcm') || kpiName.toLowerCase().includes('cit') || kpiName.toLowerCase().includes('audit') || kpiName.toLowerCase().includes('fsb') || kpiName.toLowerCase().includes('focus') || kpiName.toLowerCase().includes('l-2.5') || kpiName.toLowerCase().includes('l2.5')) && !isPPI;
+
+            const cleanNum = parseFloat(strVal.replace(/%/g, ''));
+            if (isNaN(cleanNum)) return strVal;
+
+            if (isPercentKPI) {
+                let num = cleanNum;
+                if (num <= 1 && num > 0) num = num * 100;
+                return num.toFixed(1) + '%';
+            } else if (isPPI) {
+                return cleanNum.toFixed(1);
+            } else {
+                return Number.isInteger(cleanNum) ? cleanNum.toString() : cleanNum.toFixed(1);
+            }
+        }
+
+        function findKPITarget(kpiHeader) {
+            const cleanHeader = kpiHeader.toLowerCase().replace(/%/g, '').trim();
+            for (const [key, rule] of Object.entries(KPITargets)) {
+                if (cleanHeader.includes(key)) return rule;
+            }
+            return null;
+        }
+
+        /* Dropzone Event Listeners */
+        DOM.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); DOM.dropZone.classList.add('dragover'); });
+        DOM.dropZone.addEventListener('dragleave', () => DOM.dropZone.classList.remove('dragover'));
+        DOM.dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            DOM.dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) processUploadedFile(e.dataTransfer.files[0]);
+        });
+        DOM.fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) processUploadedFile(e.target.files[0]);
+        });
+
+        function processUploadedFile(file) {
+            clearError();
+            const fileName = file.name.toLowerCase();
+
+            if (fileName.endsWith('.csv')) {
+                Papa.parse(file, {
+                    skipEmptyLines: false,
+                    complete: (results) => handleParsedRowsMultiSheet(results.data, null, null),
+                    error: (err) => showError('Error reading CSV file: ' + err.message)
+                });
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xlsb') || fileName.endsWith('.xls')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array', cellStyles: true, cellDates: true });
+                        
+                        // 1. Sheet 1: CCI Wise - KPI
+                        const targetNormalized1 = "cciwisekpi";
+                        const matchedSheet1 = workbook.SheetNames.find(s => normalizeString(s) === targetNormalized1);
+
+                        if (!matchedSheet1) {
+                            showError(`Worksheet "CCI Wise - KPI" not found. Detected sheets: ${workbook.SheetNames.join(', ')}`);
+                            return;
+                        }
+
+                        const rowsSheet1 = XLSX.utils.sheet_to_json(workbook.Sheets[matchedSheet1], { header: 1, raw: false, defval: '' });
+
+                        // 2. Sheet 2: CCI-CIT, FSB, & Focus (Optional)
+                        const matchedSheet2 = workbook.SheetNames.find(s => normalizeString(s) === "ccicitfsbfocus" || normalizeString(s).includes("ccicit"));
+                        let rowsSheet2 = matchedSheet2 ? XLSX.utils.sheet_to_json(workbook.Sheets[matchedSheet2], { header: 1, raw: false, defval: '' }) : null;
+
+                        // 3. Sheet 3: RSD Vs MDS DATA MTD
+                        const targetNormalized3 = "rsdvsmdsdatamtd";
+                        const matchedSheet3 = workbook.SheetNames.find(s => normalizeString(s) === targetNormalized3 || (normalizeString(s).includes("rsd") && normalizeString(s).includes("mds")));
+                        let rowsSheet3 = matchedSheet3 ? XLSX.utils.sheet_to_json(workbook.Sheets[matchedSheet3], { header: 1, raw: false, defval: '' }) : null;
+
+                        handleParsedRowsMultiSheet(rowsSheet1, rowsSheet2, rowsSheet3);
+                    } catch (err) {
+                        showError('Error processing Excel file: ' + err.message);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                showError('Unsupported file format. Please upload .xlsx, .xlsb, .xls, or .csv.');
+            }
+        }
+
+        function handleParsedRowsMultiSheet(rows1, rows2, rows3) {
+            if (!rows1 || rows1.length < 3) {
+                showError('Sheet 1 contains insufficient data rows.');
+                return;
+            }
+
+            // --- 1. PARSE PERFORMANCE KPI SHEET 1 & SHEET 2 ---
+            const row1_s1 = rows1[0] || [];
+            const row2_s1 = rows1[1] || [];
+
+            let currentKPI_s1 = '';
+            const colMap_s1 = [];
+            const kpiSet = new Set();
+            const periodSet = new Set();
+
+            for (let c = 2; c < Math.max(row1_s1.length, row2_s1.length); c++) {
+                const h1 = row1_s1[c] ? String(row1_s1[c]).trim() : '';
+                const h2 = row2_s1[c] ? normalizePeriodName(row2_s1[c]) : '';
+
+                if (h1 !== '') currentKPI_s1 = h1;
+                if (currentKPI_s1 && h2) {
+                    kpiSet.add(currentKPI_s1);
+                    periodSet.add(h2);
+                    colMap_s1[c] = { kpi: currentKPI_s1, period: h2 };
+                }
+            }
+
+            const colMap_s2 = [];
+            if (rows2 && rows2.length >= 3) {
+                const row1_s2 = rows2[0] || [];
+                const row2_s2 = rows2[1] || [];
+
+                let currentKPI_s2 = '';
+                for (let c = 2; c < Math.max(row1_s2.length, row2_s2.length); c++) {
+                    const h1 = row1_s2[c] ? String(row1_s2[c]).trim() : '';
+                    const h2 = row2_s2[c] ? normalizePeriodName(row2_s2[c]) : '';
+
+                    if (h1 !== '') currentKPI_s2 = h1;
+                    if (currentKPI_s2 && h2) {
+                        kpiSet.add(currentKPI_s2);
+                        periodSet.add(h2);
+                        colMap_s2[c] = { kpi: currentKPI_s2, period: h2 };
+                    }
+                }
+            }
+
+            AppState.dynamicKPIs = Array.from(kpiSet);
+            AppState.detectedPeriods = Array.from(periodSet);
+
+            const normalizedMap = new Map();
+            const stationSet = new Set();
+            let skipped = 0;
+
+            for (let r = 2; r < rows1.length; r++) {
+                const row = rows1[r];
+                if (!row || row.length === 0) continue;
+
+                const stationCode = parseStationCode(row[0]);
+                const stationName = row[1] ? String(row[1]).trim() : '';
+
+                if (stationCode === '' || !stationName) {
+                    skipped++;
+                    continue;
+                }
+
+                stationSet.add(stationName);
+
+                for (let c = 2; c < row.length; c++) {
+                    const meta = colMap_s1[c];
+                    if (!meta) continue;
+
+                    const key = `${stationCode}||${meta.period}`;
+                    if (!normalizedMap.has(key)) {
+                        const newRec = {
+                            'Period': meta.period,
+                            'Station Code': stationCode,
+                            'Station Name': stationName
+                        };
+                        AppState.dynamicKPIs.forEach(kpi => newRec[kpi] = '');
+                        normalizedMap.set(key, newRec);
+                    }
+
+                    const rec = normalizedMap.get(key);
+                    rec[meta.kpi] = formatCellValue(row[c], meta.kpi);
+                }
+            }
+
+            if (rows2 && rows2.length >= 3) {
+                let codeColIdx = 0;
+                let nameColIdx = 1;
+                const r2_s2 = rows2[1] || [];
+                r2_s2.forEach((cell, idx) => {
+                    const txt = normalizeString(cell);
+                    if (txt.includes('ccicode') || txt.includes('code')) codeColIdx = idx;
+                    if (txt.includes('mdsname') || txt.includes('name')) nameColIdx = idx;
+                });
+
+                for (let r = 2; r < rows2.length; r++) {
+                    const row = rows2[r];
+                    if (!row || row.length === 0) continue;
+
+                    const stationCode = parseStationCode(row[codeColIdx]);
+                    if (stationCode === '') continue;
+
+                    for (let c = 2; c < row.length; c++) {
+                        const meta = colMap_s2[c];
+                        if (!meta) continue;
+
+                        const key = `${stationCode}||${meta.period}`;
+                        if (normalizedMap.has(key)) {
+                            const rec = normalizedMap.get(key);
+                            rec[meta.kpi] = formatCellValue(row[c], meta.kpi);
+                        }
+                    }
+                }
+            }
+
+            AppState.normalizedData = Array.from(normalizedMap.values());
+            AppState.detectedStations = Array.from(stationSet);
+            AppState.skippedCount = skipped;
+
+            // --- 2. PARSE SHEET 3 (RSD Vs MDS DATA MTD) ---
+            AppState.rsdMdsRaw = [];
+            const rsdWeekSet = new Set();
+            const rsdStationSet = new Set();
+            const rsdUseCaseSet = new Set();
+            const rsdStatusSet = new Set();
+
+            if (rows3 && rows3.length >= 2) {
+                const headerRow = rows3[0].map(h => String(h).trim());
+                
+                const getColIdx = (colNames) => {
+                    return headerRow.findIndex(h => colNames.some(cn => normalizeString(h) === normalizeString(cn)));
+                };
+
+                const stCodeIdx = getColIdx(['Station Code', 'CCI Code', 'Code']);
+                const cciNameIdx = getColIdx(['CCI Name', 'Station Name', 'MDS Name']);
+                const weekNoIdx = getColIdx(['Week No', 'Week', 'Week_No']);
+                const useCaseIdx = getColIdx(['USE_CASE', 'UseCase', 'Use Case']);
+                const rsdMdsIdx = getColIdx(['RSD vs MDS', 'RSD_VS_MDS', 'RSD vs MDS Status']);
+                const clientTimeIdx = getColIdx(['CLIENT_TIME_STAMP', 'Client Time Stamp']);
+                const phoneModelIdx = getColIdx(['PHONE_MODEL', 'Phone Model']);
+                const rsdLoginIdx = getColIdx(['RSD_LOGIN_ID', 'RSD Login ID']);
+                const serialIdx = getColIdx(['MOBILE_SERIAL_NUMBER', 'Mobile Serial Number']);
+                const mdsSoIdx = getColIdx(['MDS So', 'MDS_SO', 'MDS SO']);
+
+                for (let r = 1; r < rows3.length; r++) {
+                    const row = rows3[r];
+                    if (!row || row.length === 0) continue;
+
+                    const rawCode = stCodeIdx >= 0 ? row[stCodeIdx] : '';
+                    const stCode = parseStationCode(rawCode);
+                    const stName = cciNameIdx >= 0 ? String(row[cciNameIdx]).trim() : '';
+                    const weekNo = weekNoIdx >= 0 ? normalizePeriodName(row[weekNoIdx]) : '';
+                    const useCase = useCaseIdx >= 0 ? String(row[useCaseIdx]).trim() : '';
+                    const rsdVsMdsVal = rsdMdsIdx >= 0 ? String(row[rsdMdsIdx]).trim() : '';
+
+                    if (!stName || !weekNo) continue;
+
+                    if (stWeekFormatValid(weekNo)) rsdWeekSet.add(weekNo);
+                    if (stName) rsdStationSet.add(stName);
+                    if (useCase) rsdUseCaseSet.add(useCase);
+                    if (rsdVsMdsVal) rsdStatusSet.add(rsdVsMdsVal);
+
+                    AppState.rsdMdsRaw.push({
+                        'Station Code': stCode,
+                        'Station Name': stName,
+                        'Week No': weekNo,
+                        'USE_CASE': useCase,
+                        'RSD vs MDS': rsdVsMdsVal,
+                        'CLIENT_TIME_STAMP': clientTimeIdx >= 0 ? String(row[clientTimeIdx]).trim() : '',
+                        'PHONE_MODEL': phoneModelIdx >= 0 ? String(row[phoneModelIdx]).trim() : '',
+                        'RSD_LOGIN_ID': rsdLoginIdx >= 0 ? String(row[rsdLoginIdx]).trim() : '',
+                        'MOBILE_SERIAL_NUMBER': serialIdx >= 0 ? String(row[serialIdx]).trim() : '',
+                        'MDS So': mdsSoIdx >= 0 ? String(row[mdsSoIdx]).trim() : ''
+                    });
+                }
+            }
+
+            AppState.rsdMdsWeeks = Array.from(rsdWeekSet).sort();
+            AppState.rsdMdsStations = Array.from(rsdStationSet).sort();
+            AppState.rsdMdsUseCases = Array.from(rsdUseCaseSet).sort();
+            AppState.rsdMdsStatuses = Array.from(rsdStatusSet).sort();
+
+            renderPreviewPanel();
+        }
+
+        function stWeekFormatValid(wk) {
+            return /^Wk|^Jan|^Feb|^Mar|^Apr|^May|^Jun|^Jul|^Aug|^Sep|^Oct|^Nov|^Dec/i.test(wk);
+        }
+
+        function renderPreviewPanel() {
+            DOM.uploadView.classList.add('hidden');
+            DOM.previewView.classList.remove('hidden');
+            DOM.resetAppBtn.classList.remove('hidden');
+
+            DOM.metricStations.textContent = AppState.detectedStations.length;
+            DOM.metricKPIs.textContent = AppState.dynamicKPIs.length;
+            DOM.metricPeriods.textContent = AppState.detectedPeriods.length;
+            DOM.metricRecords.textContent = AppState.normalizedData.length.toLocaleString();
+            DOM.metricSkipped.textContent = AppState.skippedCount;
+
+            const headers = ['Period', 'Station Code', 'Station Name', ...AppState.dynamicKPIs];
+            DOM.previewTableHeader.innerHTML = headers.map(h => {
+                const targetInfo = findKPITarget(h);
+                const displayHeader = targetInfo ? `${h} (${targetInfo.label})` : h;
+                return `<th>${displayHeader}</th>`;
+            }).join('');
+
+            const sampleRows = AppState.normalizedData.slice(0, 10);
+            DOM.previewTableBody.innerHTML = sampleRows.map(row => {
+                return `<tr>` + headers.map(h => `<td>${row[h] !== undefined ? row[h] : ''}</td>`).join('') + `</tr>`;
+            }).join('');
+        }
+
+        DOM.confirmNormalizeBtn.addEventListener('click', () => {
+            DOM.previewView.classList.add('hidden');
+            DOM.dashboardView.classList.remove('hidden');
+            DOM.tabNav.classList.remove('hidden');
+            initializeDashboard();
+        });
+
+        /* Tab Switcher Event Listeners */
+        DOM.tabPerfBtn.addEventListener('click', () => {
+            DOM.tabPerfBtn.classList.add('active');
+            DOM.tabRsdMdsBtn.classList.remove('active');
+            DOM.dashboardView.classList.remove('hidden');
+            DOM.rsdMdsView.classList.add('hidden');
+        });
+
+        DOM.tabRsdMdsBtn.addEventListener('click', () => {
+            DOM.tabRsdMdsBtn.classList.add('active');
+            DOM.tabPerfBtn.classList.remove('active');
+            DOM.rsdMdsView.classList.remove('hidden');
+            DOM.dashboardView.classList.add('hidden');
+            initRsdMdsDashboard();
+        });
+
+        /* ==========================================================================
+           TAB 1: Performance Analytics Module
+           ========================================================================== */
+
+        function initializeDashboard() {
+            setupDefaultFilterSelections();
+            initCustomDropdowns();
+            renderAGGrid();
+            applyFilters();
+        }
+
+        function setupDefaultFilterSelections() {
+            const weeklyPeriods = AppState.detectedPeriods.filter(p => /^Wk\s*\d+/i.test(p.trim()));
+            AppState.selectedPeriods.clear();
+            if (weeklyPeriods.length > 0) {
+                AppState.selectedPeriods.add(weeklyPeriods[weeklyPeriods.length - 1]);
+            } else if (AppState.detectedPeriods.length > 0) {
+                AppState.selectedPeriods.add(AppState.detectedPeriods[AppState.detectedPeriods.length - 1]);
+            }
+            AppState.selectedStations = new Set(AppState.detectedStations);
+        }
+
+        function initCustomDropdowns() {
+            setupDropdown('periodDropdownBtn', 'periodDropdownMenu', 'periodSearch', 'periodOptionsContainer', 
+                          AppState.detectedPeriods, AppState.selectedPeriods, 'periodSelectAll', 'periodUnselectAll');
+
+            setupDropdown('stationDropdownBtn', 'stationDropdownMenu', 'stationSearch', 'stationOptionsContainer', 
+                          AppState.detectedStations, AppState.selectedStations, 'stationSelectAll', 'stationUnselectAll');
+        }
+
+        function setupDropdown(btnId, menuId, searchId, containerId, fullList, selectedSet, selectAllId, unselectAllId, onChangeCallback) {
+            const btn = document.getElementById(btnId);
+            const menu = document.getElementById(menuId);
+            const search = document.getElementById(searchId);
+            const container = document.getElementById(containerId);
+
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.dropdown-menu').forEach(m => m !== menu && m.classList.remove('show'));
+                menu.classList.toggle('show');
+            };
+
+            menu.onclick = (e) => e.stopPropagation();
+
+            const renderOptions = (filterTxt = '') => {
+                container.innerHTML = '';
+                const filtered = fullList.filter(item => String(item).toLowerCase().includes(filterTxt.toLowerCase()));
+                
+                filtered.forEach(item => {
+                    const label = document.createElement('label');
+                    label.className = 'dropdown-option';
+                    
+                    const chk = document.createElement('input');
+                    chk.type = 'checkbox';
+                    chk.checked = selectedSet.has(item);
+                    chk.onchange = () => {
+                        if (chk.checked) selectedSet.add(item);
+                        else selectedSet.delete(item);
+                        updateButtonText(btn, selectedSet, fullList.length);
+                        if (onChangeCallback) onChangeCallback();
+                        else debouncedFilterUpdate();
+                    };
+
+                    label.appendChild(chk);
+                    label.appendChild(document.createTextNode(item));
+                    container.appendChild(label);
+                });
+            };
+
+            search.oninput = (e) => renderOptions(e.target.value);
+
+            document.getElementById(selectAllId).onclick = () => {
+                fullList.forEach(item => selectedSet.add(item));
+                renderOptions(search.value);
+                updateButtonText(btn, selectedSet, fullList.length);
+                if (onChangeCallback) onChangeCallback();
+                else debouncedFilterUpdate();
+            };
+
+            document.getElementById(unselectAllId).onclick = () => {
+                selectedSet.clear();
+                renderOptions(search.value);
+                updateButtonText(btn, selectedSet, fullList.length);
+                if (onChangeCallback) onChangeCallback();
+                else debouncedFilterUpdate();
+            };
+
+            renderOptions();
+            updateButtonText(btn, selectedSet, fullList.length);
+        }
+
+        function updateButtonText(btn, selectedSet, totalCount) {
+            const span = btn.querySelector('span');
+            if (selectedSet.size === 0) span.textContent = 'None Selected';
+            else if (selectedSet.size === totalCount) span.textContent = 'All Selected (' + totalCount + ')';
+            else span.textContent = selectedSet.size + ' Selected';
+        }
+
+        window.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+        });
+
+        let debounceTimer;
+        function debouncedFilterUpdate() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(applyFilters, 200);
+        }
+
+        function applyFilters() {
+            AppState.filteredData = AppState.normalizedData.filter(row => {
+                const matchPeriod = AppState.selectedPeriods.has(row['Period']);
+                const matchStation = AppState.selectedStations.has(row['Station Name']);
+                return matchPeriod && matchStation;
+            });
+
+            if (AppState.gridApi) {
+                AppState.gridApi.setRowData(AppState.filteredData);
+            }
+        }
+
+        DOM.resetFiltersBtn.addEventListener('click', () => {
+            setupDefaultFilterSelections();
+            initCustomDropdowns();
+            applyFilters();
+        });
+
+        function renderAGGrid() {
+            const columnDefs = [
+                { field: 'Period', sortable: true, filter: true, pinned: 'left', width: 90 },
+                { field: 'Station Code', sortable: true, filter: true, pinned: 'left', width: 110 },
+                { field: 'Station Name', sortable: true, filter: true, pinned: 'left', width: 140 }
+            ];
+
+            AppState.dynamicKPIs.forEach(kpi => {
+                const targetInfo = findKPITarget(kpi);
+                const headerTitle = targetInfo ? `${kpi}\n(${targetInfo.label})` : kpi;
+
+                columnDefs.push({
+                    field: kpi,
+                    headerName: headerTitle,
+                    sortable: true,
+                    filter: true,
+                    resizable: true,
+                    width: 110,
+                    wrapHeaderText: true,
+                    autoHeaderHeight: true,
+                    valueFormatter: params => (params.value === null || params.value === undefined) ? '' : params.value,
+                    cellClass: params => {
+                        if (!targetInfo || params.value === '' || params.value === null || params.value === undefined) return '';
+                        const num = parseFloat(String(params.value).replace(/%/g, ''));
+                        if (isNaN(num)) return '';
+
+                        const target = targetInfo.target;
+                        const cleanKey = kpi.toLowerCase().replace(/%/g, '').trim();
+                        const isHigherIsBetter = cleanKey.includes('cit') || cleanKey.includes('audit') || cleanKey.includes('fsb') || cleanKey.includes('focus') || cleanKey.includes('l-2.5') || cleanKey.includes('l2.5');
+
+                        if (isHigherIsBetter) {
+                            if (num >= 100) return 'kpi-cell-green';
+                            else if (num >= 85) return 'kpi-cell-yellow';
+                            else return 'kpi-cell-red';
+                        } else {
+                            if (num <= target) return 'kpi-cell-green';
+                            else if (num <= target * 1.5) return 'kpi-cell-yellow';
+                            else return 'kpi-cell-red';
+                        }
+                    }
+                });
+            });
+
+            AppState.gridOptions = {
+                columnDefs: columnDefs,
+                rowData: AppState.filteredData,
+                defaultColDef: {
+                    flex: 1,
+                    minWidth: 95,
+                    resizable: true,
+                    sortable: true,
+                    wrapHeaderText: true,
+                    autoHeaderHeight: true
+                },
+                animateRows: true,
+                suppressCellFocus: true,
+                rowBuffer: 20,
+                rowHeight: 28
+            };
+
+            const gridDiv = document.getElementById('mainGrid');
+            gridDiv.innerHTML = '';
+            AppState.gridApi = agGrid.createGrid(gridDiv, AppState.gridOptions);
+        }
+
+        /* ==========================================================================
+           TAB 2: RSD vs MDS Dashboard Engine
+           ========================================================================== */
+
+        function initRsdMdsDashboard() {
+            if (AppState.rsdMdsWeeks.length === 0) {
+                AppState.selectedRsdWeeks = new Set();
+            } else {
+                AppState.selectedRsdWeeks = new Set(AppState.rsdMdsWeeks);
+            }
+            AppState.selectedRsdStations = new Set(AppState.rsdMdsStations);
+            AppState.selectedRsdUseCases = new Set(AppState.rsdMdsUseCases);
+            AppState.selectedRsdStatuses = new Set(AppState.rsdMdsStatuses);
+
+            setupRsdMdsDropdowns();
+            renderRsdMdsTables();
+        }
+
+        function setupRsdMdsDropdowns() {
+            setupDropdown('rmWeekDropdownBtn', 'rmWeekDropdownMenu', 'rmWeekSearch', 'rmWeekOptionsContainer',
+                          AppState.rsdMdsWeeks, AppState.selectedRsdWeeks, 'rmWeekSelectAll', 'rmWeekUnselectAll', updateRsdMdsDashboard);
+
+            setupDropdown('rmStationDropdownBtn', 'rmStationDropdownMenu', 'rmStationSearch', 'rmStationOptionsContainer',
+                          AppState.rsdMdsStations, AppState.selectedRsdStations, 'rmStationSelectAll', 'rmStationUnselectAll', updateRsdMdsDashboard);
+
+            setupDropdown('rmUseCaseDropdownBtn', 'rmUseCaseDropdownMenu', 'rmUseCaseSearch', 'rmUseCaseOptionsContainer',
+                          AppState.rsdMdsUseCases, AppState.selectedRsdUseCases, 'rmUseCaseSelectAll', 'rmUseCaseUnselectAll', updateRsdMdsDashboard);
+
+            setupDropdown('rmStatusDropdownBtn', 'rmStatusDropdownMenu', 'rmStatusSearch', 'rmStatusOptionsContainer',
+                          AppState.rsdMdsStatuses, AppState.selectedRsdStatuses, 'rmStatusSelectAll', 'rmStatusUnselectAll', updateRsdMdsDashboard);
+        }
+
+        DOM.resetRsdMdsFiltersBtn.addEventListener('click', () => {
+            AppState.selectedRsdWeeks = new Set(AppState.rsdMdsWeeks);
+            AppState.selectedRsdStations = new Set(AppState.rsdMdsStations);
+            AppState.selectedRsdUseCases = new Set(AppState.rsdMdsUseCases);
+            AppState.selectedRsdStatuses = new Set(AppState.rsdMdsStatuses);
+            setupRsdMdsDropdowns();
+            updateRsdMdsDashboard();
+        });
+
+        function updateRsdMdsDashboard() {
+            const filteredRows = AppState.rsdMdsRaw.filter(row => {
+                const matchWk = AppState.selectedRsdWeeks.has(row['Week No']);
+                const matchSt = AppState.selectedRsdStations.has(row['Station Name']);
+                const matchUc = AppState.selectedRsdUseCases.has(row['USE_CASE']);
+                const matchStatus = AppState.selectedRsdStatuses.has(row['RSD vs MDS']);
+                return matchWk && matchSt && matchUc && matchStatus;
+            });
+
+            // Update Pivot Data
+            const pivotData = buildRsdMdsPivotData(filteredRows);
+            if (AppState.pivotGridApi) {
+                AppState.pivotGridApi.setRowData(pivotData);
+            }
+
+            // Update Missed Cases Data (RSD vs MDS = "Not Created")
+            const missedData = filteredRows.filter(r => String(r['RSD vs MDS']).toLowerCase().includes('not created'));
+            if (AppState.missedGridApi) {
+                AppState.missedGridApi.setRowData(missedData);
+            }
+        }
+
+        function buildRsdMdsPivotData(filteredRows) {
+            const pivotMap = new Map();
+
+            filteredRows.forEach(row => {
+                const wk = row['Week No'];
+                const stCode = row['Station Code'];
+                const stName = row['Station Name'];
+                const uc = row['USE_CASE'];
+
+                const key = `${wk}||${stCode}||${stName}`;
+                if (!pivotMap.has(key)) {
+                    const obj = {
+                        'Week No': wk,
+                        'Station Code': stCode,
+                        'Station Name': stName,
+                        'Total Count': 0
+                    };
+                    AppState.rsdMdsUseCases.forEach(u => obj[u] = 0);
+                    pivotMap.set(key, obj);
+                }
+
+                const rec = pivotMap.get(key);
+                if (rec[uc] !== undefined) {
+                    rec[uc] = (rec[uc] || 0) + 1;
+                }
+                rec['Total Count'] = (rec['Total Count'] || 0) + 1;
+            });
+
+            return Array.from(pivotMap.values());
+        }
+
+        function renderRsdMdsTables() {
+            const filteredRows = AppState.rsdMdsRaw.filter(row => {
+                const matchWk = AppState.selectedRsdWeeks.has(row['Week No']);
+                const matchSt = AppState.selectedRsdStations.has(row['Station Name']);
+                const matchUc = AppState.selectedRsdUseCases.has(row['USE_CASE']);
+                const matchStatus = AppState.selectedRsdStatuses.has(row['RSD vs MDS']);
+                return matchWk && matchSt && matchUc && matchStatus;
+            });
+
+            // 1. Pivot Table Definition
+            const pivotColumnDefs = [
+                { field: 'Week No', sortable: true, filter: true, pinned: 'left', width: 100 },
+                { field: 'Station Code', sortable: true, filter: true, pinned: 'left', width: 110 },
+                { field: 'Station Name', sortable: true, filter: true, pinned: 'left', width: 150 }
+            ];
+
+            AppState.rsdMdsUseCases.forEach(uc => {
+                pivotColumnDefs.push({
+                    field: uc,
+                    headerName: uc,
+                    sortable: true,
+                    filter: true,
+                    resizable: true,
+                    width: 120,
+                    type: 'numericColumn'
+                });
+            });
+
+            pivotColumnDefs.push({
+                field: 'Total Count',
+                headerName: 'Total Count',
+                sortable: true,
+                filter: true,
+                width: 110,
+                type: 'numericColumn',
+                cellStyle: { fontWeight: 'bold' }
+            });
+
+            const pivotGridDiv = document.getElementById('pivotGrid');
+            pivotGridDiv.innerHTML = '';
+            AppState.pivotGridApi = agGrid.createGrid(pivotGridDiv, {
+                columnDefs: pivotColumnDefs,
+                rowData: buildRsdMdsPivotData(filteredRows),
+                defaultColDef: { flex: 1, minWidth: 90, resizable: true, sortable: true },
+                animateRows: true,
+                suppressCellFocus: true,
+                rowHeight: 28
+            });
+
+            // 2. Missed Cases Table Definition (Not Created)
+            const missedColumnDefs = [
+                { field: 'CLIENT_TIME_STAMP', headerName: 'CLIENT_TIME_STAMP', sortable: true, filter: true, width: 150 },
+                { field: 'PHONE_MODEL', headerName: 'PHONE_MODEL', sortable: true, filter: true, width: 130 },
+                { field: 'RSD_LOGIN_ID', headerName: 'RSD_LOGIN_ID', sortable: true, filter: true, width: 120 },
+                { field: 'USE_CASE', headerName: 'USE_CASE', sortable: true, filter: true, width: 130 },
+                { field: 'MOBILE_SERIAL_NUMBER', headerName: 'MOBILE_SERIAL_NUMBER', sortable: true, filter: true, width: 160 },
+                { field: 'Station Code', headerName: 'Station Code', sortable: true, filter: true, width: 110 },
+                { field: 'Station Name', headerName: 'Station Name', sortable: true, filter: true, width: 150 },
+                { field: 'Week No', headerName: 'Week No', sortable: true, filter: true, width: 100 },
+                { field: 'MDS So', headerName: 'MDS So', sortable: true, filter: true, width: 120 }
+            ];
+
+            const missedRows = filteredRows.filter(r => String(r['RSD vs MDS']).toLowerCase().includes('not created'));
+            const missedGridDiv = document.getElementById('missedGrid');
+            missedGridDiv.innerHTML = '';
+            AppState.missedGridApi = agGrid.createGrid(missedGridDiv, {
+                columnDefs: missedColumnDefs,
+                rowData: missedRows,
+                defaultColDef: { flex: 1, minWidth: 100, resizable: true, sortable: true },
+                animateRows: true,
+                suppressCellFocus: true,
+                rowHeight: 28
+            });
+        }
+
+        /* Export Helpers */
+        function exportData(format, exportMaster = false) {
+            const dataToExport = exportMaster ? AppState.normalizedData : AppState.filteredData;
+            if (!dataToExport || dataToExport.length === 0) {
+                alert('No data available to export.');
+                return;
+            }
+
+            const fileName = (exportMaster ? 'Master_Normalized_Dataset' : 'Filtered_BI_Dataset') + '_' + new Date().toISOString().slice(0,10);
+
+            if (format === 'csv') {
+                const csvString = Papa.unparse(dataToExport);
+                const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.setAttribute('download', `${fileName}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else if (format === 'excel') {
+                const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Normalized Data");
+                XLSX.writeFile(workbook, `${fileName}.xlsx`);
+            }
+        }
+
+        DOM.exportFilteredXlsx.addEventListener('click', () => exportData('excel', false));
+        DOM.exportFilteredCsv.addEventListener('click', () => exportData('csv', false));
+        DOM.exportMasterXlsx.addEventListener('click', () => exportData('excel', true));
+
+        DOM.exportPivotXlsx.addEventListener('click', () => {
+            const filteredRows = AppState.rsdMdsRaw.filter(row => {
+                return AppState.selectedRsdWeeks.has(row['Week No']) && AppState.selectedRsdStations.has(row['Station Name']) && AppState.selectedRsdUseCases.has(row['USE_CASE']) && AppState.selectedRsdStatuses.has(row['RSD vs MDS']);
+            });
+            const pivotData = buildRsdMdsPivotData(filteredRows);
+            const worksheet = XLSX.utils.json_to_sheet(pivotData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "RSD vs MDS Pivot");
+            XLSX.writeFile(workbook, `RSD_MDS_Pivot_${new Date().toISOString().slice(0,10)}.xlsx`);
+        });
+
+        DOM.exportMissedXlsx.addEventListener('click', () => {
+            const filteredRows = AppState.rsdMdsRaw.filter(row => {
+                return AppState.selectedRsdWeeks.has(row['Week No']) && AppState.selectedRsdStations.has(row['Station Name']) && AppState.selectedRsdUseCases.has(row['USE_CASE']) && AppState.selectedRsdStatuses.has(row['RSD vs MDS']) && String(row['RSD vs MDS']).toLowerCase().includes('not created');
+            });
+            const worksheet = XLSX.utils.json_to_sheet(filteredRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Missed Cases");
+            XLSX.writeFile(workbook, `Missed_Cases_${new Date().toISOString().slice(0,10)}.xlsx`);
+        });
+
+        DOM.resetAppBtn.addEventListener('click', () => location.reload());
+    </script>
+</body>
+</html>
