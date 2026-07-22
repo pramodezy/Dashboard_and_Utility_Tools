@@ -84,7 +84,6 @@
             font-size: 1.75rem;
         }
 
-        /* Dashboard Navigation Tabs */
         .tab-nav {
             display: flex;
             gap: 0.5rem;
@@ -113,6 +112,12 @@
             background: var(--surface);
             color: var(--primary);
             box-shadow: var(--shadow-sm);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         main {
@@ -224,6 +229,12 @@
             background-color: var(--danger-light);
             border: 1px solid #fca5a5;
             color: #b91c1c;
+        }
+
+        .alert-success {
+            background-color: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #047857;
         }
 
         .hidden {
@@ -447,7 +458,6 @@
             gap: 0.4rem;
         }
 
-        /* AG Grid Compact Typography Styling */
         .ag-theme-alpine {
             --ag-header-background-color: #f8fafc;
             --ag-header-foreground-color: #0f172a;
@@ -494,7 +504,6 @@
             <span>BI Performance Analytics</span>
         </div>
 
-        <!-- Dashboard Switcher Tabs -->
         <div id="tabNav" class="tab-nav hidden">
             <button id="tabPerfBtn" class="tab-btn active">
                 <span class="material-symbols-outlined" style="font-size:1.1rem;">monitoring</span>
@@ -504,11 +513,22 @@
                 <span class="material-symbols-outlined" style="font-size:1.1rem;">sync_alt</span>
                 RSD vs MDS
             </button>
+            <button id="tabPerfReviewBtn" class="tab-btn">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;">rate_review</span>
+                Performance Review
+            </button>
         </div>
 
-        <button id="resetAppBtn" class="btn btn-secondary hidden">
-            <span class="material-symbols-outlined">restart_alt</span> Upload New File
-        </button>
+        <div class="header-actions">
+            <button id="regionMappingBtn" class="btn btn-secondary hidden">
+                <span class="material-symbols-outlined">map</span> Upload Regional Mapping
+            </button>
+            <input type="file" id="regionFileInput" class="file-input" accept=".xlsx, .xlsb, .xls, .csv">
+
+            <button id="resetAppBtn" class="btn btn-secondary hidden">
+                <span class="material-symbols-outlined">restart_alt</span> Upload New File
+            </button>
+        </div>
     </header>
 
     <main>
@@ -517,12 +537,17 @@
             <span id="errorMessage">An error occurred during file processing.</span>
         </div>
 
-        <!-- 1. Upload View -->
+        <div id="successAlert" class="alert alert-success hidden">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span id="successMessage">Regional Mapping updated successfully!</span>
+        </div>
+
+        <!-- Upload View -->
         <div id="uploadView" class="card">
             <div id="dropZone" class="drop-zone">
                 <span class="material-symbols-outlined">cloud_upload</span>
                 <div>
-                    <h3>Drag and drop your Excel or CSV file here</h3>
+                    <h3>Drag and drop your Master Excel or CSV file here</h3>
                     <p>Supports <strong>.xlsx, .xlsb, .xls, and .csv</strong> files (Sheets: <strong>CCI Wise - KPI</strong> and <strong>RSD Vs MDS DATA MTD</strong>)</p>
                 </div>
                 <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">Browse File</button>
@@ -530,7 +555,7 @@
             </div>
         </div>
 
-        <!-- 2. Data Preview & Validation View -->
+        <!-- Preview View -->
         <div id="previewView" class="card hidden">
             <div class="preview-header">
                 <div>
@@ -591,10 +616,28 @@
             </div>
         </div>
 
-        <!-- 3. TAB 1: Performance Analytics View -->
+        <!-- TAB 1: Performance Analytics View -->
         <div id="dashboardView" class="hidden" style="display: flex; flex-direction: column; gap: 1.25rem;">
             <div class="filter-toolbar">
                 <div class="filter-controls">
+                    <div class="filter-group">
+                        <label>Region</label>
+                        <div class="dropdown-select" id="regionDropdown">
+                            <div class="dropdown-btn" id="regionDropdownBtn">
+                                <span>Select Region</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="regionDropdownMenu">
+                                <input type="text" class="dropdown-search" id="regionSearch" placeholder="Search regions...">
+                                <div class="dropdown-actions">
+                                    <button id="regionSelectAll">Select All</button>
+                                    <button id="regionUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="regionOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="filter-group">
                         <label>Period</label>
                         <div class="dropdown-select" id="periodDropdown">
@@ -654,12 +697,28 @@
             </div>
         </div>
 
-        <!-- 4. TAB 2: RSD vs MDS Dashboard View -->
+        <!-- TAB 2: RSD vs MDS Dashboard View -->
         <div id="rsdMdsView" class="hidden" style="display: flex; flex-direction: column; gap: 1.25rem;">
-            <!-- RSD vs MDS Filters -->
             <div class="filter-toolbar">
                 <div class="filter-controls">
-                    <!-- Week No Filter -->
+                    <div class="filter-group">
+                        <label>Region</label>
+                        <div class="dropdown-select" id="rmRegionDropdown">
+                            <div class="dropdown-btn" id="rmRegionDropdownBtn">
+                                <span>Select Region</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="rmRegionDropdownMenu">
+                                <input type="text" class="dropdown-search" id="rmRegionSearch" placeholder="Search regions...">
+                                <div class="dropdown-actions">
+                                    <button id="rmRegionSelectAll">Select All</button>
+                                    <button id="rmRegionUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="rmRegionOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="filter-group">
                         <label>Week No</label>
                         <div class="dropdown-select" id="rmWeekDropdown">
@@ -678,7 +737,6 @@
                         </div>
                     </div>
 
-                    <!-- Station Name Filter -->
                     <div class="filter-group">
                         <label>Station Name</label>
                         <div class="dropdown-select" id="rmStationDropdown">
@@ -697,7 +755,6 @@
                         </div>
                     </div>
 
-                    <!-- Use Case Filter -->
                     <div class="filter-group">
                         <label>Use Case</label>
                         <div class="dropdown-select" id="rmUseCaseDropdown">
@@ -716,7 +773,6 @@
                         </div>
                     </div>
 
-                    <!-- RSD vs MDS Status Filter -->
                     <div class="filter-group">
                         <label>RSD vs MDS</label>
                         <div class="dropdown-select" id="rmStatusDropdown">
@@ -750,7 +806,6 @@
                 </div>
             </div>
 
-            <!-- RSD vs MDS Pivot Table Section -->
             <div class="card" style="padding: 1rem;">
                 <div class="section-header">
                     <h3>
@@ -761,7 +816,6 @@
                 <div id="pivotGrid" class="ag-theme-alpine grid-container" style="height: 380px;"></div>
             </div>
 
-            <!-- RSD vs MDS Missed Cases Table Section -->
             <div class="card" style="padding: 1rem;">
                 <div class="section-header">
                     <h3>
@@ -770,6 +824,87 @@
                     </h3>
                 </div>
                 <div id="missedGrid" class="ag-theme-alpine grid-container" style="height: 380px;"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Performance Review View -->
+        <div id="perfReviewView" class="hidden" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="filter-toolbar">
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label>Region</label>
+                        <div class="dropdown-select" id="reviewRegionDropdown">
+                            <div class="dropdown-btn" id="reviewRegionDropdownBtn">
+                                <span>Select Region</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="reviewRegionDropdownMenu">
+                                <input type="text" class="dropdown-search" id="reviewRegionSearch" placeholder="Search regions...">
+                                <div class="dropdown-actions">
+                                    <button id="reviewRegionSelectAll">Select All</button>
+                                    <button id="reviewRegionUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="reviewRegionOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Station Name</label>
+                        <div class="dropdown-select" id="reviewStationDropdown">
+                            <div class="dropdown-btn" id="reviewStationDropdownBtn">
+                                <span>Select Stations</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="reviewStationDropdownMenu">
+                                <input type="text" class="dropdown-search" id="reviewStationSearch" placeholder="Search stations...">
+                                <div class="dropdown-actions">
+                                    <button id="reviewStationSelectAll">Select All</button>
+                                    <button id="reviewStationUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="reviewStationOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Select KPIs to Review</label>
+                        <div class="dropdown-select" id="reviewKpiDropdown">
+                            <div class="dropdown-btn" id="reviewKpiDropdownBtn">
+                                <span>Select KPIs</span>
+                                <span class="material-symbols-outlined">expand_more</span>
+                            </div>
+                            <div class="dropdown-menu" id="reviewKpiDropdownMenu">
+                                <input type="text" class="dropdown-search" id="reviewKpiSearch" placeholder="Search KPIs...">
+                                <div class="dropdown-actions">
+                                    <button id="reviewKpiSelectAll">Select All</button>
+                                    <button id="reviewKpiUnselectAll">Unselect All</button>
+                                </div>
+                                <div class="dropdown-options" id="reviewKpiOptionsContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="resetReviewFiltersBtn" class="btn btn-secondary" style="align-self: flex-end;">
+                        <span class="material-symbols-outlined">filter_alt_off</span> Reset Filters
+                    </button>
+                </div>
+
+                <div class="export-actions">
+                    <button id="exportReviewXlsx" class="btn btn-primary">
+                        <span class="material-symbols-outlined">file_download</span> Export Review Table (Excel)
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 1rem;">
+                <div class="section-header">
+                    <h3>
+                        <span class="material-symbols-outlined" style="color:var(--danger);">trending_down</span>
+                        Consistently Underperforming Stations (Last Active Weeks Below Target)
+                    </h3>
+                </div>
+                <div id="reviewGrid" class="ag-theme-alpine grid-container" style="height: 480px;"></div>
             </div>
         </div>
 
@@ -794,40 +929,58 @@
             normalizedData: [],
             filteredData: [],
             dynamicKPIs: [],
+            reviewSelectableKPIs: [],
+            rVolColumnKey: 'R Vol',
             detectedPeriods: [],
             detectedStations: [],
+            detectedRegions: ['Unmapped'],
+            regionMap: new Map(),
+
+            selectedRegions: new Set(['Unmapped']),
             selectedPeriods: new Set(),
             selectedStations: new Set(),
             skippedCount: 0,
             gridOptions: null,
             gridApi: null,
 
-            // RSD vs MDS Specific Data
             rsdMdsRaw: [],
             rsdMdsWeeks: [],
             rsdMdsStations: [],
             rsdMdsUseCases: [],
             rsdMdsStatuses: [],
+            selectedRsdRegions: new Set(['Unmapped']),
             selectedRsdWeeks: new Set(),
             selectedRsdStations: new Set(),
             selectedRsdUseCases: new Set(),
             selectedRsdStatuses: new Set(),
             pivotGridApi: null,
-            missedGridApi: null
+            missedGridApi: null,
+
+            selectedReviewRegions: new Set(['Unmapped']),
+            selectedReviewStations: new Set(),
+            selectedReviewKPIs: new Set(),
+            reviewGridApi: null,
+            currentReviewEvaluatedWeeks: [] // Holds weekly column headers dynamically (e.g., ['Wk 1', 'Wk 2', 'Wk 3'])
         };
 
         const DOM = {
             dropZone: document.getElementById('dropZone'),
             fileInput: document.getElementById('fileInput'),
+            regionMappingBtn: document.getElementById('regionMappingBtn'),
+            regionFileInput: document.getElementById('regionFileInput'),
             errorAlert: document.getElementById('errorAlert'),
             errorMessage: document.getElementById('errorMessage'),
+            successAlert: document.getElementById('successAlert'),
+            successMessage: document.getElementById('successMessage'),
             uploadView: document.getElementById('uploadView'),
             previewView: document.getElementById('previewView'),
             dashboardView: document.getElementById('dashboardView'),
             rsdMdsView: document.getElementById('rsdMdsView'),
+            perfReviewView: document.getElementById('perfReviewView'),
             tabNav: document.getElementById('tabNav'),
             tabPerfBtn: document.getElementById('tabPerfBtn'),
             tabRsdMdsBtn: document.getElementById('tabRsdMdsBtn'),
+            tabPerfReviewBtn: document.getElementById('tabPerfReviewBtn'),
             resetAppBtn: document.getElementById('resetAppBtn'),
             confirmNormalizeBtn: document.getElementById('confirmNormalizeBtn'),
             
@@ -839,7 +992,13 @@
             previewTableHeader: document.getElementById('previewTableHeader'),
             previewTableBody: document.getElementById('previewTableBody'),
 
-            // Tab 1 Filters
+            regionDropdownBtn: document.getElementById('regionDropdownBtn'),
+            regionDropdownMenu: document.getElementById('regionDropdownMenu'),
+            regionSearch: document.getElementById('regionSearch'),
+            regionOptionsContainer: document.getElementById('regionOptionsContainer'),
+            regionSelectAll: document.getElementById('regionSelectAll'),
+            regionUnselectAll: document.getElementById('regionUnselectAll'),
+
             periodDropdownBtn: document.getElementById('periodDropdownBtn'),
             periodDropdownMenu: document.getElementById('periodDropdownMenu'),
             periodSearch: document.getElementById('periodSearch'),
@@ -855,7 +1014,13 @@
             stationUnselectAll: document.getElementById('stationUnselectAll'),
             resetFiltersBtn: document.getElementById('resetFiltersBtn'),
 
-            // Tab 2 Filters
+            rmRegionDropdownBtn: document.getElementById('rmRegionDropdownBtn'),
+            rmRegionDropdownMenu: document.getElementById('rmRegionDropdownMenu'),
+            rmRegionSearch: document.getElementById('rmRegionSearch'),
+            rmRegionOptionsContainer: document.getElementById('rmRegionOptionsContainer'),
+            rmRegionSelectAll: document.getElementById('rmRegionSelectAll'),
+            rmRegionUnselectAll: document.getElementById('rmRegionUnselectAll'),
+
             rmWeekDropdownBtn: document.getElementById('rmWeekDropdownBtn'),
             rmWeekDropdownMenu: document.getElementById('rmWeekDropdownMenu'),
             rmWeekSearch: document.getElementById('rmWeekSearch'),
@@ -883,14 +1048,36 @@
             rmStatusOptionsContainer: document.getElementById('rmStatusOptionsContainer'),
             rmStatusSelectAll: document.getElementById('rmStatusSelectAll'),
             rmStatusUnselectAll: document.getElementById('rmStatusUnselectAll'),
-
             resetRsdMdsFiltersBtn: document.getElementById('resetRsdMdsFiltersBtn'),
+
+            reviewRegionDropdownBtn: document.getElementById('reviewRegionDropdownBtn'),
+            reviewRegionDropdownMenu: document.getElementById('reviewRegionDropdownMenu'),
+            reviewRegionSearch: document.getElementById('reviewRegionSearch'),
+            reviewRegionOptionsContainer: document.getElementById('reviewRegionOptionsContainer'),
+            reviewRegionSelectAll: document.getElementById('reviewRegionSelectAll'),
+            reviewRegionUnselectAll: document.getElementById('reviewRegionUnselectAll'),
+
+            reviewStationDropdownBtn: document.getElementById('reviewStationDropdownBtn'),
+            reviewStationDropdownMenu: document.getElementById('reviewStationDropdownMenu'),
+            reviewStationSearch: document.getElementById('reviewStationSearch'),
+            reviewStationOptionsContainer: document.getElementById('reviewStationOptionsContainer'),
+            reviewStationSelectAll: document.getElementById('reviewStationSelectAll'),
+            reviewStationUnselectAll: document.getElementById('reviewStationUnselectAll'),
+
+            reviewKpiDropdownBtn: document.getElementById('reviewKpiDropdownBtn'),
+            reviewKpiDropdownMenu: document.getElementById('reviewKpiDropdownMenu'),
+            reviewKpiSearch: document.getElementById('reviewKpiSearch'),
+            reviewKpiOptionsContainer: document.getElementById('reviewKpiOptionsContainer'),
+            reviewKpiSelectAll: document.getElementById('reviewKpiSelectAll'),
+            reviewKpiUnselectAll: document.getElementById('reviewKpiUnselectAll'),
+            resetReviewFiltersBtn: document.getElementById('resetReviewFiltersBtn'),
             
             exportFilteredXlsx: document.getElementById('exportFilteredXlsx'),
             exportFilteredCsv: document.getElementById('exportFilteredCsv'),
             exportMasterXlsx: document.getElementById('exportMasterXlsx'),
             exportPivotXlsx: document.getElementById('exportPivotXlsx'),
-            exportMissedXlsx: document.getElementById('exportMissedXlsx')
+            exportMissedXlsx: document.getElementById('exportMissedXlsx'),
+            exportReviewXlsx: document.getElementById('exportReviewXlsx')
         };
 
         function showError(msg) {
@@ -898,9 +1085,15 @@
             DOM.errorAlert.classList.remove('hidden');
         }
 
-        function clearError() {
+        function clearMessages() {
             DOM.errorAlert.classList.add('hidden');
-            DOM.errorMessage.textContent = '';
+            DOM.successAlert.classList.add('hidden');
+        }
+
+        function showSuccess(msg) {
+            DOM.successMessage.textContent = msg;
+            DOM.successAlert.classList.remove('hidden');
+            setTimeout(() => DOM.successAlert.classList.add('hidden'), 5000);
         }
 
         function normalizeString(str) {
@@ -912,7 +1105,7 @@
             if (!rawPeriod) return '';
             let str = String(rawPeriod).trim();
             str = str.replace(/^([A-Za-z]{3})['\s](\d{2})$/i, '$1-$2');
-            const wkMatch = str.match(/^WK\s*(\d+)$/i);
+            const wkMatch = str.match(/^WK[\s\-_]*0*(\d+)$/i);
             if (wkMatch) return `Wk ${wkMatch[1]}`;
             return str;
         }
@@ -933,7 +1126,8 @@
             if (strVal === '') return '';
 
             const isPPI = kpiName.toLowerCase().includes('ppi');
-            const isPercentKPI = (kpiName.includes('%') || kpiName.toLowerCase().includes('rr') || kpiName.toLowerCase().includes('pcb') || kpiName.toLowerCase().includes('lcm') || kpiName.toLowerCase().includes('cit') || kpiName.toLowerCase().includes('audit') || kpiName.toLowerCase().includes('fsb') || kpiName.toLowerCase().includes('focus') || kpiName.toLowerCase().includes('l-2.5') || kpiName.toLowerCase().includes('l2.5')) && !isPPI;
+            const isRVol = kpiName.toLowerCase().includes('r vol') || kpiName.toLowerCase().includes('rvol') || kpiName.toLowerCase().includes('volume');
+            const isPercentKPI = (kpiName.includes('%') || kpiName.toLowerCase().includes('rr') || kpiName.toLowerCase().includes('pcb') || kpiName.toLowerCase().includes('lcm') || kpiName.toLowerCase().includes('cit') || kpiName.toLowerCase().includes('audit') || kpiName.toLowerCase().includes('fsb') || kpiName.toLowerCase().includes('focus') || kpiName.toLowerCase().includes('l-2.5') || kpiName.toLowerCase().includes('l2.5')) && !isPPI && !isRVol;
 
             const cleanNum = parseFloat(strVal.replace(/%/g, ''));
             if (isNaN(cleanNum)) return strVal;
@@ -944,6 +1138,8 @@
                 return num.toFixed(1) + '%';
             } else if (isPPI) {
                 return cleanNum.toFixed(1);
+            } else if (isRVol) {
+                return Math.round(cleanNum).toString();
             } else {
                 return Number.isInteger(cleanNum) ? cleanNum.toString() : cleanNum.toFixed(1);
             }
@@ -957,7 +1153,6 @@
             return null;
         }
 
-        /* Dropzone Event Listeners */
         DOM.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); DOM.dropZone.classList.add('dragover'); });
         DOM.dropZone.addEventListener('dragleave', () => DOM.dropZone.classList.remove('dragover'));
         DOM.dropZone.addEventListener('drop', (e) => {
@@ -969,8 +1164,119 @@
             if (e.target.files.length > 0) processUploadedFile(e.target.files[0]);
         });
 
+        DOM.regionMappingBtn.addEventListener('click', () => DOM.regionFileInput.click());
+        DOM.regionFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) processRegionalMappingFile(e.target.files[0]);
+        });
+
+        function processRegionalMappingFile(file) {
+            clearMessages();
+            const fileName = file.name.toLowerCase();
+
+            const parseRows = (rows) => {
+                if (!rows || rows.length < 2) {
+                    showError("Regional Mapping file must contain headers and at least 1 data row.");
+                    return;
+                }
+
+                const headerRow = rows[0].map(h => String(h).trim());
+                let stCodeColIdx = headerRow.findIndex(h => ['station code', 'cci code', 'code', 'stationcode'].includes(normalizeString(h)));
+                if (stCodeColIdx === -1) stCodeColIdx = 0;
+
+                let regionColIdx = headerRow.findIndex(h => normalizeString(h) === 'region');
+                if (regionColIdx === -1) {
+                    regionColIdx = headerRow.findIndex(h => ['zone', 'area'].includes(normalizeString(h)));
+                }
+
+                if (regionColIdx === -1) {
+                    showError("Could not find a 'Region' column in the uploaded mapping file.");
+                    return;
+                }
+
+                let mappedCount = 0;
+                AppState.regionMap.clear();
+
+                for (let r = 1; r < rows.length; r++) {
+                    const row = rows[r];
+                    if (!row || row.length === 0) continue;
+
+                    const stCode = parseStationCode(row[stCodeColIdx]);
+                    const region = row[regionColIdx] ? String(row[regionColIdx]).trim() : '';
+
+                    if (stCode !== '' && region) {
+                        AppState.regionMap.set(stCode, region);
+                        mappedCount++;
+                    }
+                }
+
+                if (mappedCount === 0) {
+                    showError("No valid Station Code -> Region mappings found in file.");
+                    return;
+                }
+
+                applyRegionMapToData();
+                showSuccess(`Successfully mapped ${mappedCount} stations to regions!`);
+            };
+
+            if (fileName.endsWith('.csv')) {
+                Papa.parse(file, {
+                    skipEmptyLines: true,
+                    complete: (results) => parseRows(results.data),
+                    error: (err) => showError('Error parsing Regional Mapping CSV: ' + err.message)
+                });
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xlsb') || fileName.endsWith('.xls')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, defval: '' });
+                        parseRows(rows);
+                    } catch (err) {
+                        showError('Error reading Regional Mapping file: ' + err.message);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function applyRegionMapToData() {
+            const regionSet = new Set();
+
+            AppState.normalizedData.forEach(row => {
+                const mappedRegion = AppState.regionMap.get(row['Station Code']) || 'Unmapped';
+                row['Region'] = mappedRegion;
+                regionSet.add(mappedRegion);
+            });
+
+            AppState.rsdMdsRaw.forEach(row => {
+                const mappedRegion = AppState.regionMap.get(row['Station Code']) || 'Unmapped';
+                row['Region'] = mappedRegion;
+            });
+
+            AppState.detectedRegions = Array.from(regionSet).sort();
+
+            AppState.selectedRegions = new Set(AppState.detectedRegions);
+            AppState.selectedRsdRegions = new Set(AppState.detectedRegions);
+            AppState.selectedReviewRegions = new Set(AppState.detectedRegions);
+
+            initCustomDropdowns();
+            applyFilters();
+
+            if (!DOM.rsdMdsView.classList.contains('hidden')) {
+                setupRsdMdsDropdowns();
+                updateRsdMdsDashboard();
+            }
+
+            if (!DOM.perfReviewView.classList.contains('hidden')) {
+                setupReviewDropdowns();
+                updatePerformanceReviewTable();
+            }
+        }
+
         function processUploadedFile(file) {
-            clearError();
+            clearMessages();
             const fileName = file.name.toLowerCase();
 
             if (fileName.endsWith('.csv')) {
@@ -986,7 +1292,6 @@
                         const data = new Uint8Array(e.target.result);
                         const workbook = XLSX.read(data, { type: 'array', cellStyles: true, cellDates: true });
                         
-                        // 1. Sheet 1: CCI Wise - KPI
                         const targetNormalized1 = "cciwisekpi";
                         const matchedSheet1 = workbook.SheetNames.find(s => normalizeString(s) === targetNormalized1);
 
@@ -997,11 +1302,9 @@
 
                         const rowsSheet1 = XLSX.utils.sheet_to_json(workbook.Sheets[matchedSheet1], { header: 1, raw: false, defval: '' });
 
-                        // 2. Sheet 2: CCI-CIT, FSB, & Focus (Optional)
                         const matchedSheet2 = workbook.SheetNames.find(s => normalizeString(s) === "ccicitfsbfocus" || normalizeString(s).includes("ccicit"));
                         let rowsSheet2 = matchedSheet2 ? XLSX.utils.sheet_to_json(workbook.Sheets[matchedSheet2], { header: 1, raw: false, defval: '' }) : null;
 
-                        // 3. Sheet 3: RSD Vs MDS DATA MTD
                         const targetNormalized3 = "rsdvsmdsdatamtd";
                         const matchedSheet3 = workbook.SheetNames.find(s => normalizeString(s) === targetNormalized3 || (normalizeString(s).includes("rsd") && normalizeString(s).includes("mds")));
                         let rowsSheet3 = matchedSheet3 ? XLSX.utils.sheet_to_json(workbook.Sheets[matchedSheet3], { header: 1, raw: false, defval: '' }) : null;
@@ -1023,7 +1326,6 @@
                 return;
             }
 
-            // --- 1. PARSE PERFORMANCE KPI SHEET 1 & SHEET 2 ---
             const row1_s1 = rows1[0] || [];
             const row2_s1 = rows1[1] || [];
 
@@ -1066,8 +1368,17 @@
             AppState.dynamicKPIs = Array.from(kpiSet);
             AppState.detectedPeriods = Array.from(periodSet);
 
+            const detectedRVolKey = AppState.dynamicKPIs.find(k => normalizeString(k).includes('rvol') || normalizeString(k).includes('r vol'));
+            if (detectedRVolKey) {
+                AppState.rVolColumnKey = detectedRVolKey;
+                AppState.reviewSelectableKPIs = AppState.dynamicKPIs.filter(k => k !== detectedRVolKey);
+            } else {
+                AppState.reviewSelectableKPIs = AppState.dynamicKPIs.slice();
+            }
+
             const normalizedMap = new Map();
             const stationSet = new Set();
+            const regionSet = new Set();
             let skipped = 0;
 
             for (let r = 2; r < rows1.length; r++) {
@@ -1083,6 +1394,8 @@
                 }
 
                 stationSet.add(stationName);
+                const mappedRegion = AppState.regionMap.get(stationCode) || 'Unmapped';
+                regionSet.add(mappedRegion);
 
                 for (let c = 2; c < row.length; c++) {
                     const meta = colMap_s1[c];
@@ -1091,6 +1404,7 @@
                     const key = `${stationCode}||${meta.period}`;
                     if (!normalizedMap.has(key)) {
                         const newRec = {
+                            'Region': mappedRegion,
                             'Period': meta.period,
                             'Station Code': stationCode,
                             'Station Name': stationName
@@ -1136,9 +1450,10 @@
 
             AppState.normalizedData = Array.from(normalizedMap.values());
             AppState.detectedStations = Array.from(stationSet);
+            AppState.detectedRegions = Array.from(regionSet).sort();
             AppState.skippedCount = skipped;
 
-            // --- 2. PARSE SHEET 3 (RSD Vs MDS DATA MTD) ---
+            // RSD Vs MDS SHEET
             AppState.rsdMdsRaw = [];
             const rsdWeekSet = new Set();
             const rsdStationSet = new Set();
@@ -1147,10 +1462,7 @@
 
             if (rows3 && rows3.length >= 2) {
                 const headerRow = rows3[0].map(h => String(h).trim());
-                
-                const getColIdx = (colNames) => {
-                    return headerRow.findIndex(h => colNames.some(cn => normalizeString(h) === normalizeString(cn)));
-                };
+                const getColIdx = (colNames) => headerRow.findIndex(h => colNames.some(cn => normalizeString(h) === normalizeString(cn)));
 
                 const stCodeIdx = getColIdx(['Station Code', 'CCI Code', 'Code']);
                 const cciNameIdx = getColIdx(['CCI Name', 'Station Name', 'MDS Name']);
@@ -1173,6 +1485,7 @@
                     const weekNo = weekNoIdx >= 0 ? normalizePeriodName(row[weekNoIdx]) : '';
                     const useCase = useCaseIdx >= 0 ? String(row[useCaseIdx]).trim() : '';
                     const rsdVsMdsVal = rsdMdsIdx >= 0 ? String(row[rsdMdsIdx]).trim() : '';
+                    const mappedRegion = AppState.regionMap.get(stCode) || 'Unmapped';
 
                     if (!stName || !weekNo) continue;
 
@@ -1182,6 +1495,7 @@
                     if (rsdVsMdsVal) rsdStatusSet.add(rsdVsMdsVal);
 
                     AppState.rsdMdsRaw.push({
+                        'Region': mappedRegion,
                         'Station Code': stCode,
                         'Station Name': stName,
                         'Week No': weekNo,
@@ -1212,6 +1526,7 @@
             DOM.uploadView.classList.add('hidden');
             DOM.previewView.classList.remove('hidden');
             DOM.resetAppBtn.classList.remove('hidden');
+            DOM.regionMappingBtn.classList.remove('hidden');
 
             DOM.metricStations.textContent = AppState.detectedStations.length;
             DOM.metricKPIs.textContent = AppState.dynamicKPIs.length;
@@ -1219,7 +1534,7 @@
             DOM.metricRecords.textContent = AppState.normalizedData.length.toLocaleString();
             DOM.metricSkipped.textContent = AppState.skippedCount;
 
-            const headers = ['Period', 'Station Code', 'Station Name', ...AppState.dynamicKPIs];
+            const headers = ['Region', 'Period', 'Station Code', 'Station Name', ...AppState.dynamicKPIs];
             DOM.previewTableHeader.innerHTML = headers.map(h => {
                 const targetInfo = findKPITarget(h);
                 const displayHeader = targetInfo ? `${h} (${targetInfo.label})` : h;
@@ -1239,21 +1554,22 @@
             initializeDashboard();
         });
 
-        /* Tab Switcher Event Listeners */
-        DOM.tabPerfBtn.addEventListener('click', () => {
-            DOM.tabPerfBtn.classList.add('active');
-            DOM.tabRsdMdsBtn.classList.remove('active');
-            DOM.dashboardView.classList.remove('hidden');
-            DOM.rsdMdsView.classList.add('hidden');
-        });
-
+        DOM.tabPerfBtn.addEventListener('click', () => switchTab(DOM.tabPerfBtn, DOM.dashboardView));
         DOM.tabRsdMdsBtn.addEventListener('click', () => {
-            DOM.tabRsdMdsBtn.classList.add('active');
-            DOM.tabPerfBtn.classList.remove('active');
-            DOM.rsdMdsView.classList.remove('hidden');
-            DOM.dashboardView.classList.add('hidden');
+            switchTab(DOM.tabRsdMdsBtn, DOM.rsdMdsView);
             initRsdMdsDashboard();
         });
+        DOM.tabPerfReviewBtn.addEventListener('click', () => {
+            switchTab(DOM.tabPerfReviewBtn, DOM.perfReviewView);
+            initPerformanceReviewDashboard();
+        });
+
+        function switchTab(activeBtn, targetView) {
+            [DOM.tabPerfBtn, DOM.tabRsdMdsBtn, DOM.tabPerfReviewBtn].forEach(b => b.classList.remove('active'));
+            [DOM.dashboardView, DOM.rsdMdsView, DOM.perfReviewView].forEach(v => v.classList.add('hidden'));
+            activeBtn.classList.add('active');
+            targetView.classList.remove('hidden');
+        }
 
         /* ==========================================================================
            TAB 1: Performance Analytics Module
@@ -1275,9 +1591,13 @@
                 AppState.selectedPeriods.add(AppState.detectedPeriods[AppState.detectedPeriods.length - 1]);
             }
             AppState.selectedStations = new Set(AppState.detectedStations);
+            AppState.selectedRegions = new Set(AppState.detectedRegions);
         }
 
         function initCustomDropdowns() {
+            setupDropdown('regionDropdownBtn', 'regionDropdownMenu', 'regionSearch', 'regionOptionsContainer', 
+                          AppState.detectedRegions, AppState.selectedRegions, 'regionSelectAll', 'regionUnselectAll');
+
             setupDropdown('periodDropdownBtn', 'periodDropdownMenu', 'periodSearch', 'periodOptionsContainer', 
                           AppState.detectedPeriods, AppState.selectedPeriods, 'periodSelectAll', 'periodUnselectAll');
 
@@ -1365,9 +1685,10 @@
 
         function applyFilters() {
             AppState.filteredData = AppState.normalizedData.filter(row => {
+                const matchRegion = AppState.selectedRegions.has(row['Region']);
                 const matchPeriod = AppState.selectedPeriods.has(row['Period']);
                 const matchStation = AppState.selectedStations.has(row['Station Name']);
-                return matchPeriod && matchStation;
+                return matchRegion && matchPeriod && matchStation;
             });
 
             if (AppState.gridApi) {
@@ -1381,10 +1702,30 @@
             applyFilters();
         });
 
+        function parseKpiNumericValue(val) {
+            if (val === null || val === undefined) return null;
+            const str = String(val).replace(/%/g, '').trim();
+            if (str === '' || str === '-') return null;
+            const num = parseFloat(str);
+            return isNaN(num) ? null : num;
+        }
+
+        function numericKpiComparator(valueA, valueB) {
+            const numA = parseKpiNumericValue(valueA);
+            const numB = parseKpiNumericValue(valueB);
+
+            if (numA === null && numB === null) return 0;
+            if (numA === null) return -1;
+            if (numB === null) return 1;
+
+            return numA - numB;
+        }
+
         function renderAGGrid() {
             const columnDefs = [
+                { field: 'Region', sortable: true, filter: true, pinned: 'left', width: 110 },
                 { field: 'Period', sortable: true, filter: true, pinned: 'left', width: 90 },
-                { field: 'Station Code', sortable: true, filter: true, pinned: 'left', width: 110 },
+                { field: 'Station Code', sortable: true, filter: true, pinned: 'left', width: 110, comparator: numericKpiComparator },
                 { field: 'Station Name', sortable: true, filter: true, pinned: 'left', width: 140 }
             ];
 
@@ -1401,11 +1742,12 @@
                     width: 110,
                     wrapHeaderText: true,
                     autoHeaderHeight: true,
+                    comparator: numericKpiComparator,
                     valueFormatter: params => (params.value === null || params.value === undefined) ? '' : params.value,
                     cellClass: params => {
-                        if (!targetInfo || params.value === '' || params.value === null || params.value === undefined) return '';
-                        const num = parseFloat(String(params.value).replace(/%/g, ''));
-                        if (isNaN(num)) return '';
+                        if (!targetInfo || params.value === '' || params.value === null || params.value === undefined || params.value === '-') return '';
+                        const num = parseKpiNumericValue(params.value);
+                        if (num === null) return '';
 
                         const target = targetInfo.target;
                         const cleanKey = kpi.toLowerCase().replace(/%/g, '').trim();
@@ -1456,6 +1798,7 @@
             } else {
                 AppState.selectedRsdWeeks = new Set(AppState.rsdMdsWeeks);
             }
+            AppState.selectedRsdRegions = new Set(AppState.detectedRegions);
             AppState.selectedRsdStations = new Set(AppState.rsdMdsStations);
             AppState.selectedRsdUseCases = new Set(AppState.rsdMdsUseCases);
             AppState.selectedRsdStatuses = new Set(AppState.rsdMdsStatuses);
@@ -1465,6 +1808,9 @@
         }
 
         function setupRsdMdsDropdowns() {
+            setupDropdown('rmRegionDropdownBtn', 'rmRegionDropdownMenu', 'rmRegionSearch', 'rmRegionOptionsContainer',
+                          AppState.detectedRegions, AppState.selectedRsdRegions, 'rmRegionSelectAll', 'rmRegionUnselectAll', updateRsdMdsDashboard);
+
             setupDropdown('rmWeekDropdownBtn', 'rmWeekDropdownMenu', 'rmWeekSearch', 'rmWeekOptionsContainer',
                           AppState.rsdMdsWeeks, AppState.selectedRsdWeeks, 'rmWeekSelectAll', 'rmWeekUnselectAll', updateRsdMdsDashboard);
 
@@ -1479,6 +1825,7 @@
         }
 
         DOM.resetRsdMdsFiltersBtn.addEventListener('click', () => {
+            AppState.selectedRsdRegions = new Set(AppState.detectedRegions);
             AppState.selectedRsdWeeks = new Set(AppState.rsdMdsWeeks);
             AppState.selectedRsdStations = new Set(AppState.rsdMdsStations);
             AppState.selectedRsdUseCases = new Set(AppState.rsdMdsUseCases);
@@ -1489,20 +1836,19 @@
 
         function updateRsdMdsDashboard() {
             const filteredRows = AppState.rsdMdsRaw.filter(row => {
+                const matchRegion = AppState.selectedRsdRegions.has(row['Region']);
                 const matchWk = AppState.selectedRsdWeeks.has(row['Week No']);
                 const matchSt = AppState.selectedRsdStations.has(row['Station Name']);
                 const matchUc = AppState.selectedRsdUseCases.has(row['USE_CASE']);
                 const matchStatus = AppState.selectedRsdStatuses.has(row['RSD vs MDS']);
-                return matchWk && matchSt && matchUc && matchStatus;
+                return matchRegion && matchWk && matchSt && matchUc && matchStatus;
             });
 
-            // Update Pivot Data
             const pivotData = buildRsdMdsPivotData(filteredRows);
             if (AppState.pivotGridApi) {
                 AppState.pivotGridApi.setRowData(pivotData);
             }
 
-            // Update Missed Cases Data (RSD vs MDS = "Not Created")
             const missedData = filteredRows.filter(r => String(r['RSD vs MDS']).toLowerCase().includes('not created'));
             if (AppState.missedGridApi) {
                 AppState.missedGridApi.setRowData(missedData);
@@ -1513,14 +1859,16 @@
             const pivotMap = new Map();
 
             filteredRows.forEach(row => {
+                const region = row['Region'];
                 const wk = row['Week No'];
                 const stCode = row['Station Code'];
                 const stName = row['Station Name'];
                 const uc = row['USE_CASE'];
 
-                const key = `${wk}||${stCode}||${stName}`;
+                const key = `${region}||${wk}||${stCode}||${stName}`;
                 if (!pivotMap.has(key)) {
                     const obj = {
+                        'Region': region,
                         'Week No': wk,
                         'Station Code': stCode,
                         'Station Name': stName,
@@ -1542,17 +1890,18 @@
 
         function renderRsdMdsTables() {
             const filteredRows = AppState.rsdMdsRaw.filter(row => {
+                const matchRegion = AppState.selectedRsdRegions.has(row['Region']);
                 const matchWk = AppState.selectedRsdWeeks.has(row['Week No']);
                 const matchSt = AppState.selectedRsdStations.has(row['Station Name']);
                 const matchUc = AppState.selectedRsdUseCases.has(row['USE_CASE']);
                 const matchStatus = AppState.selectedRsdStatuses.has(row['RSD vs MDS']);
-                return matchWk && matchSt && matchUc && matchStatus;
+                return matchRegion && matchWk && matchSt && matchUc && matchStatus;
             });
 
-            // 1. Pivot Table Definition
             const pivotColumnDefs = [
+                { field: 'Region', sortable: true, filter: true, pinned: 'left', width: 110 },
                 { field: 'Week No', sortable: true, filter: true, pinned: 'left', width: 100 },
-                { field: 'Station Code', sortable: true, filter: true, pinned: 'left', width: 110 },
+                { field: 'Station Code', sortable: true, filter: true, pinned: 'left', width: 110, comparator: numericKpiComparator },
                 { field: 'Station Name', sortable: true, filter: true, pinned: 'left', width: 150 }
             ];
 
@@ -1589,14 +1938,14 @@
                 rowHeight: 28
             });
 
-            // 2. Missed Cases Table Definition (Not Created)
             const missedColumnDefs = [
+                { field: 'Region', headerName: 'Region', sortable: true, filter: true, width: 110 },
                 { field: 'CLIENT_TIME_STAMP', headerName: 'CLIENT_TIME_STAMP', sortable: true, filter: true, width: 150 },
                 { field: 'PHONE_MODEL', headerName: 'PHONE_MODEL', sortable: true, filter: true, width: 130 },
                 { field: 'RSD_LOGIN_ID', headerName: 'RSD_LOGIN_ID', sortable: true, filter: true, width: 120 },
                 { field: 'USE_CASE', headerName: 'USE_CASE', sortable: true, filter: true, width: 130 },
                 { field: 'MOBILE_SERIAL_NUMBER', headerName: 'MOBILE_SERIAL_NUMBER', sortable: true, filter: true, width: 160 },
-                { field: 'Station Code', headerName: 'Station Code', sortable: true, filter: true, width: 110 },
+                { field: 'Station Code', headerName: 'Station Code', sortable: true, filter: true, width: 110, comparator: numericKpiComparator },
                 { field: 'Station Name', headerName: 'Station Name', sortable: true, filter: true, width: 150 },
                 { field: 'Week No', headerName: 'Week No', sortable: true, filter: true, width: 100 },
                 { field: 'MDS So', headerName: 'MDS So', sortable: true, filter: true, width: 120 }
@@ -1609,6 +1958,185 @@
                 columnDefs: missedColumnDefs,
                 rowData: missedRows,
                 defaultColDef: { flex: 1, minWidth: 100, resizable: true, sortable: true },
+                animateRows: true,
+                suppressCellFocus: true,
+                rowHeight: 28
+            });
+        }
+
+        /* ==========================================================================
+           TAB 3: Performance Review Module Engine (Period Column Removed, Weeks as Columns)
+           ========================================================================== */
+
+        function initPerformanceReviewDashboard() {
+            AppState.selectedReviewRegions = new Set(AppState.detectedRegions);
+            AppState.selectedReviewStations = new Set(AppState.detectedStations);
+            AppState.selectedReviewKPIs = new Set(AppState.reviewSelectableKPIs);
+            setupReviewDropdowns();
+            renderPerformanceReviewTable();
+        }
+
+        function setupReviewDropdowns() {
+            setupDropdown('reviewRegionDropdownBtn', 'reviewRegionDropdownMenu', 'reviewRegionSearch', 'reviewRegionOptionsContainer',
+                          AppState.detectedRegions, AppState.selectedReviewRegions, 'reviewRegionSelectAll', 'reviewRegionUnselectAll', renderPerformanceReviewTable);
+
+            setupDropdown('reviewStationDropdownBtn', 'reviewStationDropdownMenu', 'reviewStationSearch', 'reviewStationOptionsContainer',
+                          AppState.detectedStations, AppState.selectedReviewStations, 'reviewStationSelectAll', 'reviewStationUnselectAll', renderPerformanceReviewTable);
+
+            setupDropdown('reviewKpiDropdownBtn', 'reviewKpiDropdownMenu', 'reviewKpiSearch', 'reviewKpiOptionsContainer',
+                          AppState.reviewSelectableKPIs, AppState.selectedReviewKPIs, 'reviewKpiSelectAll', 'reviewKpiUnselectAll', renderPerformanceReviewTable);
+        }
+
+        DOM.resetReviewFiltersBtn.addEventListener('click', () => {
+            AppState.selectedReviewRegions = new Set(AppState.detectedRegions);
+            AppState.selectedReviewStations = new Set(AppState.detectedStations);
+            AppState.selectedReviewKPIs = new Set(AppState.reviewSelectableKPIs);
+            setupReviewDropdowns();
+            renderPerformanceReviewTable();
+        });
+
+        function getCellPerformanceStatus(kpiName, rawVal) {
+            const str = String(rawVal).trim();
+            if (!rawVal || str === '' || str === '-') {
+                return 'NEUTRAL';
+            }
+
+            const num = parseKpiNumericValue(rawVal);
+            if (num === null) return 'NEUTRAL';
+
+            const targetInfo = findKPITarget(kpiName);
+            const target = targetInfo ? targetInfo.target : 100.0;
+            const cleanKey = kpiName.toLowerCase().replace(/%/g, '').trim();
+            const isHigherIsBetter = cleanKey.includes('cit') || cleanKey.includes('audit') || cleanKey.includes('fsb') || cleanKey.includes('focus') || cleanKey.includes('l-2.5') || cleanKey.includes('l2.5');
+
+            if (isHigherIsBetter) {
+                return num >= target ? 'PASSED' : 'FAILED';
+            } else {
+                return num <= target ? 'PASSED' : 'FAILED';
+            }
+        }
+
+        function buildPerformanceReviewPivotedData() {
+            const reviewRows = [];
+            const evaluatedWeeksSet = new Set();
+
+            let weeklyPeriods = AppState.detectedPeriods
+                .filter(p => /^Wk\s*\d+/i.test(p.trim()))
+                .sort((a, b) => {
+                    const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
+                    const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
+                    return numA - numB;
+                });
+
+            if (weeklyPeriods.length === 0) {
+                weeklyPeriods = AppState.detectedPeriods.slice();
+            }
+
+            AppState.selectedReviewKPIs.forEach(kpi => {
+                const activeWeeksForKpi = weeklyPeriods.filter(wk => {
+                    return AppState.normalizedData.some(r => r['Period'] === wk && parseKpiNumericValue(r[kpi]) !== null);
+                });
+
+                if (activeWeeksForKpi.length === 0) return;
+
+                const evalWeeks = activeWeeksForKpi.slice(-3);
+                evalWeeks.forEach(w => evaluatedWeeksSet.add(w));
+
+                AppState.detectedStations.forEach(stName => {
+                    if (!AppState.selectedReviewStations.has(stName)) return;
+
+                    const sampleRec = AppState.normalizedData.find(r => 
+                        String(r['Station Name']).trim().toLowerCase() === String(stName).trim().toLowerCase()
+                    );
+                    
+                    const stCode = sampleRec ? sampleRec['Station Code'] : '';
+                    const region = sampleRec ? sampleRec['Region'] : 'Unmapped';
+
+                    if (!AppState.selectedReviewRegions.has(region)) return;
+
+                    let passedCount = 0;
+                    let failedCount = 0;
+                    const weekValuesObj = {};
+                    let latestRVol = '-';
+
+                    for (const wk of evalWeeks) {
+                        const rec = AppState.normalizedData.find(r => 
+                            String(r['Station Name']).trim().toLowerCase() === String(stName).trim().toLowerCase() && 
+                            r['Period'] === wk
+                        );
+                        const val = rec ? rec[kpi] : '-';
+                        if (rec && AppState.rVolColumnKey && rec[AppState.rVolColumnKey] !== undefined && rec[AppState.rVolColumnKey] !== '') {
+                            latestRVol = rec[AppState.rVolColumnKey];
+                        }
+
+                        const status = getCellPerformanceStatus(kpi, val);
+                        if (status === 'PASSED') passedCount++;
+                        if (status === 'FAILED') failedCount++;
+
+                        weekValuesObj[wk] = (val === '' ? '-' : val);
+                    }
+
+                    // FLAGGED IF: No week met target AND at least one week explicitly failed
+                    if (passedCount === 0 && failedCount > 0) {
+                        const rowObj = {
+                            'Region': region,
+                            'Station Code': stCode,
+                            'Station Name': stName,
+                            'R Vol Count': latestRVol,
+                            'KPI Name': kpi
+                        };
+
+                        // Assign week values horizontally as columns
+                        evalWeeks.forEach(wk => {
+                            rowObj[wk] = weekValuesObj[wk] || '-';
+                        });
+
+                        reviewRows.push(rowObj);
+                    }
+                });
+            });
+
+            // Keep track of evaluated weeks array sorted chronologically for dynamic AG Grid columns
+            AppState.currentReviewEvaluatedWeeks = Array.from(evaluatedWeeksSet).sort((a, b) => {
+                const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
+                const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
+                return numA - numB;
+            });
+
+            return reviewRows;
+        }
+
+        function renderPerformanceReviewTable() {
+            const reviewData = buildPerformanceReviewPivotedData();
+
+            // Dynamic AG Grid Column Definitions
+            const reviewColumnDefs = [
+                { field: 'Region', headerName: 'Region', sortable: true, filter: true, width: 110, pinned: 'left' },
+                { field: 'Station Code', headerName: 'Station Code', sortable: true, filter: true, width: 110, pinned: 'left', comparator: numericKpiComparator },
+                { field: 'Station Name', headerName: 'Station Name', sortable: true, filter: true, width: 160, pinned: 'left' },
+                { field: 'R Vol Count', headerName: 'R Vol Count', sortable: true, filter: true, width: 110, comparator: numericKpiComparator },
+                { field: 'KPI Name', headerName: 'KPI Name', sortable: true, filter: true, width: 170 }
+            ];
+
+            // Append Period values (Wk 1, Wk 2, Wk 3...) horizontally as table columns
+            AppState.currentReviewEvaluatedWeeks.forEach(wk => {
+                reviewColumnDefs.push({
+                    field: wk,
+                    headerName: wk,
+                    sortable: true,
+                    filter: true,
+                    width: 100,
+                    comparator: numericKpiComparator,
+                    cellClass: 'kpi-cell-red' // Highlight underperforming weekly values
+                });
+            });
+
+            const gridDiv = document.getElementById('reviewGrid');
+            gridDiv.innerHTML = '';
+            AppState.reviewGridApi = agGrid.createGrid(gridDiv, {
+                columnDefs: reviewColumnDefs,
+                rowData: reviewData,
+                defaultColDef: { flex: 1, minWidth: 95, resizable: true, sortable: true },
                 animateRows: true,
                 suppressCellFocus: true,
                 rowHeight: 28
@@ -1648,7 +2176,7 @@
 
         DOM.exportPivotXlsx.addEventListener('click', () => {
             const filteredRows = AppState.rsdMdsRaw.filter(row => {
-                return AppState.selectedRsdWeeks.has(row['Week No']) && AppState.selectedRsdStations.has(row['Station Name']) && AppState.selectedRsdUseCases.has(row['USE_CASE']) && AppState.selectedRsdStatuses.has(row['RSD vs MDS']);
+                return AppState.selectedRsdRegions.has(row['Region']) && AppState.selectedRsdWeeks.has(row['Week No']) && AppState.selectedRsdStations.has(row['Station Name']) && AppState.selectedRsdUseCases.has(row['USE_CASE']) && AppState.selectedRsdStatuses.has(row['RSD vs MDS']);
             });
             const pivotData = buildRsdMdsPivotData(filteredRows);
             const worksheet = XLSX.utils.json_to_sheet(pivotData);
@@ -1659,12 +2187,24 @@
 
         DOM.exportMissedXlsx.addEventListener('click', () => {
             const filteredRows = AppState.rsdMdsRaw.filter(row => {
-                return AppState.selectedRsdWeeks.has(row['Week No']) && AppState.selectedRsdStations.has(row['Station Name']) && AppState.selectedRsdUseCases.has(row['USE_CASE']) && AppState.selectedRsdStatuses.has(row['RSD vs MDS']) && String(row['RSD vs MDS']).toLowerCase().includes('not created');
+                return AppState.selectedRsdRegions.has(row['Region']) && AppState.selectedRsdWeeks.has(row['Week No']) && AppState.selectedRsdStations.has(row['Station Name']) && AppState.selectedRsdUseCases.has(row['USE_CASE']) && AppState.selectedRsdStatuses.has(row['RSD vs MDS']) && String(row['RSD vs MDS']).toLowerCase().includes('not created');
             });
             const worksheet = XLSX.utils.json_to_sheet(filteredRows);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Missed Cases");
             XLSX.writeFile(workbook, `Missed_Cases_${new Date().toISOString().slice(0,10)}.xlsx`);
+        });
+
+        DOM.exportReviewXlsx.addEventListener('click', () => {
+            const reviewData = buildPerformanceReviewPivotedData();
+            if (!reviewData || reviewData.length === 0) {
+                alert('No underperforming records found for review.');
+                return;
+            }
+            const worksheet = XLSX.utils.json_to_sheet(reviewData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Performance Review");
+            XLSX.writeFile(workbook, `Performance_Review_${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
         DOM.resetAppBtn.addEventListener('click', () => location.reload());
