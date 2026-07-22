@@ -19,6 +19,9 @@
     <!-- PapaParse (CSV) CDN -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
+    <!-- html2canvas (Table Snapshot) CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
     <!-- AG Grid Community CDN -->
     <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/dist/ag-grid-community.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/styles/ag-grid.css">
@@ -494,6 +497,16 @@
             color: #991b1b !important;
             font-weight: 600;
         }
+
+        .review-text-failing {
+            color: #991b1b !important;
+            font-weight: 700 !important;
+        }
+
+        .review-text-neutral {
+            color: #0f172a !important;
+            font-weight: 400 !important;
+        }
     </style>
 </head>
 <body>
@@ -891,13 +904,17 @@
                 </div>
 
                 <div class="export-actions">
+                    <button id="captureSnapshotBtn" class="btn btn-secondary">
+                        <span class="material-symbols-outlined">photo_camera</span> Capture A4 Snapshot (PNG)
+                    </button>
                     <button id="exportReviewXlsx" class="btn btn-primary">
                         <span class="material-symbols-outlined">file_download</span> Export Review Table (Excel)
                     </button>
                 </div>
             </div>
 
-            <div class="card" style="padding: 1rem;">
+            <!-- Target Card Container for Snapshot Capture -->
+            <div id="reviewCardTarget" class="card" style="padding: 1rem;">
                 <div class="section-header">
                     <h3>
                         <span class="material-symbols-outlined" style="color:var(--danger);">trending_down</span>
@@ -960,7 +977,7 @@
             selectedReviewStations: new Set(),
             selectedReviewKPIs: new Set(),
             reviewGridApi: null,
-            currentReviewEvaluatedWeeks: [] // Holds weekly column headers dynamically (e.g., ['Wk 1', 'Wk 2', 'Wk 3'])
+            currentReviewEvaluatedWeeks: []
         };
 
         const DOM = {
@@ -1077,7 +1094,8 @@
             exportMasterXlsx: document.getElementById('exportMasterXlsx'),
             exportPivotXlsx: document.getElementById('exportPivotXlsx'),
             exportMissedXlsx: document.getElementById('exportMissedXlsx'),
-            exportReviewXlsx: document.getElementById('exportReviewXlsx')
+            exportReviewXlsx: document.getElementById('exportReviewXlsx'),
+            captureSnapshotBtn: document.getElementById('captureSnapshotBtn')
         };
 
         function showError(msg) {
@@ -1271,7 +1289,7 @@
 
             if (!DOM.perfReviewView.classList.contains('hidden')) {
                 setupReviewDropdowns();
-                updatePerformanceReviewTable();
+                renderPerformanceReviewTable();
             }
         }
 
@@ -1453,7 +1471,7 @@
             AppState.detectedRegions = Array.from(regionSet).sort();
             AppState.skippedCount = skipped;
 
-            // RSD Vs MDS SHEET
+            // RSD Vs MDS SHEET Parsing
             AppState.rsdMdsRaw = [];
             const rsdWeekSet = new Set();
             const rsdStationSet = new Set();
@@ -1965,7 +1983,7 @@
         }
 
         /* ==========================================================================
-           TAB 3: Performance Review Module Engine (Period Column Removed, Weeks as Columns)
+           TAB 3: Performance Review Module Engine
            ========================================================================== */
 
         function initPerformanceReviewDashboard() {
@@ -2042,6 +2060,9 @@
                 const evalWeeks = activeWeeksForKpi.slice(-3);
                 evalWeeks.forEach(w => evaluatedWeeksSet.add(w));
 
+                const targetInfo = findKPITarget(kpi);
+                const targetLabel = targetInfo ? targetInfo.label : 'N/A';
+
                 AppState.detectedStations.forEach(stName => {
                     if (!AppState.selectedReviewStations.has(stName)) return;
 
@@ -2076,17 +2097,16 @@
                         weekValuesObj[wk] = (val === '' ? '-' : val);
                     }
 
-                    // FLAGGED IF: No week met target AND at least one week explicitly failed
                     if (passedCount === 0 && failedCount > 0) {
                         const rowObj = {
                             'Region': region,
                             'Station Code': stCode,
                             'Station Name': stName,
                             'R Vol Count': latestRVol,
-                            'KPI Name': kpi
+                            'KPI Name': kpi,
+                            'KPI Target': targetLabel
                         };
 
-                        // Assign week values horizontally as columns
                         evalWeeks.forEach(wk => {
                             rowObj[wk] = weekValuesObj[wk] || '-';
                         });
@@ -2096,7 +2116,6 @@
                 });
             });
 
-            // Keep track of evaluated weeks array sorted chronologically for dynamic AG Grid columns
             AppState.currentReviewEvaluatedWeeks = Array.from(evaluatedWeeksSet).sort((a, b) => {
                 const numA = parseInt(a.replace(/\D/g, ''), 10) || 0;
                 const numB = parseInt(b.replace(/\D/g, ''), 10) || 0;
@@ -2109,25 +2128,58 @@
         function renderPerformanceReviewTable() {
             const reviewData = buildPerformanceReviewPivotedData();
 
-            // Dynamic AG Grid Column Definitions
             const reviewColumnDefs = [
-                { field: 'Region', headerName: 'Region', sortable: true, filter: true, width: 110, pinned: 'left' },
-                { field: 'Station Code', headerName: 'Station Code', sortable: true, filter: true, width: 110, pinned: 'left', comparator: numericKpiComparator },
-                { field: 'Station Name', headerName: 'Station Name', sortable: true, filter: true, width: 160, pinned: 'left' },
-                { field: 'R Vol Count', headerName: 'R Vol Count', sortable: true, filter: true, width: 110, comparator: numericKpiComparator },
-                { field: 'KPI Name', headerName: 'KPI Name', sortable: true, filter: true, width: 170 }
+                { 
+                    field: 'Region', 
+                    headerName: 'Region', 
+                    sortable: true, 
+                    filter: true, 
+                    width: 110, 
+                    pinned: 'left',
+                    sort: 'asc',
+                    sortIndex: 0
+                },
+                { 
+                    field: 'Station Code', 
+                    headerName: 'Station Code', 
+                    sortable: true, 
+                    filter: true, 
+                    width: 110, 
+                    pinned: 'left', 
+                    comparator: numericKpiComparator 
+                },
+                { 
+                    field: 'Station Name', 
+                    headerName: 'Station Name', 
+                    sortable: true, 
+                    filter: true, 
+                    width: 160, 
+                    pinned: 'left',
+                    sort: 'asc',
+                    sortIndex: 1
+                },
+                { field: 'R Vol Count', headerName: 'R Vol Count', sortable: true, filter: true, width: 100, comparator: numericKpiComparator },
+                { field: 'KPI Name', headerName: 'KPI Name', sortable: true, filter: true, width: 160 },
+                { field: 'KPI Target', headerName: 'KPI Target', sortable: true, filter: true, width: 100, cellStyle: { fontWeight: '600', color: 'var(--text-muted)' } }
             ];
 
-            // Append Period values (Wk 1, Wk 2, Wk 3...) horizontally as table columns
             AppState.currentReviewEvaluatedWeeks.forEach(wk => {
                 reviewColumnDefs.push({
                     field: wk,
                     headerName: wk,
                     sortable: true,
                     filter: true,
-                    width: 100,
+                    width: 95,
                     comparator: numericKpiComparator,
-                    cellClass: 'kpi-cell-red' // Highlight underperforming weekly values
+                    cellClass: params => {
+                        const val = params.value;
+                        if (!val || val === '-') {
+                            return 'review-text-neutral';
+                        }
+                        const kpiName = params.data ? params.data['KPI Name'] : '';
+                        const status = getCellPerformanceStatus(kpiName, val);
+                        return status === 'FAILED' ? 'review-text-failing' : 'review-text-neutral';
+                    }
                 });
             });
 
@@ -2136,12 +2188,147 @@
             AppState.reviewGridApi = agGrid.createGrid(gridDiv, {
                 columnDefs: reviewColumnDefs,
                 rowData: reviewData,
-                defaultColDef: { flex: 1, minWidth: 95, resizable: true, sortable: true },
+                defaultColDef: { flex: 1, minWidth: 90, resizable: true, sortable: true },
                 animateRows: true,
                 suppressCellFocus: true,
-                rowHeight: 28
+                rowHeight: 28,
+                multiSortKey: 'ctrl'
             });
         }
+
+        /* ==========================================================================
+           A4 Landscape Multi-Page Print Engine (PRESORTED AG GRID ROW EXTRACTOR)
+           ========================================================================== */
+        DOM.captureSnapshotBtn.addEventListener('click', async () => {
+            if (!AppState.reviewGridApi) {
+                alert("Table is not initialized.");
+                return;
+            }
+
+            // Extract rows directly from AG Grid in their current visual/sorted order
+            const sortedReviewData = [];
+            AppState.reviewGridApi.forEachNodeAfterFilterAndSort(node => {
+                if (node.data) {
+                    sortedReviewData.push(node.data);
+                }
+            });
+
+            if (sortedReviewData.length === 0) {
+                alert("No underperforming records available to capture.");
+                return;
+            }
+
+            showSuccess("Generating high-resolution A4 Landscape snapshot with applied sorting...");
+
+            // 1. Create Off-screen Printable Document Container
+            const printDoc = document.createElement('div');
+            printDoc.style.position = 'absolute';
+            printDoc.style.left = '-9999px';
+            printDoc.style.top = '-9999px';
+            printDoc.style.width = '1120px'; // Standard A4 Landscape width
+            printDoc.style.backgroundColor = '#ffffff';
+            printDoc.style.fontFamily = "'Inter', sans-serif";
+            printDoc.style.padding = '20px';
+            printDoc.style.color = '#0f172a';
+
+            const weekCols = AppState.currentReviewEvaluatedWeeks;
+
+            // 2. Dynamic Pagination: Split sorted rows into page blocks (~22 rows per page)
+            const ROWS_PER_PAGE = 22;
+            const totalPages = Math.ceil(sortedReviewData.length / ROWS_PER_PAGE);
+
+            let docHtml = '';
+
+            for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
+                const pageRows = sortedReviewData.slice(pageIdx * ROWS_PER_PAGE, (pageIdx + 1) * ROWS_PER_PAGE);
+
+                docHtml += `
+                    <div style="page-break-after: always; margin-bottom: 30px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; background: #ffffff;">
+                        <!-- Header Section -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 15px;">
+                            <div>
+                                <h2 style="font-size: 16px; font-weight: 700; color: #1e3a8a; margin: 0;">
+                                    Consistently Underperforming Stations Review
+                                </h2>
+                                <p style="font-size: 11px; color: #64748b; margin: 2px 0 0 0;">
+                                    Last Active Weeks Below Target Evaluation
+                                </p>
+                            </div>
+                            <div style="text-align: right; font-size: 11px; color: #64748b;">
+                                <strong>Page ${pageIdx + 1} of ${totalPages}</strong><br>
+                                Date: ${new Date().toISOString().slice(0,10)}
+                            </div>
+                        </div>
+
+                        <!-- Table with Preserved Sorted Rows & Repeating Header -->
+                        <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+                            <thead>
+                                <tr style="background-color: #f8fafc; border-bottom: 1px solid #cbd5e1;">
+                                    <th style="padding: 8px 6px; font-weight: 700; width: 12%;">Region</th>
+                                    <th style="padding: 8px 6px; font-weight: 700; width: 10%;">Station Code</th>
+                                    <th style="padding: 8px 6px; font-weight: 700; width: 22%;">Station Name</th>
+                                    <th style="padding: 8px 6px; font-weight: 700; width: 10%;">R Vol Count</th>
+                                    <th style="padding: 8px 6px; font-weight: 700; width: 18%;">KPI Name</th>
+                                    <th style="padding: 8px 6px; font-weight: 700; width: 10%;">KPI Target</th>
+                                    ${weekCols.map(wk => `<th style="padding: 8px 6px; font-weight: 700; text-align: center; width: 6%;">${wk}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                pageRows.forEach((row, idx) => {
+                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                    docHtml += `
+                        <tr style="background-color: ${rowBg}; border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 7px 6px; font-weight: 600;">${row['Region']}</td>
+                            <td style="padding: 7px 6px;">${row['Station Code']}</td>
+                            <td style="padding: 7px 6px; font-weight: 500;">${row['Station Name']}</td>
+                            <td style="padding: 7px 6px;">${row['R Vol Count']}</td>
+                            <td style="padding: 7px 6px; font-weight: 500;">${row['KPI Name']}</td>
+                            <td style="padding: 7px 6px; font-weight: 600; color: #64748b;">${row['KPI Target']}</td>
+                            ${weekCols.map(wk => {
+                                const val = row[wk] || '-';
+                                const status = getCellPerformanceStatus(row['KPI Name'], val);
+                                const isFailing = status === 'FAILED' && val !== '-';
+                                const style = isFailing ? 'color: #991b1b; font-weight: 700;' : 'color: #0f172a; font-weight: 400;';
+                                return `<td style="padding: 7px 6px; text-align: center; ${style}">${val}</td>`;
+                            }).join('')}
+                        </tr>
+                    `;
+                });
+
+                docHtml += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            printDoc.innerHTML = docHtml;
+            document.body.appendChild(printDoc);
+
+            // 3. Render Canvas at High Resolution (3x Scale)
+            try {
+                const canvas = await html2canvas(printDoc, {
+                    scale: 3,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imageUri = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `Underperforming_Stations_A4_Review_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = imageUri;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (err) {
+                showError("Snapshot capture failed: " + err.message);
+            } finally {
+                document.body.removeChild(printDoc);
+            }
+        });
 
         /* Export Helpers */
         function exportData(format, exportMaster = false) {
@@ -2196,7 +2383,12 @@
         });
 
         DOM.exportReviewXlsx.addEventListener('click', () => {
-            const reviewData = buildPerformanceReviewPivotedData();
+            const reviewData = [];
+            if (AppState.reviewGridApi) {
+                AppState.reviewGridApi.forEachNodeAfterFilterAndSort(node => {
+                    if (node.data) reviewData.push(node.data);
+                });
+            }
             if (!reviewData || reviewData.length === 0) {
                 alert('No underperforming records found for review.');
                 return;
