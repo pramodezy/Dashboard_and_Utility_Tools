@@ -39,6 +39,8 @@
             --text-muted: #64748b;
             --danger: #ef4444;
             --danger-light: #fef2f2;
+            --success: #10b981;
+            --success-light: #ecfdf5;
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
             --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -114,6 +116,43 @@
         .tab-btn.active {
             background: var(--surface);
             color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sub-tab-nav {
+            display: inline-flex;
+            gap: 0.3rem;
+            background: #f1f5f9;
+            padding: 0.2rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 0.5rem;
+        }
+
+        .sub-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sub-tab-btn.active-underperforming {
+            background: var(--surface);
+            color: #b91c1c;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sub-tab-btn.active-achievers {
+            background: var(--surface);
+            color: #047857;
             box-shadow: var(--shadow-sm);
         }
 
@@ -503,6 +542,11 @@
             font-weight: 700 !important;
         }
 
+        .review-text-passing {
+            color: #047857 !important;
+            font-weight: 700 !important;
+        }
+
         .review-text-neutral {
             color: #0f172a !important;
             font-weight: 400 !important;
@@ -842,6 +886,19 @@
 
         <!-- TAB 3: Performance Review View -->
         <div id="perfReviewView" class="hidden" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            
+            <!-- Sub-Tab Navigation Bar -->
+            <div class="sub-tab-nav">
+                <button id="subTabUnderperformingBtn" class="sub-tab-btn active-underperforming">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">trending_down</span>
+                    Under Performing Locations
+                </button>
+                <button id="subTabAchieversBtn" class="sub-tab-btn">
+                    <span class="material-symbols-outlined" style="font-size:1rem;">workspace_premium</span>
+                    Consistent Achievers
+                </button>
+            </div>
+
             <div class="filter-toolbar">
                 <div class="filter-controls">
                     <div class="filter-group">
@@ -916,9 +973,9 @@
             <!-- Target Card Container for Snapshot Capture -->
             <div id="reviewCardTarget" class="card" style="padding: 1rem;">
                 <div class="section-header">
-                    <h3>
-                        <span class="material-symbols-outlined" style="color:var(--danger);">trending_down</span>
-                        Consistently Underperforming Stations (Last Active Weeks Below Target)
+                    <h3 id="reviewCardHeader">
+                        <span id="reviewCardHeaderIcon" class="material-symbols-outlined" style="color:var(--danger);">trending_down</span>
+                        <span id="reviewCardHeaderText">Consistently Underperforming Stations (Last Active Weeks Below Target)</span>
                     </h3>
                 </div>
                 <div id="reviewGrid" class="ag-theme-alpine grid-container" style="height: 480px;"></div>
@@ -973,6 +1030,8 @@
             pivotGridApi: null,
             missedGridApi: null,
 
+            // Performance Review Active Mode State ('underperforming' vs 'achievers')
+            reviewSubTabMode: 'underperforming',
             selectedReviewRegions: new Set(['Unmapped']),
             selectedReviewStations: new Set(),
             selectedReviewKPIs: new Set(),
@@ -998,6 +1057,10 @@
             tabPerfBtn: document.getElementById('tabPerfBtn'),
             tabRsdMdsBtn: document.getElementById('tabRsdMdsBtn'),
             tabPerfReviewBtn: document.getElementById('tabPerfReviewBtn'),
+            subTabUnderperformingBtn: document.getElementById('subTabUnderperformingBtn'),
+            subTabAchieversBtn: document.getElementById('subTabAchieversBtn'),
+            reviewCardHeaderIcon: document.getElementById('reviewCardHeaderIcon'),
+            reviewCardHeaderText: document.getElementById('reviewCardHeaderText'),
             resetAppBtn: document.getElementById('resetAppBtn'),
             confirmNormalizeBtn: document.getElementById('confirmNormalizeBtn'),
             
@@ -1589,6 +1652,29 @@
             targetView.classList.remove('hidden');
         }
 
+        /* Performance Review Sub-Tab Handlers */
+        DOM.subTabUnderperformingBtn.addEventListener('click', () => {
+            AppState.reviewSubTabMode = 'underperforming';
+            DOM.subTabUnderperformingBtn.className = 'sub-tab-btn active-underperforming';
+            DOM.subTabAchieversBtn.className = 'sub-tab-btn';
+            
+            DOM.reviewCardHeaderIcon.textContent = 'trending_down';
+            DOM.reviewCardHeaderIcon.style.color = 'var(--danger)';
+            DOM.reviewCardHeaderText.textContent = 'Consistently Underperforming Stations (Last Active Weeks Below Target)';
+            renderPerformanceReviewTable();
+        });
+
+        DOM.subTabAchieversBtn.addEventListener('click', () => {
+            AppState.reviewSubTabMode = 'achievers';
+            DOM.subTabAchieversBtn.className = 'sub-tab-btn active-achievers';
+            DOM.subTabUnderperformingBtn.className = 'sub-tab-btn';
+            
+            DOM.reviewCardHeaderIcon.textContent = 'workspace_premium';
+            DOM.reviewCardHeaderIcon.style.color = 'var(--success)';
+            DOM.reviewCardHeaderText.textContent = 'Consistent Achievers (Last Active Weeks Meeting Target)';
+            renderPerformanceReviewTable();
+        });
+
         /* ==========================================================================
            TAB 1: Performance Analytics Module
            ========================================================================== */
@@ -1983,7 +2069,7 @@
         }
 
         /* ==========================================================================
-           TAB 3: Performance Review Module Engine
+           TAB 3: Performance Review Module Engine (Dual Mode: Underperforming vs Achievers)
            ========================================================================== */
 
         function initPerformanceReviewDashboard() {
@@ -2037,6 +2123,7 @@
         function buildPerformanceReviewPivotedData() {
             const reviewRows = [];
             const evaluatedWeeksSet = new Set();
+            const mode = AppState.reviewSubTabMode; // 'underperforming' or 'achievers'
 
             let weeklyPeriods = AppState.detectedPeriods
                 .filter(p => /^Wk\s*\d+/i.test(p.trim()))
@@ -2097,7 +2184,17 @@
                         weekValuesObj[wk] = (val === '' ? '-' : val);
                     }
 
-                    if (passedCount === 0 && failedCount > 0) {
+                    // CONDITION EVALUATION DUAL MODE:
+                    let isMatchMode = false;
+                    if (mode === 'underperforming') {
+                        // Underperforming: No week met target AND at least one week explicitly failed
+                        isMatchMode = (passedCount === 0 && failedCount > 0);
+                    } else if (mode === 'achievers') {
+                        // Consistent Achievers: No week failed AND at least one week met/exceeded target
+                        isMatchMode = (failedCount === 0 && passedCount > 0);
+                    }
+
+                    if (isMatchMode) {
                         const rowObj = {
                             'Region': region,
                             'Station Code': stCode,
@@ -2178,7 +2275,9 @@
                         }
                         const kpiName = params.data ? params.data['KPI Name'] : '';
                         const status = getCellPerformanceStatus(kpiName, val);
-                        return status === 'FAILED' ? 'review-text-failing' : 'review-text-neutral';
+                        if (status === 'FAILED') return 'review-text-failing'; // Red text
+                        if (status === 'PASSED') return 'review-text-passing'; // Green text
+                        return 'review-text-neutral';
                     }
                 });
             });
@@ -2197,7 +2296,7 @@
         }
 
         /* ==========================================================================
-           A4 Landscape Multi-Page Print Engine (PRESORTED AG GRID ROW EXTRACTOR)
+           A4 Landscape Multi-Page Print Engine for Table Snapshots (Sub-Tab Aware)
            ========================================================================== */
         DOM.captureSnapshotBtn.addEventListener('click', async () => {
             if (!AppState.reviewGridApi) {
@@ -2205,7 +2304,6 @@
                 return;
             }
 
-            // Extract rows directly from AG Grid in their current visual/sorted order
             const sortedReviewData = [];
             AppState.reviewGridApi.forEachNodeAfterFilterAndSort(node => {
                 if (node.data) {
@@ -2214,18 +2312,26 @@
             });
 
             if (sortedReviewData.length === 0) {
-                alert("No underperforming records available to capture.");
+                alert("No records available to capture.");
                 return;
             }
 
-            showSuccess("Generating high-resolution A4 Landscape snapshot with applied sorting...");
+            const mode = AppState.reviewSubTabMode;
+            const docTitle = mode === 'achievers' 
+                ? 'Consistent Achievers Review' 
+                : 'Consistently Underperforming Stations Review';
+            const docSubtitle = mode === 'achievers' 
+                ? 'Last Active Weeks Consistently Meeting Target' 
+                : 'Last Active Weeks Below Target Evaluation';
+            const accentColor = mode === 'achievers' ? '#047857' : '#1e3a8a';
 
-            // 1. Create Off-screen Printable Document Container
+            showSuccess(`Generating high-resolution A4 Landscape snapshot for ${docTitle}...`);
+
             const printDoc = document.createElement('div');
             printDoc.style.position = 'absolute';
             printDoc.style.left = '-9999px';
             printDoc.style.top = '-9999px';
-            printDoc.style.width = '1120px'; // Standard A4 Landscape width
+            printDoc.style.width = '1120px';
             printDoc.style.backgroundColor = '#ffffff';
             printDoc.style.fontFamily = "'Inter', sans-serif";
             printDoc.style.padding = '20px';
@@ -2233,7 +2339,6 @@
 
             const weekCols = AppState.currentReviewEvaluatedWeeks;
 
-            // 2. Dynamic Pagination: Split sorted rows into page blocks (~22 rows per page)
             const ROWS_PER_PAGE = 22;
             const totalPages = Math.ceil(sortedReviewData.length / ROWS_PER_PAGE);
 
@@ -2245,13 +2350,13 @@
                 docHtml += `
                     <div style="page-break-after: always; margin-bottom: 30px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; background: #ffffff;">
                         <!-- Header Section -->
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid ${accentColor}; padding-bottom: 10px; margin-bottom: 15px;">
                             <div>
-                                <h2 style="font-size: 16px; font-weight: 700; color: #1e3a8a; margin: 0;">
-                                    Consistently Underperforming Stations Review
+                                <h2 style="font-size: 16px; font-weight: 700; color: ${accentColor}; margin: 0;">
+                                    ${docTitle}
                                 </h2>
                                 <p style="font-size: 11px; color: #64748b; margin: 2px 0 0 0;">
-                                    Last Active Weeks Below Target Evaluation
+                                    ${docSubtitle}
                                 </p>
                             </div>
                             <div style="text-align: right; font-size: 11px; color: #64748b;">
@@ -2289,8 +2394,9 @@
                             ${weekCols.map(wk => {
                                 const val = row[wk] || '-';
                                 const status = getCellPerformanceStatus(row['KPI Name'], val);
-                                const isFailing = status === 'FAILED' && val !== '-';
-                                const style = isFailing ? 'color: #991b1b; font-weight: 700;' : 'color: #0f172a; font-weight: 400;';
+                                let style = 'color: #0f172a; font-weight: 400;';
+                                if (status === 'FAILED' && val !== '-') style = 'color: #991b1b; font-weight: 700;';
+                                if (status === 'PASSED' && val !== '-') style = 'color: #047857; font-weight: 700;';
                                 return `<td style="padding: 7px 6px; text-align: center; ${style}">${val}</td>`;
                             }).join('')}
                         </tr>
@@ -2307,7 +2413,6 @@
             printDoc.innerHTML = docHtml;
             document.body.appendChild(printDoc);
 
-            // 3. Render Canvas at High Resolution (3x Scale)
             try {
                 const canvas = await html2canvas(printDoc, {
                     scale: 3,
@@ -2318,7 +2423,7 @@
 
                 const imageUri = canvas.toDataURL('image/png');
                 const link = document.createElement('a');
-                link.download = `Underperforming_Stations_A4_Review_${new Date().toISOString().slice(0,10)}.png`;
+                link.download = `${mode === 'achievers' ? 'Consistent_Achievers' : 'Underperforming_Stations'}_Review_${new Date().toISOString().slice(0,10)}.png`;
                 link.href = imageUri;
                 document.body.appendChild(link);
                 link.click();
@@ -2390,13 +2495,15 @@
                 });
             }
             if (!reviewData || reviewData.length === 0) {
-                alert('No underperforming records found for review.');
+                alert('No records found for review.');
                 return;
             }
+            const mode = AppState.reviewSubTabMode;
+            const sheetName = mode === 'achievers' ? 'Consistent Achievers' : 'Underperforming Locations';
             const worksheet = XLSX.utils.json_to_sheet(reviewData);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Performance Review");
-            XLSX.writeFile(workbook, `Performance_Review_${new Date().toISOString().slice(0,10)}.xlsx`);
+            XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+            XLSX.writeFile(workbook, `${sheetName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
         });
 
         DOM.resetAppBtn.addEventListener('click', () => location.reload());
