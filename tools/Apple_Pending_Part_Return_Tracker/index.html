@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Part Pending Return Dashboard</title>
+
+  <!-- External Libraries -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #10b981;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text-main); line-height: 1.5; padding: 20px; }
+
+    /* Layout & Cards */
+    .dashboard-container { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; }
+
+    /* Drag & Drop Upload Zone */
+    .upload-zone { border: 2px dashed var(--primary); border-radius: var(--radius); padding: 30px; text-align: center; cursor: pointer; transition: background 0.2s; }
+    .upload-zone:hover { background: #eff6ff; }
+    .upload-zone input { display: none; }
+
+    /* Filter Panel */
+    .filter-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; background: #f1f5f9; padding: 15px; border-radius: var(--radius); position: sticky; top: 10px; z-index: 100; box-shadow: var(--shadow-md); }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; background: white; padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); }
+    .filter-options { max-height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; padding: 4px; }
+    .filter-options label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; user-select: none; }
+    .filter-search { padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; margin-bottom: 5px; }
+
+    /* Buttons */
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; background: var(--primary); color: white; cursor: pointer; font-weight: 500; font-size: 14px; transition: 0.2s; }
+    .btn:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #64748b; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    /* KPI Cards */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    .kpi-card { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); }
+    .kpi-title { font-size: 14px; text-transform: uppercase; opacity: 0.9; }
+    .kpi-value { font-size: 32px; font-weight: bold; margin-top: 5px; }
+
+    /* Table Styling */
+    .table-container { overflow-x: auto; max-height: 500px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th { background: #f8fafc; position: sticky; top: 0; z-index: 10; font-weight: 600; cursor: pointer; user-select: none; border-bottom: 2px solid var(--border); }
+    th:hover { background: #e2e8f0; }
+    tr:hover { background: #f1f5f9; }
+
+    /* Bucket Badges */
+    .badge { padding: 2px 8px; border-radius: 12px; font-weight: bold; font-size: 11px; }
+    .badge-overdue { background: #fee2e2; color: #991b1b; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-normal { background: #d1fae5; color: #065f46; }
+
+    /* Controls & Utilities */
+    .table-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+    .pagination { display: flex; gap: 5px; align-items: center; justify-content: flex-end; margin-top: 10px; }
+    .pagination button { padding: 4px 10px; border: 1px solid var(--border); background: white; border-radius: 4px; cursor: pointer; }
+    .pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 1000; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; color: var(--primary); }
+    .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-style: italic; }
+  </style>
+</head>
+<body>
+
+<div id="loading" class="loading-overlay">Processing Data...</div>
+
+<div class="dashboard-container">
+  <!-- Header -->
+  <div class="header">
+    <h2>Part Pending Return Dashboard</h2>
+    <div id="exportGroup" class="btn-group" style="display: none;">
+      <button class="btn" onclick="exportData('visible')">Export PPR Table</button>
+      <button class="btn btn-secondary" onclick="exportData('complete')">Export Complete PPR Data</button>
+    </div>
+  </div>
+
+  <!-- Upload Zone -->
+  <div class="card" id="uploadCard">
+    <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+      <h3>Drop Excel / CSV File Here or Click to Upload</h3>
+      <p style="color: var(--text-muted); margin-top: 5px;">Supports .xlsx, .xls, and .csv formats</p>
+      <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" onchange="handleFileSelect(event)">
+    </div>
+  </div>
+
+  <!-- Main Content (Hidden until file uploaded) -->
+  <div id="dashboardContent" style="display: none; display: flex; flex-direction: column; gap: 20px;">
+    
+    <!-- Filter Panel -->
+    <div class="filter-panel">
+      <!-- Ship-To Filter -->
+      <div class="filter-group">
+        <strong>Ship-To Filter</strong>
+        <input type="text" class="filter-search" placeholder="Search Ship-To..." oninput="filterOptionsSearch(this, 'shipToOptions')">
+        <div class="btn-group" style="margin-bottom: 5px;">
+          <button class="btn btn-secondary" style="font-size:10px; padding:2px 6px;" onclick="selectAllFilters('shipToOptions', true)">Select All</button>
+          <button class="btn btn-secondary" style="font-size:10px; padding:2px 6px;" onclick="selectAllFilters('shipToOptions', false)">Unselect All</button>
+        </div>
+        <div id="shipToOptions" class="filter-options"></div>
+      </div>
+
+      <!-- Days Left Bucket Filter -->
+      <div class="filter-group">
+        <strong>Days Left Bucket Filter</strong>
+        <div class="btn-group" style="margin-bottom: 5px;">
+          <button class="btn btn-secondary" style="font-size:10px; padding:2px 6px;" onclick="selectAllFilters('bucketOptions', true)">Select All</button>
+          <button class="btn btn-secondary" style="font-size:10px; padding:2px 6px;" onclick="selectAllFilters('bucketOptions', false)">Unselect All</button>
+        </div>
+        <div id="bucketOptions" class="filter-options"></div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display: flex; flex-direction: column; gap: 10px; justify-content: flex-end;">
+        <button class="btn" onclick="applyFilters()">Apply Filters</button>
+        <button class="btn btn-secondary" onclick="resetFilters()">Reset All Filters</button>
+      </div>
+    </div>
+
+    <!-- KPI Section -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">Total Parts Pending</div>
+        <div id="kpiTotalPending" class="kpi-value">0</div>
+      </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+        <h3>Pending Parts by Ship-To & Bucket</h3>
+        <div class="btn-group">
+          <select id="chartMode" onchange="renderChart()" style="padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border); font-size: 13px; background: white; cursor: pointer;">
+            <option value="grouped" selected>Grouped Bar (Single Bar per Bucket)</option>
+            <option value="stacked">Stacked Bar</option>
+            <option value="byBucket">By Bucket (X-Axis = Bucket)</option>
+          </select>
+          <button class="btn btn-secondary" style="font-size: 12px;" onclick="exportChartPNG()">Export Chart PNG</button>
+        </div>
+      </div>
+      <div style="height: 350px; position: relative;">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Pivot Table -->
+    <div class="card">
+      <h3>Pivot Summary (Ship-To vs Days Left Bucket)</h3>
+      <div class="table-container" style="margin-top: 10px;">
+        <table id="pivotTable">
+          <thead><!-- Dynamic --></thead>
+          <tbody><!-- Dynamic --></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Main Data Table -->
+    <div class="card">
+      <div class="table-controls">
+        <h3>Part Pending Return Table</h3>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <input type="text" id="tableSearch" class="filter-search" placeholder="Search visible table..." oninput="onSearchTable()" style="margin-bottom:0; width: 200px;">
+          <button class="btn btn-secondary" style="font-size: 12px;" onclick="copyTableToClipboard()">Copy Table</button>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <table id="mainTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('Ship-To')">Ship-To</th>
+              <th onclick="sortTable('Repair')">Repair</th>
+              <th onclick="sortTable('Return Order')">Return Order</th>
+              <th onclick="sortTable('Part')">Part</th>
+              <th onclick="sortTable('Part Description')">Part Description</th>
+              <th onclick="sortTable('Repair Status')">Repair Status</th>
+              <th onclick="sortTable('Expected Return Date')">Expected Return Date</th>
+              <th onclick="sortTable('Return Label Printed')">Return Label Printed</th>
+              <th onclick="sortTable('Bulk Return Order')">Bulk Return Order</th>
+              <th onclick="sortTable('Days Left')">Days Left</th>
+              <th onclick="sortTable('Days Left Bucket')">Days Left Bucket</th>
+            </tr>
+          </thead>
+          <tbody id="mainTableBody">
+            <!-- Dynamic Data -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination">
+        <span id="paginationInfo" style="font-size: 13px; margin-right: 10px;"></span>
+        <button id="btnPrev" onclick="changePage(-1)">Previous</button>
+        <button id="btnNext" onclick="changePage(1)">Next</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Global State
+  let rawData = [];
+  let processedData = [];
+  let filteredData = [];
+  let chartInstance = null;
+  
+  const BUCKETS = ["<0 Days", "0 Days", "1-4 Days", "5-7 Days", "8-15 Days", "16-30 Days", ">30 Days", "No Date / N/A"];
+  const VISIBLE_COLUMNS = [
+    "Ship-To", "Repair", "Return Order", "Part", "Part Description", 
+    "Repair Status", "Expected Return Date", "Return Label Printed", 
+    "Bulk Return Order", "Days Left", "Days Left Bucket"
+  ];
+
+  // Pagination & Sorting State
+  let currentPage = 1;
+  const pageSize = 50;
+  let currentSortCol = "";
+  let sortAscending = true;
+
+  const SHIP_TO_MAP = {
+    "1168954": "Kozhikode",
+    "640946": "Vashi",
+    "1055993": "Rohini",
+    "640947": "Bangalore"
+  };
+
+  function getShipToDisplayName(rawVal) {
+    if (rawVal === undefined || rawVal === null || rawVal === "") return "Unassigned";
+    const str = String(rawVal).trim();
+    if (!str) return "Unassigned";
+
+    // Strip leading zeros for matching key
+    const cleanKey = str.replace(/^0+/, '');
+    
+    if (SHIP_TO_MAP[cleanKey]) {
+      return `${SHIP_TO_MAP[cleanKey]} (${cleanKey})`;
+    }
+    
+    return str;
+  }
+
+  // Flexible Column Matching Helper (strips spaces, hyphens, and underscores for 100% accurate key matching)
+  function getPropValue(row, possibleNames) {
+    if (!row) return "";
+    if (typeof possibleNames === 'string') possibleNames = [possibleNames];
+    
+    const keys = Object.keys(row);
+    for (let name of possibleNames) {
+      const target = String(name).trim().toLowerCase().replace(/[\s\-_]/g, "");
+      const match = keys.find(k => String(k).trim().toLowerCase().replace(/[\s\-_]/g, "") === target);
+      if (match && row[match] !== undefined && row[match] !== null && row[match] !== "") {
+        let val = row[match];
+        if (typeof val === 'string') val = val.trim();
+        return val;
+      }
+    }
+    return "";
+  }
+
+  // Flexible Date Parsing Helper
+  function parseFlexibleDate(rawVal) {
+    if (rawVal === undefined || rawVal === null || rawVal === "") return null;
+    
+    if (rawVal instanceof Date) {
+      if (!isNaN(rawVal.getTime())) {
+        return new Date(rawVal.getUTCFullYear(), rawVal.getUTCMonth(), rawVal.getUTCDate());
+      }
+      return null;
+    }
+    
+    if (typeof rawVal === 'number' || (!isNaN(rawVal) && !isNaN(parseFloat(rawVal)) && Number(rawVal) > 20000 && Number(rawVal) < 70000)) {
+      const num = Number(rawVal);
+      const dObj = new Date(Math.round((num - 25569) * 86400 * 1000));
+      return new Date(dObj.getUTCFullYear(), dObj.getUTCMonth(), dObj.getUTCDate());
+    }
+    
+    let str = String(rawVal).trim().replace(/T.*$/, "");
+    if (!str) return null;
+    
+    // Try DD/MM/YYYY or YYYY-MM-DD or DD-MM-YYYY or DD.MM.YYYY
+    let parts = str.split(/[\/\-\.]/);
+    if (parts.length === 3) {
+      let p1 = parseInt(parts[0], 10);
+      let p2 = parseInt(parts[1], 10);
+      let p3 = parseInt(parts[2], 10);
+      
+      let d = null;
+      if (p1 > 1000) { // YYYY/MM/DD
+        d = new Date(p1, p2 - 1, p3);
+      } else if (p3 > 1000) { // DD/MM/YYYY
+        d = new Date(p3, p2 - 1, p1);
+      }
+      if (d && !isNaN(d.getTime())) return d;
+    }
+    
+    // Fallback standard JS parse
+    let d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+    
+    return null;
+  }
+
+  // Drag and Drop listeners
+  const uploadZone = document.querySelector('.upload-zone');
+  uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.background = '#eff6ff'; });
+  uploadZone.addEventListener('dragleave', () => { uploadZone.style.background = 'white'; });
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.style.background = 'white';
+    if (e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]);
+  });
+
+  function handleFileSelect(e) {
+    if (e.target.files.length) processFile(e.target.files[0]);
+  }
+
+  function toggleLoading(show) {
+    document.getElementById('loading').style.display = show ? 'flex' : 'none';
+  }
+
+  function processFile(file) {
+    toggleLoading(true);
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true, dateNF: 'yyyy-mm-dd' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        rawData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+        processDataset();
+        
+        document.getElementById('uploadCard').style.display = 'none';
+        document.getElementById('dashboardContent').style.display = 'flex';
+        document.getElementById('exportGroup').style.display = 'flex';
+      } catch (err) {
+        alert("Error parsing file. Please ensure it is a valid Excel or CSV file.");
+        console.error(err);
+      } finally {
+        toggleLoading(false);
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  function processDataset() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    oneMonthAgo.setHours(0, 0, 0, 0);
+
+    processedData = [];
+
+    rawData.forEach(row => {
+      // Find Expected Return Date using flexible matching
+      let rawVal = getPropValue(row, [
+        "Expected Return Date", "Expected Date", "Return Date", 
+        "ExpectedReturnDate", "ETA Date", "ETA", "Exp Return Date", "Due Date"
+      ]);
+      
+      let returnDate = parseFlexibleDate(rawVal);
+
+      let daysLeft = "N/A";
+      let bucket = "No Date / N/A";
+      let formattedDate = rawVal ? String(rawVal) : "N/A";
+
+      if (returnDate && !isNaN(returnDate.getTime())) {
+        returnDate.setHours(0, 0, 0, 0);
+        
+        // Exclude irrelevant rows where Expected Return Date is older than 1 month from today
+        if (returnDate < oneMonthAgo) {
+          return;
+        }
+        
+        // Calculate Days Left
+        const diffTime = returnDate.getTime() - today.getTime();
+        daysLeft = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        // Determine Days Left Bucket
+        if (daysLeft < 0) bucket = "<0 Days";
+        else if (daysLeft === 0) bucket = "0 Days";
+        else if (daysLeft >= 1 && daysLeft <= 4) bucket = "1-4 Days";
+        else if (daysLeft >= 5 && daysLeft <= 7) bucket = "5-7 Days";
+        else if (daysLeft >= 8 && daysLeft <= 15) bucket = "8-15 Days";
+        else if (daysLeft >= 16 && daysLeft <= 30) bucket = "16-30 Days";
+        else bucket = ">30 Days";
+
+        // YYYY-MM-DD Date Formatting
+        const year = returnDate.getFullYear();
+        const month = String(returnDate.getMonth() + 1).padStart(2, '0');
+        const day = String(returnDate.getDate()).padStart(2, '0');
+        formattedDate = `${year}-${month}-${day}`;
+      }
+
+      // Map all standard fields with flexible column header matching
+      const rawShipTo = getPropValue(row, ["Ship-To", "Ship To", "ShipTo", "Ship_To", "Station Code", "Station Name", "Location", "Destination"]);
+      const shipTo = getShipToDisplayName(rawShipTo);
+      const repair = String(getPropValue(row, ["Repair", "Repair Order", "Repair No", "Service Order", "Order No", "Order Number"]) || "").trim();
+      const returnOrder = String(getPropValue(row, ["Return Order", "Return Order No", "Return Order Number", "RMA Order", "RMA"]) || "").trim();
+      const part = String(getPropValue(row, ["Part", "Part No", "Part Number", "Replace Part", "Material", "Item"]) || "").trim();
+      const partDesc = String(getPropValue(row, ["Part Description", "Part Name", "Description", "Material Description"]) || "").trim();
+      const repairStatus = String(getPropValue(row, ["Repair Status", "Status", "Service Order Status", "Order Status"]) || "").trim();
+      const returnLabel = String(getPropValue(row, ["Return Label Printed", "Label Printed", "Label Status"]) || "").trim();
+      const bulkReturn = String(getPropValue(row, ["Bulk Return Order", "Bulk Return", "Bulk Order"]) || "").trim();
+
+      processedData.push({
+        ...row,
+        "Ship-To": shipTo,
+        "Repair": repair,
+        "Return Order": returnOrder,
+        "Part": part,
+        "Part Description": partDesc,
+        "Repair Status": repairStatus,
+        "Expected Return Date": formattedDate,
+        "Return Label Printed": returnLabel,
+        "Bulk Return Order": bulkReturn,
+        "Days Left": daysLeft,
+        "Days Left Bucket": bucket
+      });
+    });
+
+    populateFilterPanels();
+    resetFilters();
+  }
+
+  function populateFilterPanels() {
+    // Ship To Options
+    const shipTos = [...new Set(processedData.map(d => String(d["Ship-To"] !== undefined && d["Ship-To"] !== null ? d["Ship-To"] : "Unassigned")))].sort();
+    const shipToContainer = document.getElementById("shipToOptions");
+    shipToContainer.innerHTML = shipTos.map(st => 
+      `<label><input type="checkbox" value="${st}" checked> ${st}</label>`
+    ).join("");
+
+    // Bucket Options
+    const presentBuckets = [...new Set(processedData.map(d => d["Days Left Bucket"]))];
+    const displayBuckets = BUCKETS.filter(b => presentBuckets.includes(b)).concat(
+      presentBuckets.filter(b => !BUCKETS.includes(b))
+    );
+    const bucketContainer = document.getElementById("bucketOptions");
+    bucketContainer.innerHTML = displayBuckets.map(b => 
+      `<label><input type="checkbox" value="${b}" checked> ${b}</label>`
+    ).join("");
+  }
+
+  function filterOptionsSearch(input, containerId) {
+    const val = input.value.toLowerCase();
+    const labels = document.querySelectorAll(`#${containerId} label`);
+    labels.forEach(lbl => {
+      lbl.style.display = lbl.innerText.toLowerCase().includes(val) ? "flex" : "none";
+    });
+  }
+
+  function selectAllFilters(containerId, check) {
+    const checkboxes = document.querySelectorAll(`#${containerId} input[type="checkbox"]`);
+    checkboxes.forEach(cb => cb.checked = check);
+  }
+
+  function applyFilters() {
+    const selectedShipTos = Array.from(document.querySelectorAll('#shipToOptions input:checked')).map(cb => String(cb.value));
+    const selectedBuckets = Array.from(document.querySelectorAll('#bucketOptions input:checked')).map(cb => String(cb.value));
+
+    filteredData = processedData.filter(d => {
+      const shipTo = String(d["Ship-To"] !== undefined && d["Ship-To"] !== null ? d["Ship-To"] : "Unassigned");
+      const bucket = String(d["Days Left Bucket"] || "");
+      return selectedShipTos.includes(shipTo) && selectedBuckets.includes(bucket);
+    });
+
+    currentPage = 1;
+    updateDashboardView();
+  }
+
+  function resetFilters() {
+    selectAllFilters('shipToOptions', true);
+    selectAllFilters('bucketOptions', true);
+    const searchElem = document.getElementById('tableSearch');
+    if (searchElem) searchElem.value = "";
+    applyFilters();
+  }
+
+  function updateDashboardView() {
+    updateKPIs();
+    renderChart();
+    renderPivotTable();
+    renderTable();
+  }
+
+  /* 1. KPIs */
+  function updateKPIs() {
+    document.getElementById('kpiTotalPending').innerText = filteredData.length.toLocaleString();
+  }
+
+  /* 2. Chart Rendering */
+  function renderChart() {
+    const ctx = document.getElementById('barChart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    const chartMode = document.getElementById('chartMode') ? document.getElementById('chartMode').value : 'grouped';
+
+    const shipTos = [...new Set(filteredData.map(d => String(d["Ship-To"] !== undefined && d["Ship-To"] !== null ? d["Ship-To"] : "Unassigned")))].sort();
+    const activeBuckets = [...new Set(filteredData.map(d => d["Days Left Bucket"]))];
+    const displayBuckets = BUCKETS.filter(b => activeBuckets.includes(b)).concat(
+      activeBuckets.filter(b => !BUCKETS.includes(b))
+    );
+
+    const BUCKET_COLORS = {
+      "<0 Days": "#dc2626",        // Red (Overdue)
+      "0 Days": "#ea580c",         // Bright Orange (Due Today)
+      "1-4 Days": "#d97706",       // Gold Amber (1-4 Days)
+      "5-7 Days": "#ca8a04",       // Yellow/Ochre (5-7 Days)
+      "8-15 Days": "#16a34a",      // Emerald Green (8-15 Days)
+      "16-30 Days": "#0891b2",     // Ocean Cyan (16-30 Days)
+      ">30 Days": "#4f46e5",       // Indigo (>30 Days)
+      "No Date / N/A": "#64748b"  // Slate Gray (N/A)
+    };
+
+    const DISTINCT_COLORS = [
+      '#2563eb', // Royal Blue
+      '#dc2626', // Crimson Red
+      '#16a34a', // Emerald Green
+      '#d97706', // Gold Amber
+      '#9333ea', // Deep Purple
+      '#0891b2', // Ocean Cyan
+      '#db2777', // Hot Pink
+      '#4f46e5', // Indigo
+      '#ca8a04', // Dark Yellow/Ochre
+      '#059669', // Teal Green
+      '#c026d3', // Magenta
+      '#ea580c', // Dark Orange
+      '#0284c7', // Sky Blue
+      '#7c3aed', // Bright Violet
+      '#65a30d', // Lime
+      '#e11d48'  // Rose
+    ];
+
+    let labels = [];
+    let datasets = [];
+
+    if (chartMode === 'byBucket') {
+      labels = displayBuckets;
+      datasets = shipTos.map((st, i) => {
+        const data = displayBuckets.map(b => {
+          return filteredData.filter(d => String(d["Ship-To"] !== undefined && d["Ship-To"] !== null ? d["Ship-To"] : "Unassigned") === st && String(d["Days Left Bucket"]) === b).length;
+        });
+        return {
+          label: st,
+          data: data,
+          backgroundColor: DISTINCT_COLORS[i % DISTINCT_COLORS.length]
+        };
+      });
+    } else {
+      // chartMode === 'grouped' or 'stacked'
+      labels = shipTos;
+      datasets = displayBuckets.map((bucket, i) => {
+        const data = shipTos.map(st => {
+          return filteredData.filter(d => String(d["Ship-To"] !== undefined && d["Ship-To"] !== null ? d["Ship-To"] : "Unassigned") === st && String(d["Days Left Bucket"]) === bucket).length;
+        });
+        return {
+          label: bucket,
+          data: data,
+          backgroundColor: BUCKET_COLORS[bucket] || DISTINCT_COLORS[i % DISTINCT_COLORS.length]
+        };
+      });
+    }
+
+    const isStacked = (chartMode === 'stacked');
+
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: labels, datasets: datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { 
+            stacked: isStacked, 
+            title: { display: true, text: chartMode === 'byBucket' ? 'Days Left Bucket' : 'Ship-To' } 
+          },
+          y: { 
+            stacked: isStacked, 
+            title: { display: true, text: 'Count of Repair' },
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          tooltip: { mode: 'index', intersect: false }
+        }
+      }
+    });
+  }
+
+  function exportChartPNG() {
+    if (!chartInstance) return;
+    const link = document.createElement('a');
+    link.download = 'PPR_Chart.png';
+    link.href = chartInstance.toBase64Image();
+    link.click();
+  }
+
+  /* 3. Pivot Table */
+  function renderPivotTable() {
+    const shipTos = [...new Set(filteredData.map(d => String(d["Ship-To"] !== undefined && d["Ship-To"] !== null ? d["Ship-To"] : "Unassigned")))].sort();
+    const activeBuckets = [...new Set(filteredData.map(d => d["Days Left Bucket"]))];
+    const displayBuckets = BUCKETS.filter(b => activeBuckets.includes(b)).concat(
+      activeBuckets.filter(b => !BUCKETS.includes(b))
+    );
+
+    const pivotHead = document.querySelector('#pivotTable thead');
+    const pivotBody = document.querySelector('#pivotTable tbody');
+
+    let headHTML = `<tr><th>Ship-To</th>` + displayBuckets.map(b => `<th>${b}</th>`).join('') + `<th>Total</th></tr>`;
+    pivotHead.innerHTML = headHTML;
+
+    if (shipTos.length === 0) {
+      pivotBody.innerHTML = `<tr><td colspan="${displayBuckets.length + 2}" class="empty-state">No Data Available</td></tr>`;
+      return;
+    }
+
+    let bodyHTML = "";
+    shipTos.forEach(st => {
+      let rowTotal = 0;
+      let rowCells = displayBuckets.map(b => {
+        const count = filteredData.filter(d => String(d["Ship-To"] !== undefined && d["Ship-To"] !== null ? d["Ship-To"] : "Unassigned") === st && String(d["Days Left Bucket"]) === b).length;
+        rowTotal += count;
+        return `<td>${count}</td>`;
+      }).join('');
+
+      bodyHTML += `<tr><td><strong>${st}</strong></td>${rowCells}<td><strong>${rowTotal}</strong></td></tr>`;
+    });
+
+    pivotBody.innerHTML = bodyHTML;
+  }
+
+  /* 4. Main Data Table */
+  function renderTable() {
+    const tbody = document.getElementById('mainTableBody');
+    let displayData = [...filteredData];
+
+    // Local Search Filter
+    const searchVal = document.getElementById('tableSearch') ? document.getElementById('tableSearch').value.toLowerCase() : "";
+    if (searchVal) {
+      displayData = displayData.filter(row => 
+        VISIBLE_COLUMNS.some(col => String(row[col] || "").toLowerCase().includes(searchVal))
+      );
+    }
+
+    // Sort
+    if (currentSortCol) {
+      displayData.sort((a, b) => {
+        let valA = a[currentSortCol] ?? "";
+        let valB = b[currentSortCol] ?? "";
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return sortAscending ? valA - valB : valB - valA;
+        }
+        return sortAscending 
+          ? String(valA).localeCompare(String(valB))
+          : String(valB).localeCompare(String(valA));
+      });
+    }
+
+    // Paginate
+    const totalRecords = displayData.length;
+    const totalPages = Math.ceil(totalRecords / pageSize) || 1;
+    currentPage = Math.min(Math.max(1, currentPage), totalPages);
+    
+    const startIdx = (currentPage - 1) * pageSize;
+    const pageData = displayData.slice(startIdx, startIdx + pageSize);
+
+    if (pageData.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${VISIBLE_COLUMNS.length}" class="empty-state">No Data Available</td></tr>`;
+    } else {
+      tbody.innerHTML = pageData.map(row => {
+        let badgeClass = "badge-normal";
+        if (typeof row["Days Left"] === 'number') {
+          if (row["Days Left"] < 0) badgeClass = "badge-overdue";
+          else if (row["Days Left"] <= 4) badgeClass = "badge-warning";
+        }
+
+        return `<tr>
+          <td>${row["Ship-To"] || ""}</td>
+          <td>${row["Repair"] || ""}</td>
+          <td>${row["Return Order"] || ""}</td>
+          <td>${row["Part"] || ""}</td>
+          <td>${row["Part Description"] || ""}</td>
+          <td>${row["Repair Status"] || ""}</td>
+          <td>${row["Expected Return Date"] || ""}</td>
+          <td>${row["Return Label Printed"] || ""}</td>
+          <td>${row["Bulk Return Order"] || ""}</td>
+          <td>${row["Days Left"]}</td>
+          <td><span class="badge ${badgeClass}">${row["Days Left Bucket"]}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Update Pagination UI
+    document.getElementById('paginationInfo').innerText = `Page ${currentPage} of ${totalPages} (${totalRecords} items)`;
+    document.getElementById('btnPrev').disabled = currentPage === 1;
+    document.getElementById('btnNext').disabled = currentPage === totalPages || totalPages === 0;
+  }
+
+  function onSearchTable() {
+    currentPage = 1;
+    renderTable();
+  }
+
+  function changePage(delta) {
+    currentPage += delta;
+    renderTable();
+  }
+
+  function sortTable(col) {
+    if (currentSortCol === col) {
+      sortAscending = !sortAscending;
+    } else {
+      currentSortCol = col;
+      sortAscending = true;
+    }
+    renderTable();
+  }
+
+  function copyTableToClipboard() {
+    const range = document.createRange();
+    range.selectNode(document.getElementById("mainTable"));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand("copy");
+    window.getSelection().removeAllRanges();
+    alert("Table copied to clipboard!");
+  }
+
+  /* 5. Export Functionality */
+  function exportData(type) {
+    toggleLoading(true);
+
+    setTimeout(() => {
+      try {
+        const wb = XLSX.utils.book_new();
+
+        // 1. Prepare Main Sheet Data
+        let mainSheetData = [];
+        if (type === 'visible') {
+          mainSheetData = filteredData.map(row => {
+            let filteredRow = {};
+            VISIBLE_COLUMNS.forEach(col => filteredRow[col] = row[col]);
+            return filteredRow;
+          });
+        } else {
+          mainSheetData = filteredData;
+        }
+
+        const wsMain = XLSX.utils.json_to_sheet(mainSheetData);
+        XLSX.utils.book_append_sheet(wb, wsMain, type === 'visible' ? "Part Pending Return" : "Complete Data");
+
+        // 2. Prepare Pivot Table Sheet
+        const shipTos = [...new Set(filteredData.map(d => String(d["Ship-To"] !== undefined && d["Ship-To"] !== null ? d["Ship-To"] : "Unassigned")))].sort();
+        const activeBuckets = [...new Set(filteredData.map(d => d["Days Left Bucket"]))];
+        const displayBuckets = BUCKETS.filter(b => activeBuckets.includes(b)).concat(
+          activeBuckets.filter(b => !BUCKETS.includes(b))
+        );
+
+        let pivotRows = [];
+        shipTos.forEach(st => {
+          let rowObj = { "Ship-To": st };
+          let total = 0;
+          displayBuckets.forEach(b => {
+            const cnt = filteredData.filter(d => String(d["Ship-To"] !== undefined && d["Ship-To"] !== null ? d["Ship-To"] : "Unassigned") === st && String(d["Days Left Bucket"]) === b).length;
+            rowObj[b] = cnt;
+            total += cnt;
+          });
+          rowObj["Total"] = total;
+          pivotRows.push(rowObj);
+        });
+
+        const wsPivot = XLSX.utils.json_to_sheet(pivotRows);
+        XLSX.utils.book_append_sheet(wb, wsPivot, "Pivot Table");
+
+        // Save File
+        const fileName = type === 'visible' ? "Part_Pending_Return_Filtered.xlsx" : "Complete_PPR_Data.xlsx";
+        XLSX.writeFile(wb, fileName);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to generate export file.");
+      } finally {
+        toggleLoading(false);
+      }
+    }, 100);
+  }
+</script>
+
+</body>
+</html>
