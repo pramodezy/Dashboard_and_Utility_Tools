@@ -348,7 +348,7 @@
       transform: rotate(20deg);
     }
 
-    /* Quick Filter Chips Bar - Added vertical spacing before app categories */
+    /* Quick Filter Chips Bar - Enhanced with Icon Folder Assets */
     .filter-chips-bar {
       margin-bottom: 2.5rem;
     }
@@ -356,12 +356,15 @@
     .filter-chips {
       display: flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.55rem;
       flex-wrap: wrap;
     }
 
     .chip {
-      padding: 0.3rem 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.3rem 0.85rem;
       border-radius: 16px;
       background: var(--chip-bg);
       color: var(--text-secondary);
@@ -372,10 +375,32 @@
       transition: all 0.25s ease;
     }
 
+    .chip-img {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #ffffff;
+      flex-shrink: 0;
+      transition: transform 0.25s ease;
+    }
+
+    .chip-svg-icon {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      transition: transform 0.25s ease;
+    }
+
     .chip:hover {
       border-color: var(--border-hover);
       color: var(--text-primary);
       transform: translateY(-1px);
+    }
+
+    .chip:hover .chip-img,
+    .chip:hover .chip-svg-icon {
+      transform: scale(1.15);
     }
 
     .chip.active {
@@ -849,14 +874,44 @@
       </div>
     </header>
 
-    <!-- Quick Links Category Tabs Row -->
+    <!-- Quick Links Category Tabs Row (With Local Folder Icons) -->
     <div class="filter-chips-bar">
       <div class="filter-chips">
-        <button class="chip active" data-filter="all">All Tools</button>
-        <button class="chip" data-filter="Quick Help Tools">Quick Utilities</button>
-        <button class="chip" data-filter="Data Summary / Analytics Tools">Analytics Dashboards</button>
-        <button class="chip" data-filter="Motorola">Motorola</button>
-        <button class="chip" data-filter="Apple">Apple</button>
+        <!-- All Tools Icon -->
+        <button class="chip active" data-filter="all">
+          <svg class="chip-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>All Tools</span>
+        </button>
+
+        <!-- Quick Utilities Icon (PDF.png) -->
+        <button class="chip" data-filter="Quick Help Tools">
+          <img src="Icon/PDF.png" alt="Utilities Icon" class="chip-img">
+          <span>Quick Utilities</span>
+        </button>
+
+        <!-- Analytics Dashboards Icon (excel.png) -->
+        <button class="chip" data-filter="Data Summary / Analytics Tools">
+          <img src="Icon/excel.png" alt="Analytics Icon" class="chip-img">
+          <span>Analytics Dashboards</span>
+        </button>
+
+        <!-- Motorola Icon (Motorola.png) -->
+        <button class="chip" data-filter="Motorola">
+          <img src="Icon/Motorola.png" alt="Motorola Icon" class="chip-img">
+          <span>Motorola</span>
+        </button>
+
+        <!-- Apple Icon (Apple.jpeg) -->
+        <button class="chip" data-filter="Apple">
+          <img src="Icon/Apple.jpeg" alt="Apple Icon" class="chip-img">
+          <span>Apple</span>
+        </button>
       </div>
     </div>
 
