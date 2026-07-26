@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motorola - Parts Status Analytics Dashboard</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Material Symbols Outlined -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <!-- External CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-card-subtle: #f1f5f9;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --primary-glow: rgba(37, 99, 235, 0.15);
+            
+            --success: #10b981;
+            --success-light: #ecfdf5;
+            --warning: #f59e0b;
+            --warning-light: #fffbe6;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --info: #06b6d4;
+            --info-light: #ecfeff;
+
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.03);
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-full: 9999px;
+            
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.5);
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #0b0f19;
+            --bg-card: #141c2e;
+            --bg-card-subtle: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #2e3a52;
+            
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --primary-light: rgba(59, 130, 246, 0.15);
+            --primary-glow: rgba(59, 130, 246, 0.25);
+            
+            --success: #10b981;
+            --success-light: rgba(16, 185, 129, 0.15);
+            --warning: #f59e0b;
+            --warning-light: rgba(245, 158, 11, 0.15);
+            --danger: #f87171;
+            --danger-light: rgba(239, 68, 68, 0.15);
+            
+            --glass-bg: rgba(20, 28, 46, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        /* Glassmorphic Header */
+        .glass-header {
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: var(--glass-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.85rem 1.75rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .brand-badge {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 10px var(--primary-glow);
+        }
+
+        .header-title {
+            font-weight: 700;
+            font-size: 1.35rem;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            margin: 0;
+        }
+
+        .header-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* Nav Tabs Modern Style */
+        .nav-pills-custom {
+            background-color: var(--bg-card-subtle);
+            padding: 4px;
+            border-radius: var(--radius-full);
+            display: inline-flex;
+            gap: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-pills-custom .nav-link {
+            border-radius: var(--radius-full);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.45rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .nav-pills-custom .nav-link.active {
+            background-color: var(--bg-card);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .nav-pills-custom .nav-link:hover:not(.active) {
+            color: var(--text-main);
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.1rem 1.25rem;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .kpi-value {
+            font-size: 1.45rem;
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--text-main);
+        }
+
+        .kpi-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* Modern Upload Area */
+        .upload-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            height: 100%;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.75rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            background-color: var(--bg-card-subtle);
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .upload-area:hover, .upload-area.drag-over {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .upload-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 0.75rem auto;
+            border-radius: 50%;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .upload-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .upload-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .file-info {
+            margin-top: 0.75rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            color: var(--success);
+        }
+
+        /* Custom Checkbox Dropdown Styles (Overflow Visible & High z-index) */
+        .checkbox-dropdown {
+            position: relative;
+            z-index: 110;
+        }
+
+        .checkbox-dropdown-btn {
+            width: 100%;
+            text-align: left;
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 0.45rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+        }
+
+        .checkbox-dropdown-btn:hover {
+            border-color: var(--primary);
+        }
+
+        .checkbox-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            max-height: 280px;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            padding: 6px;
+        }
+
+        .checkbox-dropdown-menu.show {
+            display: block;
+            animation: fadeIn 0.15s ease-out;
+        }
+
+        .checkbox-dropdown-item {
+            padding: 2px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-dropdown-item label {
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            margin: 0;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 0.825rem;
+            color: var(--text-main);
+            user-select: none;
+        }
+
+        .checkbox-dropdown-item label:hover {
+            background-color: var(--bg-card-subtle);
+        }
+
+        .checkbox-dropdown-item input[type="checkbox"] {
+            margin-right: 8px;
+            cursor: pointer;
+            width: 15px;
+            height: 15px;
+            accent-color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        /* Dashboard Cards with Overflow Visible for Filters */
+        .dashboard-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .dashboard-card.filter-card {
+            overflow: visible !important;
+            z-index: 100;
+        }
+
+        .dashboard-card-header {
+            padding: 1rem 1.25rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top-left-radius: var(--radius-lg);
+            border-top-right-radius: var(--radius-lg);
+        }
+
+        .dashboard-card-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Compact Summary Tables Formatting (Original Start Specifications Restored) */
+        .summary-table {
+            font-size: 0.75rem !important;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 3px 4px !important;
+            white-space: normal;
+            word-wrap: break-word;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        .summary-table .text-start {
+            text-align: left !important;
+        }
+
+        .summary-table .bg-total {
+            background-color: var(--bg-card-subtle) !important;
+            font-weight: bold;
+        }
+
+        .summary-table .bg-grand-total {
+            background-color: var(--primary-light) !important;
+            color: var(--primary) !important;
+            font-weight: bold;
+        }
+
+        /* Buttons */
+        .btn-modern {
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 0.5rem 1.15rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid transparent;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary-modern {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+
+        .btn-primary-modern:hover {
+            background-color: var(--primary-hover);
+            color: #ffffff;
+        }
+
+        .btn-success-modern {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+
+        .btn-success-modern:hover {
+            background-color: #059669;
+            color: #ffffff;
+        }
+
+        .btn-outline-modern {
+            background-color: var(--bg-card);
+            border-color: var(--border-color);
+            color: var(--text-main);
+        }
+
+        .btn-outline-modern:hover {
+            background-color: var(--bg-card-subtle);
+            color: var(--text-main);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Quick Action Chips */
+        .chip-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .chip-btn:hover {
+            background-color: var(--primary-light);
+        }
+
+        .chip-btn.danger {
+            color: var(--danger);
+        }
+
+        .chip-btn.danger:hover {
+            background-color: var(--danger-light);
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle-btn {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--border-color);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* DataTables Styling Override */
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            background-color: var(--bg-card) !important;
+            color: var(--text-main) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: var(--radius-md) !important;
+            padding: 0.35rem 0.65rem !important;
+        }
+
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: var(--text-muted) !important;
+            margin-top: 1rem !important;
+            font-size: 0.85rem !important;
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+        }
+
+        .page-link {
+            background-color: var(--bg-card) !important;
+            color: var(--text-main) !important;
+            border-color: var(--border-color) !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Glassmorphic Navigation Bar -->
+    <header class="glass-header">
+        <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="brand-badge">M</div>
+                <div>
+                    <h1 class="header-title">Motorola Parts Analytics</h1>
+                    <p class="header-subtitle">Open Calls & Regional Parts Logistics Intelligence</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation & Actions -->
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div id="navTabWrapper" class="hidden">
+                    <ul class="nav nav-pills-custom" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" id="main-tab" data-bs-toggle="pill" data-bs-target="#main-tab-pane" type="button" role="tab">
+                                <span class="material-symbols-outlined fs-5">dashboard</span>
+                                Main Dashboard
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link text-danger" id="cci-tab" data-bs-toggle="pill" data-bs-target="#cci-tab-pane" type="button" role="tab">
+                                <span class="material-symbols-outlined fs-5">swap_horiz</span>
+                                Parts in Other CCI
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+                    <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid px-4 mt-4">
+
+        <!-- KPI Metric Summary Cards (Shown when file loaded) -->
+        <div id="kpiSection" class="row g-3 mb-4 hidden">
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: var(--primary-light); color: var(--primary);">
+                        <span class="material-symbols-outlined">inventory_2</span>
+                    </div>
+                    <div>
+                        <div class="kpi-value" id="kpiTotalCalls">0</div>
+                        <div class="kpi-label">Total Open Calls Loaded</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: var(--info-light); color: var(--info);">
+                        <span class="material-symbols-outlined">map</span>
+                    </div>
+                    <div>
+                        <div class="kpi-value" id="kpiRegionsCount">0</div>
+                        <div class="kpi-label">Active Regions Mapped</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: var(--warning-light); color: var(--warning);">
+                        <span class="material-symbols-outlined">published_with_changes</span>
+                    </div>
+                    <div>
+                        <div class="kpi-value" id="kpiCCICount">0</div>
+                        <div class="kpi-label">Parts in Other CCI</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card">
+                    <div class="kpi-icon" style="background: var(--danger-light); color: var(--danger);">
+                        <span class="material-symbols-outlined">running_with_errors</span>
+                    </div>
+                    <div>
+                        <div class="kpi-value" id="kpiAgedCount">0</div>
+                        <div class="kpi-label">Critical Ageing (>30 Days)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="row g-3 mb-4">
+            <!-- Open Calls File Upload -->
+            <div class="col-md-6">
+                <div class="upload-card">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="fw-bold fs-6 d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">upload_file</span>
+                            1. Open Calls Data File
+                        </span>
+                        <span class="badge bg-primary-subtle text-primary fw-semibold">Required</span>
+                    </div>
+                    <div id="uploadArea" class="upload-area">
+                        <div class="upload-icon-wrapper">
+                            <span class="material-symbols-outlined fs-3">cloud_upload</span>
+                        </div>
+                        <div class="upload-title">Drag & Drop Open Calls File</div>
+                        <div class="upload-sub">Supports Excel (.xlsx, .xls) and CSV (.csv) files</div>
+                        <button id="browseBtn" class="btn btn-modern btn-primary-modern">
+                            <span class="material-symbols-outlined fs-5">folder_open</span>
+                            Browse File
+                        </button>
+                        <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls,.csv">
+                        <div id="fileInfo" class="file-info"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Regional Mapping File Upload -->
+            <div class="col-md-6">
+                <div class="upload-card">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="fw-bold fs-6 d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined text-info">route</span>
+                            2. Region Mapping File
+                        </span>
+                        <span class="badge bg-secondary-subtle text-secondary fw-semibold">Optional</span>
+                    </div>
+                    <div id="regionUploadArea" class="upload-area">
+                        <div class="upload-icon-wrapper" style="color: var(--info);">
+                            <span class="material-symbols-outlined fs-3">map</span>
+                        </div>
+                        <div class="upload-title">Drag & Drop Region Mapping File</div>
+                        <div class="upload-sub">Maps Station Codes to specific Regions</div>
+                        <button id="regionBrowseBtn" class="btn btn-modern btn-outline-modern">
+                            <span class="material-symbols-outlined fs-5">folder_open</span>
+                            Browse File
+                        </button>
+                        <input type="file" id="regionFileInput" class="hidden" accept=".xlsx,.xls,.csv">
+                        <div id="regionFileInfo" class="file-info text-info"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content Tabs -->
+        <div id="resultsSection" class="hidden">
+            <div class="tab-content" id="dashboardTabsContent">
+                
+                <!-- TAB 1: Main Dashboard -->
+                <div class="tab-pane fade show active" id="main-tab-pane" role="tabpanel">
+                    
+                    <!-- Filters Card (with Overflow Visible so dropdown overlay is fully visible) -->
+                    <div class="dashboard-card filter-card">
+                        <div class="dashboard-card-header">
+                            <h3 class="dashboard-card-title">
+                                <span class="material-symbols-outlined text-primary">filter_alt</span>
+                                Filter Dashboard Analytics
+                            </h3>
+                            <button id="applyFilter" class="btn btn-modern btn-primary-modern">
+                                <span class="material-symbols-outlined fs-5">search</span>
+                                Apply Filters
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <div class="row g-3">
+                                <!-- Part Status Filter -->
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label fw-semibold text-muted fs-7 mb-0">Filter by Part Status:</label>
+                                        <div>
+                                            <button id="selectAllStatus" class="chip-btn">Select All</button>
+                                            <button id="unselectAllStatus" class="chip-btn danger">Unselect All</button>
+                                        </div>
+                                    </div>
+                                    <div class="checkbox-dropdown" id="statusDropdown">
+                                        <button type="button" class="checkbox-dropdown-btn" id="statusDropdownBtn">
+                                            <span id="statusDropdownText">Select Part Statuses</span>
+                                            <span class="material-symbols-outlined fs-5 text-muted">expand_more</span>
+                                        </button>
+                                        <div class="checkbox-dropdown-menu" id="statusDropdownMenu">
+                                            <div class="checkbox-dropdown-item"><label><input type="checkbox" value="Parts in service center" checked> Parts in service center</label></div>
+                                            <div class="checkbox-dropdown-item"><label><input type="checkbox" value="Parts shortage" checked> Parts shortage</label></div>
+                                            <div class="checkbox-dropdown-item"><label><input type="checkbox" value="Vendor Country Hub to CCI" checked> Vendor Country Hub to CCI</label></div>
+                                            <div class="checkbox-dropdown-item"><label><input type="checkbox" value="Parts in other CCI" checked> Parts in other CCI</label></div>
+                                            <div class="checkbox-dropdown-item"><label><input type="checkbox" value="Parts in ASP CWH" checked> Parts in ASP CWH</label></div>
+                                            <div class="checkbox-dropdown-item"><label><input type="checkbox" value="ASP CWH to CCI" checked> ASP CWH to CCI</label></div>
+                                            <div class="checkbox-dropdown-item"><label><input type="checkbox" value="Parts in Vendor GEO Hub" checked> Parts in Vendor GEO Hub</label></div>
+                                            <div class="checkbox-dropdown-item"><label><input type="checkbox" value="Parts in Vendor Country Hub" checked> Parts in Vendor Country Hub</label></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Region Filter -->
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label fw-semibold text-muted fs-7 mb-0">Filter by Region:</label>
+                                        <div>
+                                            <button id="selectAllRegion" class="chip-btn">Select All</button>
+                                            <button id="unselectAllRegion" class="chip-btn danger">Unselect All</button>
+                                        </div>
+                                    </div>
+                                    <div class="checkbox-dropdown" id="regionDropdown">
+                                        <button type="button" class="checkbox-dropdown-btn" id="regionDropdownBtn">
+                                            <span id="regionDropdownText">Select Regions</span>
+                                            <span class="material-symbols-outlined fs-5 text-muted">expand_more</span>
+                                        </button>
+                                        <div class="checkbox-dropdown-menu" id="regionDropdownMenu"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pivot Table Card -->
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <h3 class="dashboard-card-title">
+                                <span class="material-symbols-outlined text-info">grid_on</span>
+                                Pivot Summary Matrix (Region x Part Status vs Ageing Bucket)
+                            </h3>
+                        </div>
+                        <div class="p-0 table-custom-wrapper">
+                            <table class="table table-bordered summary-table m-0" id="pivotTable">
+                                <thead>
+                                    <tr class="table-dark">
+                                        <th>Region</th>
+                                        <th>Parts Status</th>
+                                        <th>0-1 Days</th>
+                                        <th>2-4 Days</th>
+                                        <th>5-7 Days</th>
+                                        <th>8-15 Days</th>
+                                        <th>16-30 Days</th>
+                                        <th>>30 Days</th>
+                                        <th>Grand Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pivotTableBody">
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4">Apply filters to generate Pivot Table</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Data Table Card -->
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <h3 class="dashboard-card-title">
+                                <span class="material-symbols-outlined text-success">table_rows</span>
+                                Filtered Detailed Results
+                            </h3>
+                            <button id="exportBtn" class="btn btn-modern btn-success-modern">
+                                <span class="material-symbols-outlined fs-5">download</span>
+                                Export Main Data to Excel
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <div class="table-responsive">
+                                <table id="resultsTable" class="table table-striped table-bordered w-100 fs-7">
+                                    <thead>
+                                        <tr>
+                                            <th>Region</th>
+                                            <th>Service Order</th>
+                                            <th>Station Code</th>
+                                            <th>Station Name</th>
+                                            <th>Model</th>
+                                            <th>IMEI1</th>
+                                            <th>Service Order Status</th>
+                                            <th>Warranty Status</th>
+                                            <th>Parts Status</th>
+                                            <th>DOA Status</th>
+                                            <th>Carry-In Time</th>
+                                            <th>Ageing (Days)</th>
+                                            <th>Ageing Bucket</th>
+                                            <th>MTM</th>
+                                            <th>Defective Part Category</th>
+                                            <th>Replace Part</th>
+                                            <th>Replacement Part Name</th>
+                                            <th>Replace Part Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Parts in Other CCI Summary Tab (Original Start Sizing Restored) -->
+                <div class="tab-pane fade" id="cci-tab-pane" role="tabpanel">
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white fw-bold">
+                            <span>Parts in Other CCI - Summary Reports</span>
+                            <button id="exportCCIBtn" class="btn btn-success btn-sm fw-bold">Export CCI Summary to Excel</button>
+                        </div>
+                        <div class="card-body p-2">
+                            <!-- CCI Tab Region Filter -->
+                            <div class="bg-light p-2 border rounded mb-2" style="overflow: visible; position: relative; z-index: 100;">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6 col-lg-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label fw-bold m-0" style="font-size:0.85rem;">Filter CCI by Region:</label>
+                                            <div>
+                                                <button id="selectAllCCIRegion" class="btn btn-link btn-sm p-0 me-2 text-decoration-none" style="font-size:0.8rem;">Select All</button>
+                                                <button id="unselectAllCCIRegion" class="btn btn-link btn-sm p-0 text-decoration-none text-danger" style="font-size:0.8rem;">Unselect All</button>
+                                            </div>
+                                        </div>
+                                        <div class="checkbox-dropdown" id="cciRegionDropdown">
+                                            <button type="button" class="checkbox-dropdown-btn" id="cciRegionDropdownBtn" style="font-size:0.82rem; padding: 0.25rem 0.5rem;">
+                                                <span id="cciRegionDropdownText">All Regions Selected</span>
+                                                <span class="material-symbols-outlined fs-6 text-muted">expand_more</span>
+                                            </button>
+                                            <div class="checkbox-dropdown-menu" id="cciRegionDropdownMenu"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-2" id="cciSummaryContainer">
+                                <!-- Table 1: Region-wise Ageing Bucket Matrix -->
+                                <div class="col-xl-4 col-lg-5 col-md-12">
+                                    <div class="card h-100">
+                                        <div class="card-header fw-bold bg-light py-1 px-2" style="font-size:0.85rem;">
+                                            Region vs Ageing Bucket Matrix</div>
+                                        <div class="card-body p-1 table-responsive">
+                                            <table class="table table-bordered summary-table m-0" id="cciMatrixTable">
+                                                <thead>
+                                                    <tr class="table-secondary">
+                                                        <th>Region</th>
+                                                        <th>Parts Status</th>
+                                                        <th>0-1 Days</th>
+                                                        <th>2-4 Days</th>
+                                                        <th>5-7 Days</th>
+                                                        <th>8-15 Days</th>
+                                                        <th>16-30 Days</th>
+                                                        <th>>30 Days</th>
+                                                        <th>Grand Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="cciMatrixBody"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Table 2: Detailed Part Breakdown -->
+                                <div class="col-xl-5 col-lg-4 col-md-12">
+                                    <div class="card h-100">
+                                        <div class="card-header fw-bold bg-light py-1 px-2" style="font-size:0.85rem;">
+                                            Part Detail Breakdown</div>
+                                        <div class="card-body p-1 table-responsive" style="max-height: 550px; overflow-y: auto;">
+                                            <table class="table table-bordered summary-table m-0" id="cciPartDetailTable">
+                                                <thead>
+                                                    <tr class="table-secondary">
+                                                        <th style="width: 25%;">Defective Category</th>
+                                                        <th style="width: 20%;">Replace Part</th>
+                                                        <th style="width: 45%;">Replacement Part Name</th>
+                                                        <th style="width: 10%;">Qty</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="cciPartDetailBody"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Table 3: Defective Category Summary -->
+                                <div class="col-xl-3 col-lg-3 col-md-12">
+                                    <div class="card h-100">
+                                        <div class="card-header fw-bold bg-light py-1 px-2" style="font-size:0.85rem;">
+                                            Defective Category Summary</div>
+                                        <div class="card-body p-1 table-responsive">
+                                            <table class="table table-bordered summary-table m-0" id="cciCategorySummaryTable">
+                                                <thead>
+                                                    <tr class="table-secondary">
+                                                        <th>Defective Part Category</th>
+                                                        <th>Part Qty</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="cciCategorySummaryBody"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            let table;
+            let allData = [];
+            let filteredData = [];
+            let cciData = [];
+            let regionMap = {};
+            const BUCKETS = ["0-1 Days", "2-4 Days", "5-7 Days", "8-15 Days", "16-30 Days", ">30 Days"];
+
+            // Theme Toggle Logic
+            const themeBtn = $('#themeToggleBtn');
+            const themeIcon = $('#themeIcon');
+            
+            themeBtn.on('click', function() {
+                const currentTheme = $('html').attr('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                $('html').attr('data-theme', newTheme);
+                themeIcon.text(newTheme === 'dark' ? 'light_mode' : 'dark_mode');
+                localStorage.setItem('theme', newTheme);
+            });
+
+            if (localStorage.getItem('theme') === 'dark') {
+                $('html').attr('data-theme', 'dark');
+                themeIcon.text('light_mode');
+            }
+
+            setupCheckboxDropdown('statusDropdownBtn', 'statusDropdownMenu', 'statusDropdownText', 'Select Part Statuses');
+            setupCheckboxDropdown('regionDropdownBtn', 'regionDropdownMenu', 'regionDropdownText', 'Select Regions');
+            setupCheckboxDropdown('cciRegionDropdownBtn', 'cciRegionDropdownMenu', 'cciRegionDropdownText', 'Select CCI Regions', renderCCITabTables);
+
+            // Initialize status dropdown label count on startup
+            updateDropdownLabel('statusDropdownMenu', 'statusDropdownText', 'Select Part Statuses');
+
+            function setupCheckboxDropdown(btnId, menuId, textId, defaultText, onChangeCallback) {
+                const $btn = $('#' + btnId);
+                const $menu = $('#' + menuId);
+                
+                $btn.on('click', function (e) {
+                    e.stopPropagation();
+                    $('.checkbox-dropdown-menu').not($menu).removeClass('show');
+                    $menu.toggleClass('show');
+                });
+                
+                $menu.on('click', e => e.stopPropagation());
+                
+                $menu.on('change', 'input[type="checkbox"]', () => {
+                    updateDropdownLabel(menuId, textId, defaultText);
+                    if (onChangeCallback) onChangeCallback();
+                });
+            }
+
+            $(document).on('click', () => $('.checkbox-dropdown-menu').removeClass('show'));
+
+            function updateDropdownLabel(menuId, textId, defaultText) {
+                const checked = $(`#${menuId} input[type="checkbox"]:checked`);
+                if (checked.length === 0) $('#' + textId).text(defaultText);
+                else if (checked.length === 1) $('#' + textId).text(checked.parent().text().trim());
+                else $('#' + textId).text(`${checked.length} items selected`);
+            }
+
+            // Quick select handlers for Main Dashboard
+            $('#selectAllStatus').click(() => { $('#statusDropdownMenu input[type="checkbox"]').prop('checked', true); updateDropdownLabel('statusDropdownMenu', 'statusDropdownText', 'Select Part Statuses'); });
+            $('#unselectAllStatus').click(() => { $('#statusDropdownMenu input[type="checkbox"]').prop('checked', false); updateDropdownLabel('statusDropdownMenu', 'statusDropdownText', 'Select Part Statuses'); });
+            $('#selectAllRegion').click(() => { $('#regionDropdownMenu input[type="checkbox"]').prop('checked', true); updateDropdownLabel('regionDropdownMenu', 'regionDropdownText', 'Select Regions'); });
+            $('#unselectAllRegion').click(() => { $('#regionDropdownMenu input[type="checkbox"]').prop('checked', false); updateDropdownLabel('regionDropdownMenu', 'regionDropdownText', 'Select Regions'); });
+
+            // Quick select handlers for CCI Tab Filter
+            $('#selectAllCCIRegion').click(() => { $('#cciRegionDropdownMenu input[type="checkbox"]').prop('checked', true); updateDropdownLabel('cciRegionDropdownMenu', 'cciRegionDropdownText', 'Select CCI Regions'); renderCCITabTables(); });
+            $('#unselectAllCCIRegion').click(() => { $('#cciRegionDropdownMenu input[type="checkbox"]').prop('checked', false); updateDropdownLabel('cciRegionDropdownMenu', 'cciRegionDropdownText', 'Select CCI Regions'); renderCCITabTables(); });
+
+            setupFileUpload(document.getElementById('uploadArea'), document.getElementById('fileInput'), document.getElementById('browseBtn'), handleCallsFile);
+            setupFileUpload(document.getElementById('regionUploadArea'), document.getElementById('regionFileInput'), document.getElementById('regionBrowseBtn'), handleRegionFile);
+
+            $('#applyFilter').on('click', applyFilters);
+            $('#exportBtn').on('click', exportToExcel);
+            $('#exportCCIBtn').on('click', exportCCIToExcel);
+
+            function setupFileUpload(area, input, button, fileHandler) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+                    area.addEventListener(e, preventDefaults, false);
+                    document.body.addEventListener(e, preventDefaults, false);
+                });
+                ['dragenter', 'dragover'].forEach(e => area.addEventListener(e, () => area.classList.add('drag-over'), false));
+                ['dragleave', 'drop'].forEach(e => area.addEventListener(e, () => area.classList.remove('drag-over'), false));
+                area.addEventListener('drop', (e) => {
+                    const dt = e.dataTransfer;
+                    if (dt.files.length) { input.files = dt.files; fileHandler(dt.files[0]); }
+                }, false);
+                button.addEventListener('click', () => input.click());
+                input.addEventListener('change', (e) => { if (e.target.files[0]) fileHandler(e.target.files[0]); });
+            }
+
+            function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+            function cleanExcelValue(val) {
+                if (val === undefined || val === null) return '';
+                let cleaned = String(val).trim();
+                if (cleaned.startsWith('="') && cleaned.endsWith('"')) {
+                    cleaned = cleaned.substring(2, cleaned.length - 1);
+                }
+                return cleaned;
+            }
+
+            function getRowValue(row, keyName) {
+                if (!row) return '';
+                if (row[keyName] !== undefined && row[keyName] !== null) return cleanExcelValue(row[keyName]);
+                const lowerKey = keyName.trim().toLowerCase();
+                const actualKey = Object.keys(row).find(k => k.trim().toLowerCase() === lowerKey);
+                return actualKey ? cleanExcelValue(row[actualKey]) : '';
+            }
+
+            function normalizeCode(code) {
+                let cleaned = cleanExcelValue(code);
+                return cleaned ? String(parseInt(cleaned, 10)) : '';
+            }
+
+            function calculateAgeing(carryInStr) {
+                if (!carryInStr) return { days: 'N/A', bucket: 'N/A' };
+                let carryInDate;
+                if (!isNaN(carryInStr) && Number(carryInStr) > 30000) {
+                    carryInDate = new Date(Math.round((Number(carryInStr) - 25569) * 86400 * 1000));
+                } else { carryInDate = new Date(carryInStr); }
+
+                if (isNaN(carryInDate.getTime())) return { days: 'N/A', bucket: 'N/A' };
+                const days = Math.floor(Math.abs(new Date() - carryInDate) / (1000 * 60 * 60 * 24));
+
+                let bucket = "";
+                if (days <= 1) bucket = "0-1 Days";
+                else if (days <= 4) bucket = "2-4 Days";
+                else if (days <= 7) bucket = "5-7 Days";
+                else if (days <= 15) bucket = "8-15 Days";
+                else if (days <= 30) bucket = "16-30 Days";
+                else bucket = ">30 Days";
+
+                return { days, bucket };
+            }
+
+            function handleRegionFile(file) {
+                document.getElementById('regionFileInfo').innerHTML = `<span class="material-symbols-outlined fs-6">check_circle</span> Loaded: ${file.name}`;
+                const ext = file.name.split('.').pop().toLowerCase();
+                const processRegionData = (data) => {
+                    regionMap = {};
+                    const regions = new Set();
+                    data.forEach(row => {
+                        const stationKey = Object.keys(row).find(k => k.trim().toLowerCase().includes('station'));
+                        const regionKey = Object.keys(row).find(k => k.trim().toLowerCase().includes('region'));
+                        if (stationKey && regionKey) {
+                            const normCode = normalizeCode(row[stationKey]);
+                            const regVal = cleanExcelValue(row[regionKey]);
+                            if (normCode && regVal) {
+                                regionMap[normCode] = regVal;
+                                regions.add(regVal);
+                            }
+                        }
+                    });
+
+                    // Update Main Dashboard Dropdown
+                    const $menu = $('#regionDropdownMenu');
+                    $menu.empty();
+                    // Update CCI Tab Dropdown
+                    const $cciMenu = $('#cciRegionDropdownMenu');
+                    $cciMenu.empty();
+
+                    Array.from(regions).sort().forEach(r => {
+                        $menu.append(`<div class="checkbox-dropdown-item"><label><input type="checkbox" value="${r}" checked> ${r}</label></div>`);
+                        $cciMenu.append(`<div class="checkbox-dropdown-item"><label><input type="checkbox" value="${r}" checked> ${r}</label></div>`);
+                    });
+
+                    updateDropdownLabel('regionDropdownMenu', 'regionDropdownText', 'Select Regions');
+                    updateDropdownLabel('cciRegionDropdownMenu', 'cciRegionDropdownText', 'Select CCI Regions');
+
+                    $('#kpiRegionsCount').text(regions.size);
+
+                    if (allData.length > 0) {
+                        processCCITabData();
+                        applyFilters();
+                    }
+                };
+
+                if (ext === 'csv') Papa.parse(file, { header: true, complete: res => processRegionData(res.data) });
+                else {
+                    const reader = new FileReader();
+                    reader.onload = (e) => processRegionData(XLSX.utils.sheet_to_json(XLSX.read(new Uint8Array(e.target.result), { type: 'array' }).Sheets[XLSX.read(new Uint8Array(e.target.result), { type: 'array' }).SheetNames[0]], { defval: "" }));
+                    reader.readAsArrayBuffer(file);
+                }
+            }
+
+            function handleCallsFile(file) {
+                document.getElementById('fileInfo').innerHTML = `<span class="material-symbols-outlined fs-6">check_circle</span> Loaded: ${file.name}`;
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'csv') Papa.parse(file, { header: true, complete: res => processCallsData(res.data) });
+                else {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                        processCallsData(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" }));
+                    };
+                    reader.readAsArrayBuffer(file);
+                }
+            }
+
+            function processCallsData(data) {
+                allData = data.filter(row => !['Canceled', 'Closed'].includes(getRowValue(row, 'Service Order Status')));
+                
+                // Show Header Nav Tab Pills & KPI Metric Cards & Results Section
+                $('#navTabWrapper').removeClass('hidden');
+                $('#kpiSection').removeClass('hidden');
+                $('#resultsSection').removeClass('hidden');
+
+                // Update KPI Cards
+                $('#kpiTotalCalls').text(allData.length);
+                let agedCount = 0;
+                allData.forEach(row => {
+                    const ageing = calculateAgeing(getRowValue(row, 'Carry-In Time'));
+                    if (ageing.bucket === '>30 Days') agedCount++;
+                });
+                $('#kpiAgedCount').text(agedCount);
+
+                // Auto-select status checkboxes if none checked
+                if ($('#statusDropdownMenu input[type="checkbox"]:checked').length === 0) {
+                    $('#statusDropdownMenu input[type="checkbox"]').prop('checked', true);
+                    updateDropdownLabel('statusDropdownMenu', 'statusDropdownText', 'Select Part Statuses');
+                }
+
+                initializeEmptyTable();
+                processCCITabData();
+                applyFilters();
+            }
+
+            function processCCITabData() {
+                cciData = [];
+                const cciTarget = "Parts in other CCI";
+
+                allData.forEach(row => {
+                    const rawStationCode = getRowValue(row, 'Station Code');
+                    const normCode = normalizeCode(rawStationCode);
+                    const mappedRegion = regionMap[normCode] || 'Unmapped';
+                    const carryInStr = getRowValue(row, 'Carry-In Time');
+                    const ageingInfo = calculateAgeing(carryInStr);
+
+                    const commonFields = {
+                        'Region': mappedRegion,
+                        'Service Order': getRowValue(row, 'Service Order'),
+                        'Station Code': rawStationCode,
+                        'Station Name': getRowValue(row, 'Station Name'),
+                        'Model': getRowValue(row, 'Model'),
+                        'IMEI1': getRowValue(row, 'IMEI1'),
+                        'Service Order Status': getRowValue(row, 'Service Order Status'),
+                        'Carry-In Time': carryInStr,
+                        'Ageing (Days)': ageingInfo.days,
+                        'Ageing Bucket': ageingInfo.bucket,
+                        'MTM': getRowValue(row, 'MTM')
+                    };
+
+                    [1, 2, 3].forEach(idx => {
+                        const statusVal = getRowValue(row, `Replace Part ${idx} Status`);
+                        if (statusVal && statusVal.toLowerCase().includes('parts in other cci')) {
+                            cciData.push({
+                                ...commonFields,
+                                'Defective Part Category': getRowValue(row, `Defective Part ${idx} Category`) || getRowValue(row, `Defective Part ${idx} Name`),
+                                'Replace Part': getRowValue(row, `Replace Part ${idx}`),
+                                'Replacement Part Name': getRowValue(row, `Replacement Part ${idx} Name`),
+                                'Replace Part Status': cciTarget
+                            });
+                        }
+                    });
+                });
+
+                $('#kpiCCICount').text(cciData.length);
+                renderCCITabTables();
+            }
+
+            function getFilteredCCIData() {
+                const selectedCCIRegions = $('#cciRegionDropdownMenu input[type="checkbox"]:checked').map((_, cb) => cb.value).get();
+                return cciData.filter(item => {
+                    if (selectedCCIRegions.length === 0) return true;
+                    return selectedCCIRegions.includes(item['Region']);
+                });
+            }
+
+            function renderCCITabTables() {
+                const activeCCIData = getFilteredCCIData();
+
+                const matrixMap = {};
+                const matrixTotals = {};
+                BUCKETS.forEach(b => matrixTotals[b] = 0);
+                let matrixGrandTotal = 0;
+
+                const detailMap = {};
+                const categoryMap = {};
+
+                activeCCIData.forEach(item => {
+                    const reg = item['Region'] || 'Unmapped';
+                    const bucket = item['Ageing Bucket'];
+                    const category = item['Defective Part Category'] || 'Unspecified';
+                    const partCode = item['Replace Part'] || 'N/A';
+                    const partName = item['Replacement Part Name'] || 'N/A';
+
+                    // 1. Matrix logic
+                    if (!matrixMap[reg]) {
+                        matrixMap[reg] = {};
+                        BUCKETS.forEach(b => matrixMap[reg][b] = 0);
+                    }
+                    if (BUCKETS.includes(bucket)) {
+                        matrixMap[reg][bucket]++;
+                        matrixTotals[bucket]++;
+                        matrixGrandTotal++;
+                    }
+
+                    // 2. Part Detail logic
+                    const detailKey = `${category}||${partCode}||${partName}`;
+                    detailMap[detailKey] = (detailMap[detailKey] || 0) + 1;
+
+                    // 3. Category Summary logic
+                    categoryMap[category] = (categoryMap[category] || 0) + 1;
+                });
+
+                // Render Table 1: Matrix
+                let matrixHtml = "";
+                const sortedRegions = Object.keys(matrixMap).sort();
+                sortedRegions.forEach(reg => {
+                    let regTotal = 0;
+                    matrixHtml += `<tr><td class="text-start fw-bold">${reg}</td><td>Parts in other CCI</td>`;
+                    BUCKETS.forEach(b => {
+                        const count = matrixMap[reg][b];
+                        matrixHtml += `<td>${count || 0}</td>`;
+                        regTotal += count;
+                    });
+                    matrixHtml += `<td class="fw-bold">${regTotal}</td></tr>`;
+                });
+
+                matrixHtml += `<tr class="bg-grand-total"><td colspan="2" class="text-start">Grand Total</td>`;
+                BUCKETS.forEach(b => matrixHtml += `<td>${matrixTotals[b]}</td>`);
+                matrixHtml += `<td>${matrixGrandTotal}</td></tr>`;
+                $('#cciMatrixBody').html(matrixHtml);
+
+                // Render Table 2: Part Detail Breakdown
+                let detailHtml = "";
+                let detailTotalQty = 0;
+                const sortedDetails = Object.keys(detailMap).sort();
+                sortedDetails.forEach(key => {
+                    const [cat, code, name] = key.split('||');
+                    const qty = detailMap[key];
+                    detailTotalQty += qty;
+                    detailHtml += `<tr>
+                        <td class="text-start">${cat}</td>
+                        <td>${code}</td>
+                        <td class="text-start">${name}</td>
+                        <td class="fw-bold">${qty}</td>
+                    </tr>`;
+                });
+                detailHtml += `<tr class="bg-grand-total"><td colspan="3" class="text-start">Total</td><td>${detailTotalQty}</td></tr>`;
+                $('#cciPartDetailBody').html(detailHtml);
+
+                // Render Table 3: Defective Category Summary
+                let categoryHtml = "";
+                let categoryTotalQty = 0;
+                const sortedCategories = Object.keys(categoryMap).sort((a, b) => categoryMap[b] - categoryMap[a]);
+                sortedCategories.forEach(cat => {
+                    const qty = categoryMap[cat];
+                    categoryTotalQty += qty;
+                    categoryHtml += `<tr>
+                        <td class="text-start">${cat}</td>
+                        <td class="fw-bold">${qty}</td>
+                    </tr>`;
+                });
+                categoryHtml += `<tr class="bg-grand-total"><td class="text-start">Total</td><td>${categoryTotalQty}</td></tr>`;
+                $('#cciCategorySummaryBody').html(categoryHtml);
+            }
+
+            function initializeEmptyTable() {
+                if ($.fn.DataTable.isDataTable('#resultsTable')) { table.destroy(); }
+                table = $('#resultsTable').DataTable({ responsive: true, data: [] });
+            }
+
+            function applyFilters() {
+                const selectedStatuses = $('#statusDropdownMenu input[type="checkbox"]:checked').map((_, cb) => cb.value).get();
+                const selectedRegions = $('#regionDropdownMenu input[type="checkbox"]:checked').map((_, cb) => cb.value).get();
+
+                if (allData.length === 0) return;
+
+                if (selectedStatuses.length === 0) {
+                    filteredData = [];
+                    displayResults();
+                    generatePivotTable();
+                    return;
+                }
+
+                const matchedRows = allData.filter(row => {
+                    return selectedStatuses.some(status =>
+                        (getRowValue(row, 'Replace Part 1 Status') && getRowValue(row, 'Replace Part 1 Status').includes(status)) ||
+                        (getRowValue(row, 'Replace Part 2 Status') && getRowValue(row, 'Replace Part 2 Status').includes(status)) ||
+                        (getRowValue(row, 'Replace Part 3 Status') && getRowValue(row, 'Replace Part 3 Status').includes(status))
+                    );
+                });
+
+                filteredData = [];
+                matchedRows.forEach(row => {
+                    const rawStationCode = getRowValue(row, 'Station Code');
+                    const normCode = normalizeCode(rawStationCode);
+                    const mappedRegion = regionMap[normCode] || 'Unmapped';
+
+                    if (selectedRegions.length > 0 && !selectedRegions.includes(mappedRegion)) return;
+
+                    const carryInStr = getRowValue(row, 'Carry-In Time');
+                    const ageingInfo = calculateAgeing(carryInStr);
+
+                    const commonFields = {
+                        'Region': mappedRegion,
+                        'Service Order': getRowValue(row, 'Service Order'),
+                        'Station Code': rawStationCode,
+                        'Station Name': getRowValue(row, 'Station Name'),
+                        'Model': getRowValue(row, 'Model'),
+                        'IMEI1': getRowValue(row, 'IMEI1'),
+                        'Service Order Status': getRowValue(row, 'Service Order Status'),
+                        'Warranty Status': getRowValue(row, 'Warranty Status'),
+                        'Parts Status': getRowValue(row, 'Parts Status'),
+                        'DOA Status': getRowValue(row, 'DOA Status'),
+                        'Carry-In Time': carryInStr,
+                        'Ageing (Days)': ageingInfo.days,
+                        'Ageing Bucket': ageingInfo.bucket,
+                        'MTM': getRowValue(row, 'MTM')
+                    };
+
+                    [1, 2, 3].forEach(idx => {
+                        const st = getRowValue(row, `Replace Part ${idx} Status`);
+                        if (st && selectedStatuses.some(s => st.includes(s))) {
+                            filteredData.push({
+                                ...commonFields,
+                                'Defective Part Category': getRowValue(row, `Defective Part ${idx} Category`) || getRowValue(row, `Defective Part ${idx} Name`),
+                                'Replace Part': getRowValue(row, `Replace Part ${idx}`),
+                                'Replacement Part Name': getRowValue(row, `Replacement Part ${idx} Name`),
+                                'Replace Part Status': st
+                            });
+                        }
+                    });
+                });
+
+                displayResults();
+                generatePivotTable();
+            }
+
+            function displayResults() {
+                if ($.fn.DataTable.isDataTable('#resultsTable')) { table.destroy(); }
+                table = $('#resultsTable').DataTable({
+                    responsive: true,
+                    data: filteredData,
+                    columns: [
+                        { data: 'Region' }, { data: 'Service Order' }, { data: 'Station Code' },
+                        { data: 'Station Name' }, { data: 'Model' }, { data: 'IMEI1' },
+                        { data: 'Service Order Status' }, { data: 'Warranty Status' }, { data: 'Parts Status' },
+                        { data: 'DOA Status' }, { data: 'Carry-In Time' }, { data: 'Ageing (Days)' },
+                        { data: 'Ageing Bucket' }, { data: 'MTM' }, { data: 'Defective Part Category' },
+                        { data: 'Replace Part' }, { data: 'Replacement Part Name' }, { data: 'Replace Part Status' }
+                    ]
+                });
+            }
+
+            function generatePivotTable() {
+                const pivotMap = {};
+                const grandTotals = {};
+                BUCKETS.forEach(b => grandTotals[b] = 0);
+                let overallTotal = 0;
+
+                filteredData.forEach(item => {
+                    const reg = item['Region'] || 'Unmapped';
+                    const status = item['Replace Part Status'] || 'Unknown';
+                    const bucket = item['Ageing Bucket'];
+
+                    if (!pivotMap[reg]) pivotMap[reg] = {};
+                    if (!pivotMap[reg][status]) {
+                        pivotMap[reg][status] = {};
+                        BUCKETS.forEach(b => pivotMap[reg][status][b] = 0);
+                    }
+                    if (BUCKETS.includes(bucket)) {
+                        pivotMap[reg][status][bucket]++;
+                        grandTotals[bucket]++;
+                        overallTotal++;
+                    }
+                });
+
+                let html = "";
+                const regions = Object.keys(pivotMap).sort();
+                if (regions.length === 0) {
+                    $('#pivotTableBody').html('<tr><td colspan="9" class="text-center text-muted py-3">No data found matching selected filters.</td></tr>');
+                    return;
+                }
+
+                regions.forEach(reg => {
+                    const statuses = Object.keys(pivotMap[reg]).sort();
+                    let regionSubtotals = {};
+                    BUCKETS.forEach(b => regionSubtotals[b] = 0);
+                    let regionTotal = 0;
+
+                    statuses.forEach((st, idx) => {
+                        let rowTotal = 0;
+                        html += `<tr>`;
+                        if (idx === 0) html += `<td rowspan="${statuses.length + 1}" class="fw-bold align-middle">${reg}</td>`;
+                        html += `<td class="text-start">${st}</td>`;
+                        BUCKETS.forEach(b => {
+                            const val = pivotMap[reg][st][b];
+                            html += `<td>${val || 0}</td>`;
+                            rowTotal += val;
+                            regionSubtotals[b] += val;
+                        });
+                        html += `<td class="fw-bold">${rowTotal}</td></tr>`;
+                        regionTotal += rowTotal;
+                    });
+
+                    html += `<tr class="bg-total"><td class="text-start">Total (${reg})</td>`;
+                    BUCKETS.forEach(b => html += `<td>${regionSubtotals[b]}</td>`);
+                    html += `<td>${regionTotal}</td></tr>`;
+                });
+
+                html += `<tr class="bg-grand-total"><td colspan="2" class="text-start">Grand Total</td>`;
+                BUCKETS.forEach(b => html += `<td>${grandTotals[b]}</td>`);
+                html += `<td>${overallTotal}</td></tr>`;
+
+                $('#pivotTableBody').html(html);
+            }
+
+            function exportToExcel() {
+                if (filteredData.length === 0) return alert('No data to export.');
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filteredData), "Filtered Data");
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.table_to_sheet(document.getElementById("pivotTable")), "Pivot Summary");
+                XLSX.writeFile(wb, "Filtered_Parts_With_Pivot.xlsx");
+            }
+
+            function exportCCIToExcel() {
+                const activeCCIRecords = getFilteredCCIData();
+
+                if (activeCCIRecords.length === 0) return alert('No Parts in Other CCI data available for the selected region(s).');
+
+                const wb = XLSX.utils.book_new();
+                const ws = {};
+
+                const t1 = XLSX.utils.sheet_to_json(XLSX.utils.table_to_sheet(document.getElementById("cciMatrixTable")), { header: 1 });
+                const t2 = XLSX.utils.sheet_to_json(XLSX.utils.table_to_sheet(document.getElementById("cciPartDetailTable")), { header: 1 });
+                const t3 = XLSX.utils.sheet_to_json(XLSX.utils.table_to_sheet(document.getElementById("cciCategorySummaryTable")), { header: 1 });
+
+                append2DArrayToSheet(ws, t1, 0, 0);
+                append2DArrayToSheet(ws, t2, 0, 10);
+                append2DArrayToSheet(ws, t3, 0, 15);
+
+                const maxRow = Math.max(t1.length, t2.length, t3.length);
+                ws['!ref'] = XLSX.utils.encode_range({ r: 0, c: 0 }, { r: maxRow, c: 17 });
+
+                XLSX.utils.book_append_sheet(wb, ws, "pivots");
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(activeCCIRecords), "CCI Raw Records");
+
+                XLSX.writeFile(wb, "Parts_In_Other_CCI_Summary_Reports.xlsx");
+            }
+
+            function append2DArrayToSheet(ws, data, startRow, startCol) {
+                for (let r = 0; r < data.length; r++) {
+                    for (let c = 0; c < data[r].length; c++) {
+                        const val = data[r][c];
+                        if (val !== undefined && val !== null) {
+                            const cellRef = XLSX.utils.encode_cell({ r: startRow + r, c: startCol + c });
+                            ws[cellRef] = { v: val, t: typeof val === 'number' ? 'n' : 's' };
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
