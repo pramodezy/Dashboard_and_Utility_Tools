@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CCI Spare Part Allocation Engine</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- SheetJS CDN for Excel/CSV parsing & export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- AG Grid Community CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/dist/ag-grid-community.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/styles/ag-grid.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.0.1/styles/ag-theme-alpine.css">
+
+  <style>
+    /* Custom Scrollbar & Grid Heights */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    .ag-theme-alpine {
+      --ag-header-background-color: #f8fafc;
+      --ag-header-foreground-color: #1e293b;
+      --ag-border-color: #e2e8f0;
+      --ag-secondary-border-color: #f1f5f9;
+      --ag-row-hover-color: #f1f5f9;
+      font-size: 13px;
+    }
+    
+    .grid-container {
+      height: 420px; /* Standard view height ~10 visible rows + header/scrollbars */
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- Header Banner -->
+  <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          CCI Spare Part Allocation Engine
+        </h1>
+        <p class="text-xs text-slate-400 mt-0.5">High-Performance Offline Inventory Allocation & Service Order Processing</p>
+      </div>
+      <div class="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-xs font-medium text-emerald-400">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        Offline Ready
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+    <!-- Upload & Controls Card -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-4">1. Data Ingestion</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <!-- Inventory Upload Box -->
+        <div class="border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-colors rounded-lg p-4 bg-slate-50/50 flex flex-col justify-between">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Inventory File (.xlsx, .xls, .csv)</label>
+            <p class="text-xs text-slate-500 mb-3">Required columns: <code class="bg-slate-200 px-1 rounded text-slate-700">New PN</code>, <code class="bg-slate-200 px-1 rounded text-slate-700">Quantity</code>, <code class="bg-slate-200 px-1 rounded text-slate-700">Site</code>, <code class="bg-slate-200 px-1 rounded text-slate-700">Warehouse Name</code>, <code class="bg-slate-200 px-1 rounded text-slate-700">Station Name</code>, <code class="bg-slate-200 px-1 rounded text-slate-700">partsGroup</code></p>
+          </div>
+          <input type="file" id="inventoryFileInput" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+        </div>
+
+        <!-- Open Calls Upload Box -->
+        <div class="border-2 border-dashed border-slate-200 hover:border-indigo-400 transition-colors rounded-lg p-4 bg-slate-50/50 flex flex-col justify-between">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Open Calls File (.xlsx, .xls, .csv)</label>
+            <p class="text-xs text-slate-500 mb-3">Contains Service Orders, Replace Parts 1-3, Replace Part Statuses 1-3, Defective Part 1-3 Categories, Station Code, etc.</p>
+          </div>
+          <input type="file" id="openCallsFileInput" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+        </div>
+
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+        <div id="statusMessage" class="text-xs font-medium text-slate-600 flex items-center gap-2">
+          Ready for processing.
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="resetBtn" onclick="resetApplication()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors">
+            Reset
+          </button>
+          <button id="processBtn" onclick="processAllocation()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all flex items-center gap-2">
+            <span id="btnSpinner" class="hidden w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            Process Data
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- KPI Dashboard Cards -->
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <span class="text-xs font-medium text-slate-500 block">Parts in Other CCI</span>
+        <span id="kpiOtherCCI" class="text-xl font-bold text-slate-800 mt-1 block">0</span>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <span class="text-xs font-medium text-slate-500 block">Parts in Service Center</span>
+        <span id="kpiServiceCenter" class="text-xl font-bold text-slate-800 mt-1 block">0</span>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <span class="text-xs font-medium text-slate-500 block">Inventory Records</span>
+        <span id="kpiInventory" class="text-xl font-bold text-slate-800 mt-1 block">0</span>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-emerald-500">
+        <span class="text-xs font-medium text-slate-500 block">Allocated Parts</span>
+        <span id="kpiAllocated" class="text-xl font-bold text-emerald-600 mt-1 block">0</span>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm border-l-4 border-l-rose-500">
+        <span class="text-xs font-medium text-slate-500 block">Unallocated Parts</span>
+        <span id="kpiUnallocated" class="text-xl font-bold text-rose-600 mt-1 block">0</span>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm bg-indigo-50/50">
+        <span class="text-xs font-medium text-slate-500 block">Success Rate</span>
+        <span id="kpiSuccessRate" class="text-xl font-bold text-indigo-600 mt-1 block">0%</span>
+      </div>
+    </section>
+
+    <!-- Table 3: Part Allocation Output (Primary Focus) -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            Table 3 – Part Allocation for Parts in Other CCI
+            <span id="countTableAllocation" class="text-xs bg-slate-100 text-slate-600 font-normal px-2 py-0.5 rounded-full border border-slate-200">0 rows</span>
+          </h2>
+          <p class="text-xs text-slate-500">Inventory allocation computed via FIFO based on Carry-In Time after reserving Service Center requirements.</p>
+        </div>
+        
+        <!-- Controls for Table 3 -->
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <input type="text" id="searchAllocation" oninput="onFilterChanged('gridAllocation', this.value)" placeholder="Search table..." class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs w-full sm:w-48 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <button onclick="copySelectedRows('gridAllocation')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-colors">Copy Selected</button>
+          <button onclick="copyEntireTable('gridAllocation')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-colors">Copy Table</button>
+          <button onclick="exportToExcel('gridAllocation', 'Part_Allocation_Results')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors">Export Excel</button>
+          <button onclick="exportToCSV('gridAllocation', 'Part_Allocation_Results')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white text-xs font-medium rounded-lg transition-colors">Export CSV</button>
+        </div>
+      </div>
+      <div id="gridAllocation" class="ag-theme-alpine grid-container rounded-lg border border-slate-200"></div>
+    </section>
+
+    <!-- Table 1: Parts in Other CCI -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            Table 1 – Parts in Other CCI
+            <span id="countTableOtherCCI" class="text-xs bg-slate-100 text-slate-600 font-normal px-2 py-0.5 rounded-full border border-slate-200">0 rows</span>
+          </h2>
+          <p class="text-xs text-slate-500">Normalized qualifying parts with status 'Parts in Other CCI' (Excludes SOs 'In Escalation').</p>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <input type="text" id="searchOtherCCI" oninput="onFilterChanged('gridOtherCCI', this.value)" placeholder="Search table..." class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs w-full sm:w-48 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <button onclick="copySelectedRows('gridOtherCCI')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-colors">Copy Selected</button>
+          <button onclick="copyEntireTable('gridOtherCCI')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-colors">Copy Table</button>
+          <button onclick="exportToExcel('gridOtherCCI', 'Parts_In_Other_CCI')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors">Export Excel</button>
+          <button onclick="exportToCSV('gridOtherCCI', 'Parts_In_Other_CCI')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white text-xs font-medium rounded-lg transition-colors">Export CSV</button>
+        </div>
+      </div>
+      <div id="gridOtherCCI" class="ag-theme-alpine grid-container rounded-lg border border-slate-200"></div>
+    </section>
+
+    <!-- Table 2: Parts in Service Center -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-3">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            Table 2 – Parts in Service Center
+            <span id="countTableServiceCenter" class="text-xs bg-slate-100 text-slate-600 font-normal px-2 py-0.5 rounded-full border border-slate-200">0 rows</span>
+          </h2>
+          <p class="text-xs text-slate-500">Normalized qualifying parts with status 'Parts in Service Center' (Excludes SOs 'Waiting for pickup').</p>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <input type="text" id="searchServiceCenter" oninput="onFilterChanged('gridServiceCenter', this.value)" placeholder="Search table..." class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs w-full sm:w-48 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <button onclick="copySelectedRows('gridServiceCenter')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-colors">Copy Selected</button>
+          <button onclick="copyEntireTable('gridServiceCenter')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-colors">Copy Table</button>
+          <button onclick="exportToExcel('gridServiceCenter', 'Parts_In_Service_Center')" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg transition-colors">Export Excel</button>
+          <button onclick="exportToCSV('gridServiceCenter', 'Parts_In_Service_Center')" class="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white text-xs font-medium rounded-lg transition-colors">Export CSV</button>
+        </div>
+      </div>
+      <div id="gridServiceCenter" class="ag-theme-alpine grid-container rounded-lg border border-slate-200"></div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-8">
+    CCI Spare Part Allocation Engine &bull; High Performance Offline Application &bull; Client-Side Processing
+  </footer>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // Global AG Grid Instances
+    const gridInstances = {
+      gridOtherCCI: null,
+      gridServiceCenter: null,
+      gridAllocation: null
+    };
+
+    // Shared Standard Display Columns Definition
+    const commonDisplayColumns = [
+      { field: "Service Order", headerName: "Service Order", sortable: true, filter: true, resizable: true },
+      { field: "Station Code", headerName: "Station Code", sortable: true, filter: true, resizable: true },
+      { field: "Station Name", headerName: "Station Name", sortable: true, filter: true, resizable: true },
+      { field: "Model", headerName: "Model", sortable: true, filter: true, resizable: true },
+      { field: "IMEI1", headerName: "IMEI1", sortable: true, filter: true, resizable: true },
+      { field: "Service Order Status", headerName: "Service Order Status", sortable: true, filter: true, resizable: true },
+      { field: "Warranty Status", headerName: "Warranty Status", sortable: true, filter: true, resizable: true },
+      { field: "Parts Status", headerName: "Parts Status (Master)", sortable: true, filter: true, resizable: true },
+      { field: "DOA Status", headerName: "DOA Status", sortable: true, filter: true, resizable: true },
+      { field: "Carry-In Time", headerName: "Carry-In Time", sortable: true, filter: true, resizable: true },
+      { field: "MTM", headerName: "MTM", sortable: true, filter: true, resizable: true },
+      { field: "Defective Part Category", headerName: "Defective Part Category", sortable: true, filter: true, resizable: true },
+      { field: "Replace Part", headerName: "Replace Part", sortable: true, filter: true, resizable: true },
+      { field: "Replacement Part Name", headerName: "Replacement Part Name", sortable: true, filter: true, resizable: true },
+      { field: "Replace Part Status", headerName: "Replace Part Status", sortable: true, filter: true, resizable: true }
+    ];
+
+    // Table 3: Allocation Grid Columns (Includes partsGroup Column)
+    const allocationColumns = [
+      { field: "Service Order", headerName: "Service Order", sortable: true, filter: true, resizable: true },
+      { field: "Station Code", headerName: "Station Code", sortable: true, filter: true, resizable: true },
+      { field: "Station Name", headerName: "Station Name", sortable: true, filter: true, resizable: true },
+      { field: "Carry-In Time", headerName: "Carry-In Time", sortable: true, filter: true, resizable: true },
+      { field: "Replace Part", headerName: "Replace Part", sortable: true, filter: true, resizable: true },
+      { field: "Replacement Part Name", headerName: "Replacement Part Name", sortable: true, filter: true, resizable: true },
+      { field: "partsGroup", headerName: "Parts Group", sortable: true, filter: true, resizable: true },
+      { field: "Inventory Site", headerName: "Inventory Site", sortable: true, filter: true, resizable: true },
+      { field: "Inventory Station Name", headerName: "Inventory Station Name", sortable: true, filter: true, resizable: true },
+      { field: "Warehouse Name", headerName: "Warehouse Name", sortable: true, filter: true, resizable: true },
+      { field: "Inventory Quantity", headerName: "Inventory Qty", sortable: true, filter: true, resizable: true, type: "numericColumn" },
+      { field: "Reserved Quantity", headerName: "Reserved Qty", sortable: true, filter: true, resizable: true, type: "numericColumn" },
+      { field: "Available Quantity", headerName: "Available Qty (Before)", sortable: true, filter: true, resizable: true, type: "numericColumn" },
+      { 
+        field: "Allocation Status", 
+        headerName: "Allocation Status", 
+        sortable: true, 
+        filter: true, 
+        resizable: true,
+        cellRenderer: params => {
+          if (params.value === "Allocated") {
+            return `<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">Allocated</span>`;
+          }
+          return `<span class="px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-800">Not Allocated</span>`;
+        }
+      }
+    ];
+
+    // Initialize AG Grids on DOM Ready
+    document.addEventListener("DOMContentLoaded", () => {
+      gridInstances.gridOtherCCI = createAgGrid("gridOtherCCI", commonDisplayColumns);
+      gridInstances.gridServiceCenter = createAgGrid("gridServiceCenter", commonDisplayColumns);
+      gridInstances.gridAllocation = createAgGrid("gridAllocation", allocationColumns);
+    });
+
+    function createAgGrid(containerId, columnDefs) {
+      const gridDiv = document.getElementById(containerId);
+      const gridOptions = {
+        columnDefs: columnDefs,
+        rowData: [],
+        rowSelection: 'multiple',
+        suppressRowClickSelection: true,
+        animateRows: false,
+        headerHeight: 38,
+        rowHeight: 34,
+        defaultColDef: {
+          flex: 1,
+          minWidth: 120,
+          resizable: true,
+          sortable: true,
+          filter: true
+        }
+      };
+      return agGrid.createGrid(gridDiv, gridOptions);
+    }
+
+    // Utility: Clean & Normalize String Values
+    function cleanStr(val) {
+      if (val === null || val === undefined) return "";
+      return String(val).trim();
+    }
+
+    function cleanUpper(val) {
+      return cleanStr(val).toUpperCase();
+    }
+
+    // Helper: Find Column Value by Checking Multiple Possible Alias Headers
+    function getColValueMulti(row, possibleNames) {
+      if (!row) return "";
+      for (const name of possibleNames) {
+        const val = getColValue(row, name);
+        if (cleanStr(val) !== "") {
+          return val;
+        }
+      }
+      return "";
+    }
+
+    // Helper: Find Column Name Case-Insensitively with Spaces/Underscores Removed
+    function getColValue(row, colName) {
+      if (!row) return "";
+      const target = colName.toLowerCase().replace(/[\s_]/g, "");
+      for (const key in row) {
+        if (key.toLowerCase().replace(/[\s_]/g, "") === target) {
+          return row[key];
+        }
+      }
+      return "";
+    }
+
+    // Robust Date Parsing & Standardized Display Formatting
+    function parseAndFormatCarryInTime(val) {
+      if (val === null || val === undefined || val === "") {
+        return { parsedDate: new Date(0), formattedStr: "" };
+      }
+
+      let dateObj = null;
+
+      if (val instanceof Date) {
+        dateObj = val;
+      } else {
+        const rawStr = String(val).trim();
+
+        const directParsed = new Date(rawStr);
+        if (!isNaN(directParsed.getTime())) {
+          dateObj = directParsed;
+        } else {
+          const match = rawStr.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?\s*(AM|PM)?)?/i);
+          if (match) {
+            let [_, day, month, year, hrs, mins, secs, ampm] = match;
+            hrs = parseInt(hrs || "0", 10);
+            mins = parseInt(mins || "0", 10);
+            secs = parseInt(secs || "0", 10);
+
+            if (ampm) {
+              ampm = ampm.toUpperCase();
+              if (ampm === "PM" && hrs < 12) hrs += 12;
+              if (ampm === "AM" && hrs === 12) hrs = 0;
+            }
+
+            dateObj = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10), hrs, mins, secs);
+          }
+        }
+      }
+
+      if (!dateObj || isNaN(dateObj.getTime())) {
+        return { parsedDate: new Date(0), formattedStr: String(val) };
+      }
+
+      const pad = (num) => String(num).padStart(2, '0');
+      const dd = pad(dateObj.getDate());
+      const mm = pad(dateObj.getMonth() + 1);
+      const yyyy = dateObj.getFullYear();
+
+      let hours = dateObj.getHours();
+      const minutes = pad(dateObj.getMinutes());
+      const seconds = pad(dateObj.getSeconds());
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+
+      const formattedStr = `${dd}/${mm}/${yyyy} ${pad(hours)}:${minutes}:${seconds} ${ampm}`;
+
+      return { parsedDate: dateObj, formattedStr: formattedStr };
+    }
+
+    // File Parsing Wrapper using SheetJS
+    function readFileAsArrayBuffer(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (err) => reject(err);
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    async function parseExcelFile(file) {
+      const buffer = await readFileAsArrayBuffer(file);
+      const workbook = XLSX.read(buffer, { type: 'array', cellDates: true, cellText: false });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      return XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+    }
+
+    // MAIN ALLOCATION CONTROLLER
+    async function processAllocation() {
+      const invInput = document.getElementById("inventoryFileInput");
+      const openCallsInput = document.getElementById("openCallsFileInput");
+      const statusMsg = document.getElementById("statusMessage");
+      const btnSpinner = document.getElementById("btnSpinner");
+      const processBtn = document.getElementById("processBtn");
+
+      if (!invInput.files.length || !openCallsInput.files.length) {
+        alert("Please select both Inventory and Open Calls files before processing.");
+        return;
+      }
+
+      try {
+        processBtn.disabled = true;
+        btnSpinner.classList.remove("hidden");
+        statusMsg.innerText = "Parsing files in background...";
+        await new Promise(r => setTimeout(r, 50));
+
+        const [invRawData, openCallsRawData] = await Promise.all([
+          parseExcelFile(invInput.files[0]),
+          parseExcelFile(openCallsInput.files[0])
+        ]);
+
+        if (!invRawData.length || !openCallsRawData.length) {
+          throw new Error("One or both uploaded files contain no data.");
+        }
+
+        statusMsg.innerText = "Validating structure & normalizing parts...";
+        await new Promise(r => setTimeout(r, 20));
+
+        // Validate Inventory Columns
+        const sampleInvRow = invRawData[0];
+        const reqInvCols = ["New PN", "Quantity", "Site", "Warehouse Name", "Station Name"];
+        for (const col of reqInvCols) {
+          if (getColValue(sampleInvRow, col) === undefined && !(col in sampleInvRow)) {
+            throw new Error(`Inventory File is missing required column: '${col}'`);
+          }
+        }
+
+        const table1OtherCCI = [];
+        const table2ServiceCenter = [];
+
+        // Step 1: Normalize Open Calls into Table 1 & Table 2
+        for (let i = 0; i < openCallsRawData.length; i++) {
+          const row = openCallsRawData[i];
+          const soStatus = cleanStr(getColValueMulti(row, ["Service Order Status", "SO Status", "Status"]));
+          
+          const rawCarryIn = getColValueMulti(row, ["Carry-In Time", "CarryInTime", "Carry In Time", "Carry In"]);
+          const { parsedDate, formattedStr } = parseAndFormatCarryInTime(rawCarryIn);
+
+          // Extract master order metadata once
+          const meta = {
+            "Service Order": cleanStr(getColValueMulti(row, ["Service Order", "Service Order No", "SO", "SO Number"])),
+            "Station Code": cleanStr(getColValueMulti(row, ["Station Code", "StationCode", "Site Code"])),
+            "Station Name": cleanStr(getColValueMulti(row, ["Station Name", "StationName", "Site Name"])),
+            "Model": cleanStr(getColValueMulti(row, ["Model", "Model Name"])),
+            "IMEI1": cleanStr(getColValueMulti(row, ["IMEI1", "IMEI 1", "IMEI"])),
+            "Service Order Status": soStatus,
+            "Warranty Status": cleanStr(getColValueMulti(row, ["Warranty Status", "Warranty"])),
+            "Parts Status": cleanStr(getColValueMulti(row, ["Parts Status", "Part Status"])),
+            "DOA Status": cleanStr(getColValueMulti(row, ["DOA Status", "DOA"])),
+            "Carry-In Time": formattedStr,
+            "_parsedCarryInTime": parsedDate,
+            "MTM": cleanStr(getColValueMulti(row, ["MTM", "MTM Number"])),
+            "Master Defective Cat": cleanStr(getColValueMulti(row, ["Defective Part Category", "Defective Category", "Defective Part Cat"]))
+          };
+
+          // Evaluate Parts 1, 2, and 3
+          for (let p = 1; p <= 3; p++) {
+            const partNum = cleanStr(getColValueMulti(row, [
+              `Replace Part ${p}`, `Replace Part${p}`, `ReplacePart${p}`, `Part ${p}`, `Part${p}`
+            ]));
+
+            const partStatus = cleanStr(getColValueMulti(row, [
+              `Replace Part ${p} Status`, `Replace Part${p} Status`, `ReplacePart${p}Status`, `Part ${p} Status`, `Part${p} Status`
+            ]));
+
+            // Flexible Multi-Alias Resolution for Replacement Part Name
+            const partName = cleanStr(getColValueMulti(row, [
+              `Replacement Part Name ${p}`, `Replacement Part Name${p}`, `Replacement Part ${p} Name`,
+              `Replace Part Name ${p}`, `Replace Part Name${p}`, `Replace Part ${p} Name`,
+              `Part Name ${p}`, `Part Name${p}`, `Part ${p} Name`,
+              `Replacement Part Name`, `Replace Part Name`
+            ]));
+
+            // Explicit Positional Match for Defective Part Category (1, 2, or 3)
+            const partDefectCat = cleanStr(getColValueMulti(row, [
+              `Defective Part ${p} Category`, `Defective Part ${p} Cat`,
+              `Defective Part Category ${p}`, `Defective Part Category${p}`,
+              `Defective Part Cat ${p}`, `Defective Category ${p}`, `Defective Category${p}`
+            ])) || meta["Master Defective Cat"];
+
+            if (!partNum) continue; // Ignore blank replace parts
+
+            const partRow = {
+              "Service Order": meta["Service Order"],
+              "Station Code": meta["Station Code"],
+              "Station Name": meta["Station Name"],
+              "Model": meta["Model"],
+              "IMEI1": meta["IMEI1"],
+              "Service Order Status": meta["Service Order Status"],
+              "Warranty Status": meta["Warranty Status"],
+              "Parts Status": meta["Parts Status"],
+              "DOA Status": meta["DOA Status"],
+              "Carry-In Time": meta["Carry-In Time"],
+              "_parsedCarryInTime": meta["_parsedCarryInTime"],
+              "MTM": meta["MTM"],
+              "Defective Part Category": partDefectCat,
+              "Replace Part": partNum,
+              "Replacement Part Name": partName,
+              "Replace Part Status": partStatus
+            };
+
+            // Rule Table 1: Status = 'Parts in Other CCI', Exclude SO Status 'In Escalation'
+            if (partStatus.toLowerCase() === "parts in other cci") {
+              if (soStatus.toLowerCase() !== "in escalation") {
+                table1OtherCCI.push(partRow);
+              }
+            }
+
+            // Rule Table 2: Status = 'Parts in Service Center', Exclude SO Status 'Waiting for pickup'
+            if (partStatus.toLowerCase() === "parts in service center") {
+              if (soStatus.toLowerCase() !== "waiting for pickup") {
+                table2ServiceCenter.push(partRow);
+              }
+            }
+          }
+        }
+
+        statusMsg.innerText = "Indexing inventory & calculating reservations...";
+        await new Promise(r => setTimeout(r, 20));
+
+        // Step 2: Index Reserved Quantities from Table 2
+        const reservedMap = new Map();
+        for (let i = 0; i < table2ServiceCenter.length; i++) {
+          const r = table2ServiceCenter[i];
+          const pKey = cleanUpper(r["Replace Part"]);
+          const sKey = cleanUpper(r["Station Code"]);
+          if (!pKey) continue;
+
+          const comboKey = `${pKey}||${sKey}`;
+          reservedMap.set(comboKey, (reservedMap.get(comboKey) || 0) + 1);
+        }
+
+        // Step 3: Parse and Index Inventory File (Including partsGroup)
+        const inventoryMap = new Map();
+        let totalInvRecords = 0;
+
+        for (let i = 0; i < invRawData.length; i++) {
+          const invRow = invRawData[i];
+          const newPn = cleanStr(getColValueMulti(invRow, ["New PN", "NewPN", "PN", "Part Number"]));
+          if (!newPn) continue;
+
+          let rawQty = parseFloat(getColValueMulti(invRow, ["Quantity", "Qty"]));
+          if (isNaN(rawQty) || rawQty < 0) rawQty = 0;
+
+          const site = cleanStr(getColValueMulti(invRow, ["Site", "Station Code", "Site Code"]));
+          const whName = cleanStr(getColValueMulti(invRow, ["Warehouse Name", "WarehouseName", "Warehouse"]));
+          const stName = cleanStr(getColValueMulti(invRow, ["Station Name", "StationName"]));
+          const partsGroupVal = cleanStr(getColValueMulti(invRow, ["partsGroup", "Parts Group", "PartsGroup", "Part Group"]));
+
+          const pnKey = newPn.toUpperCase();
+          if (!inventoryMap.has(pnKey)) {
+            inventoryMap.set(pnKey, []);
+          }
+
+          const comboKey = `${pnKey}||${site.toUpperCase()}`;
+          const reservedQty = reservedMap.get(comboKey) || 0;
+          
+          let availQty = rawQty - reservedQty;
+          if (availQty < 0) availQty = 0;
+
+          const invRecord = {
+            pn: newPn,
+            site: site,
+            warehouseName: whName,
+            stationName: stName,
+            partsGroup: partsGroupVal,
+            invQty: rawQty,
+            reservedQty: reservedQty,
+            availQty: availQty
+          };
+
+          inventoryMap.get(pnKey).push(invRecord);
+          totalInvRecords++;
+        }
+
+        statusMsg.innerText = "Executing FIFO Allocation based on Carry-In Time...";
+        await new Promise(r => setTimeout(r, 20));
+
+        // Step 4: FIFO Allocation for Table 1 (Parts in Other CCI)
+        const table1Sorted = [...table1OtherCCI].sort((a, b) => a._parsedCarryInTime - b._parsedCarryInTime);
+
+        const allocationOutput = [];
+        let allocatedCount = 0;
+        let unallocatedCount = 0;
+
+        for (let i = 0; i < table1Sorted.length; i++) {
+          const orderRow = table1Sorted[i];
+          const reqPartUpper = cleanUpper(orderRow["Replace Part"]);
+          const matchingInvList = inventoryMap.get(reqPartUpper) || [];
+
+          let allocatedRecord = null;
+          for (let j = 0; j < matchingInvList.length; j++) {
+            if (matchingInvList[j].availQty > 0) {
+              allocatedRecord = matchingInvList[j];
+              break;
+            }
+          }
+
+          if (allocatedRecord) {
+            const availBefore = allocatedRecord.availQty;
+            allocatedRecord.availQty -= 1;
+            allocatedCount++;
+
+            allocationOutput.push({
+              "Service Order": orderRow["Service Order"],
+              "Station Code": orderRow["Station Code"],
+              "Station Name": orderRow["Station Name"],
+              "Carry-In Time": orderRow["Carry-In Time"],
+              "Replace Part": orderRow["Replace Part"],
+              "Replacement Part Name": orderRow["Replacement Part Name"],
+              "partsGroup": allocatedRecord.partsGroup,
+              "Inventory Site": allocatedRecord.site,
+              "Inventory Station Name": allocatedRecord.stationName,
+              "Warehouse Name": allocatedRecord.warehouseName,
+              "Inventory Quantity": allocatedRecord.invQty,
+              "Reserved Quantity": allocatedRecord.reservedQty,
+              "Available Quantity": availBefore,
+              "Allocation Status": "Allocated"
+            });
+          } else {
+            unallocatedCount++;
+            const fallbackInv = matchingInvList[0];
+
+            allocationOutput.push({
+              "Service Order": orderRow["Service Order"],
+              "Station Code": orderRow["Station Code"],
+              "Station Name": orderRow["Station Name"],
+              "Carry-In Time": orderRow["Carry-In Time"],
+              "Replace Part": orderRow["Replace Part"],
+              "Replacement Part Name": orderRow["Replacement Part Name"],
+              "partsGroup": fallbackInv ? fallbackInv.partsGroup : "N/A",
+              "Inventory Site": fallbackInv ? fallbackInv.site : "N/A",
+              "Inventory Station Name": fallbackInv ? fallbackInv.stationName : "N/A",
+              "Warehouse Name": fallbackInv ? fallbackInv.warehouseName : "N/A",
+              "Inventory Quantity": fallbackInv ? fallbackInv.invQty : 0,
+              "Reserved Quantity": fallbackInv ? fallbackInv.reservedQty : 0,
+              "Available Quantity": fallbackInv ? fallbackInv.availQty : 0,
+              "Allocation Status": "Not Allocated"
+            });
+          }
+        }
+
+        const cleanDisplayRows = (rows) => rows.map(({ _parsedCarryInTime, MasterDefectiveCat, ...rest }) => rest);
+
+        // Step 5: Render Results into AG Grid Instances
+        gridInstances.gridOtherCCI.setGridOption('rowData', cleanDisplayRows(table1OtherCCI));
+        gridInstances.gridServiceCenter.setGridOption('rowData', cleanDisplayRows(table2ServiceCenter));
+        gridInstances.gridAllocation.setGridOption('rowData', allocationOutput);
+
+        // Update Row Counters
+        document.getElementById("countTableOtherCCI").innerText = `${table1OtherCCI.length} rows`;
+        document.getElementById("countTableServiceCenter").innerText = `${table2ServiceCenter.length} rows`;
+        document.getElementById("countTableAllocation").innerText = `${allocationOutput.length} rows`;
+
+        // Update KPI Dashboard
+        document.getElementById("kpiOtherCCI").innerText = table1OtherCCI.length.toLocaleString();
+        document.getElementById("kpiServiceCenter").innerText = table2ServiceCenter.length.toLocaleString();
+        document.getElementById("kpiInventory").innerText = totalInvRecords.toLocaleString();
+        document.getElementById("kpiAllocated").innerText = allocatedCount.toLocaleString();
+        document.getElementById("kpiUnallocated").innerText = unallocatedCount.toLocaleString();
+
+        const successRate = table1OtherCCI.length > 0 
+          ? ((allocatedCount / table1OtherCCI.length) * 100).toFixed(1) 
+          : "0.0";
+        document.getElementById("kpiSuccessRate").innerText = `${successRate}%`;
+
+        statusMsg.innerHTML = `<span class="text-emerald-600 font-semibold">Processing Complete!</span> Processed ${table1OtherCCI.length} required parts. ${allocatedCount} Allocated, ${unallocatedCount} Unallocated.`;
+
+      } catch (err) {
+        console.error("Allocation Processing Error:", err);
+        alert(`Error processing files:\n${err.message}`);
+        statusMsg.innerHTML = `<span class="text-rose-600 font-semibold">Processing Failed:</span> ${err.message}`;
+      } finally {
+        processBtn.disabled = false;
+        btnSpinner.classList.add("hidden");
+      }
+    }
+
+    // AG Grid Quick Filter Helper
+    function onFilterChanged(gridKey, val) {
+      if (gridInstances[gridKey]) {
+        gridInstances[gridKey].setGridOption('quickFilterText', val);
+      }
+    }
+
+    // Grid Actions: Copy Selected Rows
+    function copySelectedRows(gridKey) {
+      const grid = gridInstances[gridKey];
+      if (!grid) return;
+      const selectedNodes = grid.getSelectedNodes();
+      if (!selectedNodes.length) {
+        alert("Please select rows to copy (use Ctrl/Cmd + click or Shift + click).");
+        return;
+      }
+      const data = selectedNodes.map(node => node.data);
+      copyToClipboard(data);
+    }
+
+    // Grid Actions: Copy Entire Table
+    function copyEntireTable(gridKey) {
+      const grid = gridInstances[gridKey];
+      if (!grid) return;
+      const rowData = [];
+      grid.forEachNodeAfterFilterAndSort(node => rowData.push(node.data));
+      if (!rowData.length) {
+        alert("No data available to copy.");
+        return;
+      }
+      copyToClipboard(rowData);
+    }
+
+    function copyToClipboard(dataArray) {
+      if (!dataArray || !dataArray.length) return;
+      const keys = Object.keys(dataArray[0]);
+      let tsv = keys.join("\t") + "\n";
+      dataArray.forEach(row => {
+        tsv += keys.map(k => cleanStr(row[k])).join("\t") + "\n";
+      });
+      navigator.clipboard.writeText(tsv).then(() => {
+        alert(`Successfully copied ${dataArray.length} rows to clipboard!`);
+      }).catch(err => {
+        alert("Failed to copy rows: " + err);
+      });
+    }
+
+    // Export Helpers using SheetJS
+    function exportToExcel(gridKey, filename) {
+      const grid = gridInstances[gridKey];
+      if (!grid) return;
+      const rowData = [];
+      grid.forEachNodeAfterFilterAndSort(node => rowData.push(node.data));
+      if (!rowData.length) {
+        alert("No data to export.");
+        return;
+      }
+      const worksheet = XLSX.utils.json_to_sheet(rowData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+      XLSX.writeFile(workbook, `${filename}.xlsx`);
+    }
+
+    function exportToCSV(gridKey, filename) {
+      const grid = gridInstances[gridKey];
+      if (!grid) return;
+      const rowData = [];
+      grid.forEachNodeAfterFilterAndSort(node => rowData.push(node.data));
+      if (!rowData.length) {
+        alert("No data to export.");
+        return;
+      }
+      const worksheet = XLSX.utils.json_to_sheet(rowData);
+      const csvOutput = XLSX.utils.sheet_to_csv(worksheet);
+      
+      const blob = new Blob([csvOutput], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `${filename}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Reset Application State
+    function resetApplication() {
+      document.getElementById("inventoryFileInput").value = "";
+      document.getElementById("openCallsFileInput").value = "";
+      
+      ["searchOtherCCI", "searchServiceCenter", "searchAllocation"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+
+      if (gridInstances.gridOtherCCI) gridInstances.gridOtherCCI.setGridOption('rowData', []);
+      if (gridInstances.gridServiceCenter) gridInstances.gridServiceCenter.setGridOption('rowData', []);
+      if (gridInstances.gridAllocation) gridInstances.gridAllocation.setGridOption('rowData', []);
+
+      document.getElementById("countTableOtherCCI").innerText = "0 rows";
+      document.getElementById("countTableServiceCenter").innerText = "0 rows";
+      document.getElementById("countTableAllocation").innerText = "0 rows";
+
+      document.getElementById("kpiOtherCCI").innerText = "0";
+      document.getElementById("kpiServiceCenter").innerText = "0";
+      document.getElementById("kpiInventory").innerText = "0";
+      document.getElementById("kpiAllocated").innerText = "0";
+      document.getElementById("kpiUnallocated").innerText = "0";
+      document.getElementById("kpiSuccessRate").innerText = "0%";
+
+      document.getElementById("statusMessage").innerText = "Application reset. Ready for new files.";
+    }
+  </script>
+</body>
+</html>
