@@ -49,15 +49,109 @@
     .filter-section { background: white; border-radius: 16px; padding: 1rem 1.5rem; margin: 1rem 0 1.5rem; border: 1px solid #e9edf2; }
     body.dark .filter-section { background: #1e293b; border-color: #334155; }
     .filter-section h4 { margin-bottom: 0.5rem; font-size: 0.95rem; }
-    .filter-group { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; }
-    .filter-group label { display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; cursor: pointer; }
-    .filter-group select { padding: 0.3rem 0.8rem; border-radius: 6px; border: 1px solid #d1d9e6; background: white; }
-    body.dark .filter-group select { background: #0f172a; color: #e2e8f0; border-color: #475569; }
-    .filter-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .filter-btn { padding: 0.25rem 0.8rem; border-radius: 20px; border: 1px solid #d1d9e6; background: white; cursor: pointer; font-size: 0.8rem; }
-    body.dark .filter-btn { background: #0f172a; color: #e2e8f0; border-color: #475569; }
-    .filter-btn:hover { background: #f1f5f9; }
-    body.dark .filter-btn:hover { background: #2d3a4f; }
+    .filter-group { display: flex; flex-wrap: wrap; gap: 1.2rem; align-items: center; }
+    .filter-group label { display: flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; cursor: pointer; font-weight: 500; }
+    
+    /* Custom Dropdown Styling */
+    .custom-dropdown { position: relative; display: inline-block; min-width: 170px; }
+    .dropdown-btn { 
+      width: 100%; 
+      padding: 0.45rem 0.8rem; 
+      border-radius: 8px; 
+      border: 1px solid #cbd5e1; 
+      background: white; 
+      color: #1e293b; 
+      cursor: pointer; 
+      font-size: 0.82rem; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      gap: 0.5rem;
+      transition: all 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .dropdown-btn:hover { border-color: #2563eb; }
+    body.dark .dropdown-btn { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+    body.dark .dropdown-btn:hover { border-color: #60a5fa; }
+    
+    .dropdown-menu { 
+      position: absolute; 
+      top: calc(100% + 4px); 
+      left: 0; 
+      width: 230px; 
+      background: white; 
+      border: 1px solid #cbd5e1; 
+      border-radius: 10px; 
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12); 
+      z-index: 100; 
+      padding: 0.6rem; 
+      display: none; 
+      flex-direction: column;
+    }
+    body.dark .dropdown-menu { background: #1e293b; border-color: #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+    .dropdown-menu.show { display: flex; }
+    
+    .dropdown-search { 
+      width: 100%; 
+      padding: 0.4rem 0.6rem; 
+      border: 1px solid #cbd5e1; 
+      border-radius: 6px; 
+      font-size: 0.8rem; 
+      margin-bottom: 0.5rem; 
+      outline: none; 
+      background: #f8fafc;
+      color: #1e293b;
+    }
+    body.dark .dropdown-search { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+    .dropdown-search:focus { border-color: #2563eb; background: #fff; }
+    body.dark .dropdown-search:focus { border-color: #60a5fa; background: #0f172a; }
+    
+    .dropdown-actions { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      margin-bottom: 0.4rem; 
+      padding-bottom: 0.4rem; 
+      border-bottom: 1px solid #e2e8f0; 
+    }
+    body.dark .dropdown-actions { border-bottom-color: #334155; }
+    .dropdown-actions span { 
+      font-size: 0.75rem; 
+      color: #2563eb; 
+      cursor: pointer; 
+      font-weight: 600; 
+      user-select: none;
+    }
+    body.dark .dropdown-actions span { color: #60a5fa; }
+    .dropdown-actions span:hover { text-decoration: underline; }
+    
+    .dropdown-options { 
+      max-height: 180px; 
+      overflow-y: auto; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.2rem; 
+    }
+    .dropdown-option { 
+      display: flex; 
+      align-items: center; 
+      gap: 0.5rem; 
+      font-size: 0.82rem; 
+      padding: 0.3rem 0.4rem; 
+      border-radius: 4px; 
+      cursor: pointer; 
+      color: #334155;
+      user-select: none;
+    }
+    body.dark .dropdown-option { color: #cbd5e1; }
+    .dropdown-option:hover { background: #f1f5f9; }
+    body.dark .dropdown-option:hover { background: #334155; }
+    .dropdown-option input[type="checkbox"] { 
+      width: 14px; 
+      height: 14px; 
+      accent-color: #2563eb; 
+      cursor: pointer; 
+    }
     
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
     .kpi-card { background: white; border-radius: 20px; padding: 1.2rem 0.8rem; box-shadow: 0 4px 8px rgba(0,0,0,0.02); border: 1px solid #e9edf2; text-align: center; transition: 0.15s; }
@@ -67,8 +161,10 @@
     .kpi-card .value { font-size: 1.9rem; font-weight: 700; margin: 0.3rem 0; }
     .kpi-card .value.percentage { color: #2563eb; }
     .kpi-card .value.ect { color: #8b5cf6; }
+    .kpi-card .value.ect-part { color: #0284c7; }
     body.dark .kpi-card .value.percentage { color: #60a5fa; }
     body.dark .kpi-card .value.ect { color: #a78bfa; }
+    body.dark .kpi-card .value.ect-part { color: #38bdf8; }
     .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem; margin: 1.5rem 0; }
     .card { background: white; border-radius: 20px; padding: 1.2rem 1rem; border: 1px solid #e9edf2; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
     body.dark .card { background: #1e293b; border-color: #334155; }
@@ -117,7 +213,7 @@
       <i class="fas fa-tools" style="color:#2563eb; font-size:2rem;"></i>
       <div>
         <h1>OTD (On Time Delivery) Performance Dashboard</h1>
-        <span class="subtitle">Service Repair Turnaround Time Analysis · Carry‑In Time base · Target 95.90%</span>
+        <span class="subtitle">Service Repair Turnaround Time Analysis · Carry‑In Time base · Target 95%</span>
       </div>
     </div>
     <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i> Dark</button>
@@ -147,53 +243,107 @@
     <div class="filter-group">
       <div>
         <label>Week:</label>
-        <select id="weekFilter" multiple style="min-width:120px; height:60px;"></select>
-        <div class="filter-actions" style="margin-top:4px;">
-          <button class="filter-btn" onclick="selectAllWeeks()">Select All</button>
-          <button class="filter-btn" onclick="deselectAllWeeks()">Clear</button>
+        <div class="custom-dropdown">
+          <button class="dropdown-btn" id="weekFilterBtn" type="button">
+            <span>Week: All Selected</span> <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" id="weekFilterMenu">
+            <input type="text" class="dropdown-search" id="weekSearch" placeholder="Search weeks...">
+            <div class="dropdown-actions">
+              <span id="weekSelectAll">Select All</span>
+              <span id="weekClear">Clear</span>
+            </div>
+            <div class="dropdown-options" id="weekOptionsContainer"></div>
+          </div>
         </div>
       </div>
+
       <div>
         <label>Month:</label>
-        <select id="monthFilter" multiple style="min-width:120px; height:60px;"></select>
-        <div class="filter-actions" style="margin-top:4px;">
-          <button class="filter-btn" onclick="selectAllMonths()">Select All</button>
-          <button class="filter-btn" onclick="deselectAllMonths()">Clear</button>
+        <div class="custom-dropdown">
+          <button class="dropdown-btn" id="monthFilterBtn" type="button">
+            <span>Month: All Selected</span> <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" id="monthFilterMenu">
+            <input type="text" class="dropdown-search" id="monthSearch" placeholder="Search months...">
+            <div class="dropdown-actions">
+              <span id="monthSelectAll">Select All</span>
+              <span id="monthClear">Clear</span>
+            </div>
+            <div class="dropdown-options" id="monthOptionsContainer"></div>
+          </div>
         </div>
       </div>
+
       <div>
         <label>Repair Type:</label>
-        <select id="repairTypeFilter" multiple style="min-width:120px; height:60px;"></select>
-        <div class="filter-actions" style="margin-top:4px;">
-          <button class="filter-btn" onclick="selectAllRepairTypes()">Select All</button>
-          <button class="filter-btn" onclick="deselectAllRepairTypes()">Clear</button>
+        <div class="custom-dropdown">
+          <button class="dropdown-btn" id="repairTypeFilterBtn" type="button">
+            <span>Repair Type: All Selected</span> <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" id="repairTypeFilterMenu">
+            <input type="text" class="dropdown-search" id="repairTypeSearch" placeholder="Search repair types...">
+            <div class="dropdown-actions">
+              <span id="repairTypeSelectAll">Select All</span>
+              <span id="repairTypeClear">Clear</span>
+            </div>
+            <div class="dropdown-options" id="repairTypeOptionsContainer"></div>
+          </div>
         </div>
       </div>
+
       <div>
         <label>Region:</label>
-        <select id="regionFilter" multiple style="min-width:120px; height:60px;"></select>
-        <div class="filter-actions" style="margin-top:4px;">
-          <button class="filter-btn" onclick="selectAllRegions()">Select All</button>
-          <button class="filter-btn" onclick="deselectAllRegions()">Clear</button>
+        <div class="custom-dropdown">
+          <button class="dropdown-btn" id="regionFilterBtn" type="button">
+            <span>Region: All Selected</span> <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" id="regionFilterMenu">
+            <input type="text" class="dropdown-search" id="regionSearch" placeholder="Search regions...">
+            <div class="dropdown-actions">
+              <span id="regionSelectAll">Select All</span>
+              <span id="regionClear">Clear</span>
+            </div>
+            <div class="dropdown-options" id="regionOptionsContainer"></div>
+          </div>
         </div>
       </div>
+
       <div>
         <label>Warranty Status:</label>
-        <select id="warrantyFilter" multiple style="min-width:140px; height:60px;"></select>
-        <div class="filter-actions" style="margin-top:4px;">
-          <button class="filter-btn" onclick="selectAllWarranty()">Select All</button>
-          <button class="filter-btn" onclick="deselectAllWarranty()">Clear</button>
+        <div class="custom-dropdown">
+          <button class="dropdown-btn" id="warrantyFilterBtn" type="button">
+            <span>Warranty: All Selected</span> <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" id="warrantyFilterMenu">
+            <input type="text" class="dropdown-search" id="warrantySearch" placeholder="Search warranty...">
+            <div class="dropdown-actions">
+              <span id="warrantySelectAll">Select All</span>
+              <span id="warrantyClear">Clear</span>
+            </div>
+            <div class="dropdown-options" id="warrantyOptionsContainer"></div>
+          </div>
         </div>
       </div>
+
       <div>
         <label>Device Model:</label>
-        <select id="modelFilter" multiple style="min-width:140px; height:60px;"></select>
-        <div class="filter-actions" style="margin-top:4px;">
-          <button class="filter-btn" onclick="selectAllModels()">Select All</button>
-          <button class="filter-btn" onclick="deselectAllModels()">Clear</button>
+        <div class="custom-dropdown">
+          <button class="dropdown-btn" id="modelFilterBtn" type="button">
+            <span>Model: All Selected</span> <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="dropdown-menu" id="modelFilterMenu">
+            <input type="text" class="dropdown-search" id="modelSearch" placeholder="Search models...">
+            <div class="dropdown-actions">
+              <span id="modelSelectAll">Select All</span>
+              <span id="modelClear">Clear</span>
+            </div>
+            <div class="dropdown-options" id="modelOptionsContainer"></div>
+          </div>
         </div>
       </div>
-      <button class="export-btn" id="applyFiltersBtn" style="padding:0.4rem 1.2rem; align-self:flex-end;"><i class="fas fa-filter"></i> Apply Filters</button>
+
+      <button class="export-btn" id="applyFiltersBtn" style="padding:0.45rem 1.2rem; align-self:flex-end;"><i class="fas fa-filter"></i> Apply Filters</button>
     </div>
   </div>
 
@@ -202,6 +352,7 @@
     <div class="kpi-card"><div class="label">Total Orders</div><div class="value" id="kpiTotal">-</div></div>
     <div class="kpi-card"><div class="label">Avg OTD (days)</div><div class="value" id="kpiAvg">-</div></div>
     <div class="kpi-card"><div class="label">ECT (days)</div><div class="value ect" id="kpiECT">-</div></div>
+    <div class="kpi-card"><div class="label">ECT Repair - Part (days)</div><div class="value ect-part" id="kpiECTPart">-</div></div>
     <div class="kpi-card"><div class="label">OTD %</div><div class="value percentage" id="kpiOTDPercentage">-</div></div>
     <div class="kpi-card"><div class="label">Achieved OTD</div><div class="value" id="kpiAchieved" style="color:#22c55e;">-</div></div>
     <div class="kpi-card"><div class="label">Missed OTD</div><div class="value" id="kpiMissed" style="color:#ef4444;">-</div></div>
@@ -219,7 +370,7 @@
   <!-- Station OTD Table -->
   <div class="card" style="margin-top:1.5rem;" id="stationTableCard">
     <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center;">
-      <h3><i class="fas fa-table"></i> Station OTD % · Target 95.90%</h3>
+      <h3><i class="fas fa-table"></i> Station OTD % · Target 95%</h3>
       <div class="export-buttons">
         <button class="export-btn-small excel" id="exportStationExcel"><i class="fas fa-file-excel"></i> Export Excel</button>
         <button class="export-btn-small png" id="exportStationPNG"><i class="fas fa-image"></i> Export PNG</button>
@@ -232,10 +383,13 @@
             <th>Region</th>
             <th>Station Code</th>
             <th>Station Name</th>
+            <th>City</th>
+            <th>State</th>
             <th>Total Orders</th>
             <th>Achieved</th>
             <th>Missed</th>
             <th>OTD %</th>
+            <th>ECT Repair TAT (days)</th>
             <th>Performance</th>
           </tr>
         </thead>
@@ -264,6 +418,7 @@
     let chartInstances = {};
     let regionMap = {};
     let regionMapNormalized = {};
+    let regionDetailsMap = {};
     let currentFilters = { weeks: [], months: [], repairTypes: [], regions: [], warranties: [], models: [] };
     let currentStationData = [];
 
@@ -358,7 +513,7 @@
       if (stageName.includes('CWH TAT')) return 'CWH';
       if (stageName.includes('Country TAT')) return 'Country';
       if (stageName.includes('CCI Receive TAT')) return 'CCI Receive';
-      if (stageName.includes('Repair TAT')) return 'Repair';
+      if (stageName.includes('ECT Repair - Part') || stageName.includes('Repair TAT')) return 'Repair';
       if (stageName.includes('Escalation')) return 'Escalation';
       if (stageName.includes('Total')) return 'Total';
       return 'Other';
@@ -378,13 +533,25 @@
       return String(region).trim().toUpperCase();
     }
 
-    function getRegion(stationCode) {
-      if (!stationCode) return '';
+    function getStationLocationDetails(stationCode) {
+      if (!stationCode) return { region: '', city: '', state: '' };
       const normalizedCode = normalizeStationCode(stationCode);
-      if (regionMap[normalizedCode]) return regionMap[normalizedCode];
-      if (regionMapNormalized[normalizedCode]) return regionMapNormalized[normalizedCode];
-      if (regionMap[stationCode]) return regionMap[stationCode];
-      return '';
+      
+      let detail = regionDetailsMap[normalizedCode] || regionDetailsMap[stationCode];
+      if (detail) {
+        return {
+          region: detail.region || '',
+          city: detail.city || '',
+          state: detail.state || ''
+        };
+      }
+      
+      const region = regionMap[normalizedCode] || regionMapNormalized[normalizedCode] || regionMap[stationCode] || '';
+      return { region, city: '', state: '' };
+    }
+
+    function getRegion(stationCode) {
+      return getStationLocationDetails(stationCode).region;
     }
 
     // ---------- core enrichment using Carry-In Time as base ----------
@@ -425,6 +592,9 @@
       let finishStart = cci;
       if (!finishStart) finishStart = countryEffective || aspHubEffective || applyParts;
       const stageFinish = diffBusinessDays(finishStart, finishRepair);
+
+      // Explicit ECT Repair - Part calculation: Parts in CCI Time -> Finish Repair Time
+      const stageCciToFinish = (cci && finishRepair) ? diffBusinessDays(cci, finishRepair) : null;
 
       const esc1 = diffDays(toDate(get('Escalation Create Time 1')), toDate(get('Escalation Approval/Rejection Time 1')));
       const esc2 = diffDays(toDate(get('Escalation Create Time 2')), toDate(get('Escalation Approval/Rejection Time 2')));
@@ -467,7 +637,7 @@
             { name: 'CWH TAT', value: stageAspHub },
             { name: 'Country TAT', value: stageAvailCountry },
             { name: 'CCI Receive TAT', value: stageCci },
-            { name: 'Repair TAT', value: stageFinish }
+            { name: 'ECT Repair - Part', value: stageCciToFinish !== null ? stageCciToFinish : stageFinish }
           ];
           
           let maxStage = null;
@@ -515,7 +685,11 @@
       if (stageAspHub !== null && !isNaN(stageAspHub) && stageAspHub >= 0) delayParts.push(`CWH TAT(${stageAspHub})`);
       if (stageAvailCountry !== null && !isNaN(stageAvailCountry) && stageAvailCountry >= 0) delayParts.push(`Country TAT(${stageAvailCountry})`);
       if (stageCci !== null && !isNaN(stageCci) && stageCci >= 0) delayParts.push(`CCI Receive TAT(${stageCci})`);
-      if (stageFinish !== null && !isNaN(stageFinish) && stageFinish >= 0) delayParts.push(`Repair TAT(${stageFinish})`);
+      if (stageCciToFinish !== null && !isNaN(stageCciToFinish) && stageCciToFinish >= 0) {
+        delayParts.push(`ECT Repair - Part(${stageCciToFinish})`);
+      } else if (stageFinish !== null && !isNaN(stageFinish) && stageFinish >= 0) {
+        delayParts.push(`Repair TAT(${stageFinish})`);
+      }
       if (totalEscDays > 0) delayParts.push(`Total Escalation Days(${totalEscDays})`);
       
       let delayAnalysis = delayParts.length ? delayParts.join(', ') : 
@@ -538,6 +712,7 @@
         _StageAvailCountry: stageAvailCountry,
         _StageCci: stageCci,
         _StageFinish: stageFinish,
+        _StageCciToFinish: stageCciToFinish,
         _Esc1: esc1,
         _Esc2: esc2,
         _Esc3: esc3,
@@ -562,139 +737,208 @@
       };
     }
 
-    // ---------- Filter functions ----------
-    window.selectAllWeeks = function() {
-      const select = document.getElementById('weekFilter');
-      Array.from(select.options).forEach(opt => opt.selected = true);
-    };
-    window.deselectAllWeeks = function() {
-      const select = document.getElementById('weekFilter');
-      Array.from(select.options).forEach(opt => opt.selected = false);
-    };
-    window.selectAllMonths = function() {
-      const select = document.getElementById('monthFilter');
-      Array.from(select.options).forEach(opt => opt.selected = true);
-    };
-    window.deselectAllMonths = function() {
-      const select = document.getElementById('monthFilter');
-      Array.from(select.options).forEach(opt => opt.selected = false);
-    };
-    window.selectAllRepairTypes = function() {
-      const select = document.getElementById('repairTypeFilter');
-      Array.from(select.options).forEach(opt => opt.selected = true);
-    };
-    window.deselectAllRepairTypes = function() {
-      const select = document.getElementById('repairTypeFilter');
-      Array.from(select.options).forEach(opt => opt.selected = false);
-    };
-    window.selectAllRegions = function() {
-      const select = document.getElementById('regionFilter');
-      Array.from(select.options).forEach(opt => opt.selected = true);
-    };
-    window.deselectAllRegions = function() {
-      const select = document.getElementById('regionFilter');
-      Array.from(select.options).forEach(opt => opt.selected = false);
-    };
-    window.selectAllWarranty = function() {
-      const select = document.getElementById('warrantyFilter');
-      Array.from(select.options).forEach(opt => opt.selected = true);
-    };
-    window.deselectAllWarranty = function() {
-      const select = document.getElementById('warrantyFilter');
-      Array.from(select.options).forEach(opt => opt.selected = false);
-    };
-    window.selectAllModels = function() {
-      const select = document.getElementById('modelFilter');
-      Array.from(select.options).forEach(opt => opt.selected = true);
-    };
-    window.deselectAllModels = function() {
-      const select = document.getElementById('modelFilter');
-      Array.from(select.options).forEach(opt => opt.selected = false);
+    // ---------- Filter state & custom searchable dropdown managers ----------
+    let availableOptions = {
+      weeks: [],
+      months: [],
+      repairTypes: [],
+      regions: [],
+      warranties: [],
+      models: []
     };
 
+    let selectedFilters = {
+      weeks: new Set(),
+      months: new Set(),
+      repairTypes: new Set(),
+      regions: new Set(),
+      warranties: new Set(),
+      models: new Set()
+    };
+
+    function setupSearchableDropdown({ btnId, menuId, searchId, containerId, selectAllId, clearId, key, labelPrefix, formatItem }) {
+      const btn = document.getElementById(btnId);
+      const menu = document.getElementById(menuId);
+      const searchInput = document.getElementById(searchId);
+      const container = document.getElementById(containerId);
+      const selectAllBtn = document.getElementById(selectAllId);
+      const clearBtn = document.getElementById(clearId);
+
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('.dropdown-menu').forEach(m => {
+          if (m !== menu) m.classList.remove('show');
+        });
+        menu.classList.toggle('show');
+        if (menu.classList.contains('show')) {
+          searchInput.focus();
+        }
+      };
+
+      menu.onclick = (e) => e.stopPropagation();
+
+      const updateButtonText = () => {
+        const fullList = availableOptions[key] || [];
+        const selectedSet = selectedFilters[key];
+        const btnText = btn.querySelector('span');
+        if (selectedSet.size === 0) {
+          btnText.textContent = `${labelPrefix}: None Selected`;
+        } else if (selectedSet.size === fullList.length && fullList.length > 0) {
+          btnText.textContent = `${labelPrefix}: All Selected (${fullList.length})`;
+        } else {
+          btnText.textContent = `${labelPrefix}: ${selectedSet.size} Selected`;
+        }
+      };
+
+      const renderOptions = (filterTxt = '') => {
+        container.innerHTML = '';
+        const fullList = availableOptions[key] || [];
+        const selectedSet = selectedFilters[key];
+        const filtered = fullList.filter(item => {
+          const displayStr = formatItem ? formatItem(item) : String(item);
+          return displayStr.toLowerCase().includes(filterTxt.toLowerCase());
+        });
+
+        if (filtered.length === 0) {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.style.cssText = 'font-size:0.75rem; color:#94a3b8; text-align:center; padding:0.5rem;';
+          emptyDiv.innerText = 'No matches';
+          container.appendChild(emptyDiv);
+          return;
+        }
+
+        filtered.forEach(item => {
+          const label = document.createElement('label');
+          label.className = 'dropdown-option';
+
+          const chk = document.createElement('input');
+          chk.type = 'checkbox';
+          chk.checked = selectedSet.has(item);
+          chk.onchange = () => {
+            if (chk.checked) selectedSet.add(item);
+            else selectedSet.delete(item);
+            updateButtonText();
+          };
+
+          label.appendChild(chk);
+          const textSpan = document.createElement('span');
+          textSpan.textContent = formatItem ? formatItem(item) : item;
+          label.appendChild(textSpan);
+          container.appendChild(label);
+        });
+      };
+
+      searchInput.oninput = (e) => renderOptions(e.target.value);
+
+      selectAllBtn.onclick = () => {
+        const fullList = availableOptions[key] || [];
+        fullList.forEach(item => selectedFilters[key].add(item));
+        renderOptions(searchInput.value);
+        updateButtonText();
+      };
+
+      clearBtn.onclick = () => {
+        selectedFilters[key].clear();
+        renderOptions(searchInput.value);
+        updateButtonText();
+      };
+
+      return {
+        rebuild: () => {
+          searchInput.value = '';
+          renderOptions();
+          updateButtonText();
+        },
+        selectAll: () => {
+          const fullList = availableOptions[key] || [];
+          fullList.forEach(item => selectedFilters[key].add(item));
+          renderOptions();
+          updateButtonText();
+        },
+        deselectAll: () => {
+          selectedFilters[key].clear();
+          renderOptions();
+          updateButtonText();
+        }
+      };
+    }
+
+    // Close open dropdown menus when clicking outside
+    window.addEventListener('click', () => {
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+    });
+
+    const dropdownManagers = {
+      weeks: setupSearchableDropdown({
+        btnId: 'weekFilterBtn', menuId: 'weekFilterMenu', searchId: 'weekSearch',
+        containerId: 'weekOptionsContainer', selectAllId: 'weekSelectAll', clearId: 'weekClear',
+        key: 'weeks', labelPrefix: 'Week', formatItem: item => `Week ${item}`
+      }),
+      months: setupSearchableDropdown({
+        btnId: 'monthFilterBtn', menuId: 'monthFilterMenu', searchId: 'monthSearch',
+        containerId: 'monthOptionsContainer', selectAllId: 'monthSelectAll', clearId: 'monthClear',
+        key: 'months', labelPrefix: 'Month'
+      }),
+      repairTypes: setupSearchableDropdown({
+        btnId: 'repairTypeFilterBtn', menuId: 'repairTypeFilterMenu', searchId: 'repairTypeSearch',
+        containerId: 'repairTypeOptionsContainer', selectAllId: 'repairTypeSelectAll', clearId: 'repairTypeClear',
+        key: 'repairTypes', labelPrefix: 'Repair Type'
+      }),
+      regions: setupSearchableDropdown({
+        btnId: 'regionFilterBtn', menuId: 'regionFilterMenu', searchId: 'regionSearch',
+        containerId: 'regionOptionsContainer', selectAllId: 'regionSelectAll', clearId: 'regionClear',
+        key: 'regions', labelPrefix: 'Region'
+      }),
+      warranties: setupSearchableDropdown({
+        btnId: 'warrantyFilterBtn', menuId: 'warrantyFilterMenu', searchId: 'warrantySearch',
+        containerId: 'warrantyOptionsContainer', selectAllId: 'warrantySelectAll', clearId: 'warrantyClear',
+        key: 'warranties', labelPrefix: 'Warranty'
+      }),
+      models: setupSearchableDropdown({
+        btnId: 'modelFilterBtn', menuId: 'modelFilterMenu', searchId: 'modelSearch',
+        containerId: 'modelOptionsContainer', selectAllId: 'modelSelectAll', clearId: 'modelClear',
+        key: 'models', labelPrefix: 'Model'
+      })
+    };
+
+    window.selectAllWeeks = function() { dropdownManagers.weeks.selectAll(); };
+    window.deselectAllWeeks = function() { dropdownManagers.weeks.deselectAll(); };
+    window.selectAllMonths = function() { dropdownManagers.months.selectAll(); };
+    window.deselectAllMonths = function() { dropdownManagers.months.deselectAll(); };
+    window.selectAllRepairTypes = function() { dropdownManagers.repairTypes.selectAll(); };
+    window.deselectAllRepairTypes = function() { dropdownManagers.repairTypes.deselectAll(); };
+    window.selectAllRegions = function() { dropdownManagers.regions.selectAll(); };
+    window.deselectAllRegions = function() { dropdownManagers.regions.deselectAll(); };
+    window.selectAllWarranty = function() { dropdownManagers.warranties.selectAll(); };
+    window.deselectAllWarranty = function() { dropdownManagers.warranties.deselectAll(); };
+    window.selectAllModels = function() { dropdownManagers.models.selectAll(); };
+    window.deselectAllModels = function() { dropdownManagers.models.deselectAll(); };
+
     function populateFilters(data) {
-      const weeks = [...new Set(data.map(r => r._WeekNum).filter(w => w !== null))].sort((a,b) => a-b);
-      const months = [...new Set(data.map(r => r._Month).filter(m => m !== null))].sort();
-      const repairTypes = [...new Set(data.map(r => r._RepairType).filter(r => r))].sort();
-      const regions = [...new Set(data.map(r => r._Region).filter(r => r))].sort();
-      const warranties = [...new Set(data.map(r => r['Warranty Status']).filter(w => w))].sort();
-      const models = [...new Set(data.map(r => r['Model']).filter(m => m))].sort();
+      availableOptions.weeks = [...new Set(data.map(r => r._WeekNum).filter(w => w !== null))].sort((a,b) => a-b);
+      availableOptions.months = [...new Set(data.map(r => r._Month).filter(m => m !== null))].sort();
+      availableOptions.repairTypes = [...new Set(data.map(r => r._RepairType).filter(r => r))].sort();
+      availableOptions.regions = [...new Set(data.map(r => r._Region).filter(r => r))].sort();
+      availableOptions.warranties = [...new Set(data.map(r => r['Warranty Status']).filter(w => w))].sort();
+      availableOptions.models = [...new Set(data.map(r => r['Model']).filter(m => m))].sort();
       
-      const weekSelect = document.getElementById('weekFilter');
-      weekSelect.innerHTML = '';
-      weeks.forEach(w => {
-        const opt = document.createElement('option');
-        opt.value = w;
-        opt.text = `Week ${w}`;
-        opt.selected = true;
-        weekSelect.appendChild(opt);
-      });
-      
-      const monthSelect = document.getElementById('monthFilter');
-      monthSelect.innerHTML = '';
-      months.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m;
-        opt.text = m;
-        opt.selected = true;
-        monthSelect.appendChild(opt);
-      });
-      
-      const repairSelect = document.getElementById('repairTypeFilter');
-      repairSelect.innerHTML = '';
-      repairTypes.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = r;
-        opt.text = r;
-        opt.selected = true;
-        repairSelect.appendChild(opt);
-      });
-      
-      const regionSelect = document.getElementById('regionFilter');
-      regionSelect.innerHTML = '';
-      regions.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = r;
-        opt.text = r;
-        opt.selected = true;
-        regionSelect.appendChild(opt);
-      });
-      
-      const warrantySelect = document.getElementById('warrantyFilter');
-      warrantySelect.innerHTML = '';
-      warranties.forEach(w => {
-        const opt = document.createElement('option');
-        opt.value = w;
-        opt.text = w;
-        opt.selected = true;
-        warrantySelect.appendChild(opt);
-      });
-      
-      const modelSelect = document.getElementById('modelFilter');
-      modelSelect.innerHTML = '';
-      models.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m;
-        opt.text = m;
-        opt.selected = true;
-        modelSelect.appendChild(opt);
-      });
+      selectedFilters.weeks = new Set(availableOptions.weeks);
+      selectedFilters.months = new Set(availableOptions.months);
+      selectedFilters.repairTypes = new Set(availableOptions.repairTypes);
+      selectedFilters.regions = new Set(availableOptions.regions);
+      selectedFilters.warranties = new Set(availableOptions.warranties);
+      selectedFilters.models = new Set(availableOptions.models);
+
+      Object.values(dropdownManagers).forEach(mgr => mgr.rebuild());
     }
 
     function applyFilters() {
-      const weekSelect = document.getElementById('weekFilter');
-      const monthSelect = document.getElementById('monthFilter');
-      const repairSelect = document.getElementById('repairTypeFilter');
-      const regionSelect = document.getElementById('regionFilter');
-      const warrantySelect = document.getElementById('warrantyFilter');
-      const modelSelect = document.getElementById('modelFilter');
-      
-      currentFilters.weeks = Array.from(weekSelect.selectedOptions).map(o => parseInt(o.value));
-      currentFilters.months = Array.from(monthSelect.selectedOptions).map(o => o.value);
-      currentFilters.repairTypes = Array.from(repairSelect.selectedOptions).map(o => o.value);
-      currentFilters.regions = Array.from(regionSelect.selectedOptions).map(o => o.value);
-      currentFilters.warranties = Array.from(warrantySelect.selectedOptions).map(o => o.value);
-      currentFilters.models = Array.from(modelSelect.selectedOptions).map(o => o.value);
+      currentFilters.weeks = Array.from(selectedFilters.weeks);
+      currentFilters.months = Array.from(selectedFilters.months);
+      currentFilters.repairTypes = Array.from(selectedFilters.repairTypes);
+      currentFilters.regions = Array.from(selectedFilters.regions);
+      currentFilters.warranties = Array.from(selectedFilters.warranties);
+      currentFilters.models = Array.from(selectedFilters.models);
       
       applyFiltersToData();
     }
@@ -727,6 +971,10 @@
       const totalDays = data.map(r => r._TotalDays).filter(v => v !== null && !isNaN(v));
       const ect = totalDays.length > 0 ? totalDays.reduce((a,b)=>a+b,0) / totalDays.length : 0;
       
+      // ECT Repair - Part calculation
+      const ectPartVals = data.map(r => r._StageCciToFinish).filter(v => v !== null && !isNaN(v));
+      const ectPartAvg = ectPartVals.length > 0 ? ectPartVals.reduce((a,b)=>a+b,0) / ectPartVals.length : 0;
+
       const achieved = data.filter(r => r._OTDFlag === 'Achieved').length;
       const missed = data.filter(r => r._OTDFlag === 'Missed').length;
       
@@ -736,12 +984,13 @@
       document.getElementById('kpiTotal').innerText = orders;
       document.getElementById('kpiAvg').innerText = avg !== null ? avg.toFixed(2) : '-';
       document.getElementById('kpiECT').innerText = ect.toFixed(2);
+      document.getElementById('kpiECTPart').innerText = ectPartVals.length > 0 ? ectPartAvg.toFixed(2) : '-';
       document.getElementById('kpiOTDPercentage').innerText = totalWithOTD > 0 ? otdPercentage.toFixed(1) + '%' : '0%';
       document.getElementById('kpiAchieved').innerText = achieved;
       document.getElementById('kpiMissed').innerText = missed;
     }
 
-    // ---------- Station Table with color coding based on target 95.90% ----------
+    // ---------- Station Table with color coding based on target 95% ----------
     function updateStationTable(data) {
       const stationData = {};
       
@@ -749,6 +998,9 @@
         const stationCode = r._StationCode || 'Unknown';
         const stationName = r['Station Name'] || stationCode;
         const region = r._Region || 'Unassigned';
+        const locDetails = getStationLocationDetails(stationCode);
+        const city = locDetails.city || r['City'] || r['city'] || '-';
+        const state = locDetails.state || r['State'] || r['state'] || '-';
         const key = region + '|' + stationCode;
         
         if (!stationData[key]) {
@@ -756,15 +1008,22 @@
             region: region,
             code: stationCode,
             name: stationName,
+            city: city,
+            state: state,
             total: 0,
             achieved: 0,
-            missed: 0
+            missed: 0,
+            ectPartValues: []
           };
         }
         
         stationData[key].total++;
         if (r._OTDFlag === 'Achieved') stationData[key].achieved++;
         else if (r._OTDFlag === 'Missed') stationData[key].missed++;
+
+        if (r._StageCciToFinish !== null && !isNaN(r._StageCciToFinish)) {
+          stationData[key].ectPartValues.push(r._StageCciToFinish);
+        }
       });
       
       const stationArray = Object.values(stationData);
@@ -783,14 +1042,14 @@
       tbody.innerHTML = '';
       
       let currentRegion = '';
-      const TARGET = 95.90;
+      const TARGET = 95.00;
       
       stationArray.forEach(st => {
         if (st.region !== currentRegion) {
           currentRegion = st.region;
           const headerRow = document.createElement('tr');
           headerRow.className = 'region-header';
-          headerRow.innerHTML = `<td colspan="8"><i class="fas fa-map-marker-alt" style="margin-right:8px;"></i> ${st.region}</td>`;
+          headerRow.innerHTML = `<td colspan="11"><i class="fas fa-map-marker-alt" style="margin-right:8px;"></i> ${st.region}</td>`;
           tbody.appendChild(headerRow);
         }
         
@@ -798,6 +1057,10 @@
         const pct = totalWithOTD > 0 ? (st.achieved / totalWithOTD) * 100 : 0;
         const pctDisplay = totalWithOTD > 0 ? pct.toFixed(1) + '%' : 'N/A';
         
+        const avgEctPart = st.ectPartValues.length > 0 
+          ? (st.ectPartValues.reduce((a,b)=>a+b,0) / st.ectPartValues.length).toFixed(2)
+          : '-';
+
         let barClass = '';
         let barColor = '#22c55e';
         if (pct >= TARGET) {
@@ -816,10 +1079,13 @@
           <td>${st.region}</td>
           <td><strong>${st.code}</strong></td>
           <td>${st.name}</td>
+          <td>${st.city || '-'}</td>
+          <td>${st.state || '-'}</td>
           <td>${st.total}</td>
           <td style="color:#22c55e;">${st.achieved}</td>
           <td style="color:#ef4444;">${st.missed}</td>
           <td><strong>${pctDisplay}</strong></td>
+          <td>${avgEctPart}</td>
           <td>
             <div style="width:100%; background:#e9edf2; border-radius:10px; overflow:hidden;">
               <div class="station-otd-bar ${barClass}" style="width:${Math.min(pct, 100)}%; background:${barColor};">
@@ -838,11 +1104,14 @@
         alert('No data to export');
         return;
       }
-      const headers = ['Region', 'Station Code', 'Station Name', 'Total Orders', 'Achieved', 'Missed', 'OTD %'];
+      const headers = ['Region', 'Station Code', 'Station Name', 'City', 'State', 'Total Orders', 'Achieved', 'Missed', 'OTD %', 'ECT Repair TAT (days)'];
       const rows = currentStationData.map(st => {
         const totalWithOTD = st.achieved + st.missed;
         const pct = totalWithOTD > 0 ? (st.achieved / totalWithOTD) * 100 : 0;
-        return [st.region, st.code, st.name, st.total, st.achieved, st.missed, pct.toFixed(1) + '%'];
+        const avgEctPart = st.ectPartValues.length > 0 
+          ? (st.ectPartValues.reduce((a,b)=>a+b,0) / st.ectPartValues.length).toFixed(2)
+          : '';
+        return [st.region, st.code, st.name, st.city || '-', st.state || '-', st.total, st.achieved, st.missed, pct.toFixed(1) + '%', avgEctPart];
       });
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       const wb = XLSX.utils.book_new();
@@ -894,8 +1163,8 @@
       const ctx1 = document.getElementById('chartOtd').getContext('2d');
       chartInstances.otd = new Chart(ctx1, { type: 'bar', data: { labels: ranges, datasets: [{ label: 'Orders', data: bins, backgroundColor: '#3b82f6' }] }, options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { const pct = totalOrders > 0 ? ((context.parsed.y / totalOrders) * 100).toFixed(1) : 0; return `${context.parsed.y} orders (${pct}%)`; } } } }, scales: { y: { beginAtZero: true } } } });
 
-      const stageKeys = ['_StageApply','_StageAspHub','_StageAvailCountry','_StageCci','_StageFinish'];
-      const stageLabels = ['Part Apply TAT','CWH TAT','Country TAT','CCI Receive TAT','Repair TAT'];
+      const stageKeys = ['_StageApply','_StageAspHub','_StageAvailCountry','_StageCci','_StageCciToFinish'];
+      const stageLabels = ['Part Apply TAT','CWH TAT','Country TAT','CCI Receive TAT','ECT Repair - Part'];
       const stageAvgs = stageKeys.map(k => {
         const vals = data.map(r => r[k]).filter(v => v !== null && !isNaN(v));
         return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
@@ -932,7 +1201,7 @@
         return total > 0 ? (regionData[region].achieved / total) * 100 : 0;
       });
       const regionColors = regionPcts.map(pct => {
-        if (pct >= 95.90) return '#22c55e';
+        if (pct >= 95.00) return '#22c55e';
         if (pct >= 80) return '#f59e0b';
         return '#ef4444';
       });
@@ -977,7 +1246,7 @@
         'Escalation Create Time 2','Escalation Approval/Rejection Time 2',
         'Escalation Create Time 3','Escalation Approval/Rejection Time 3',
         'OTD (days)','OTD Flag','Most Impact Category','Most Impact for OTD','Delay Analysis',
-        'Part Apply TAT','CWH TAT','Country TAT','CCI Receive TAT','Repair TAT',
+        'Part Apply TAT','CWH TAT','Country TAT','CCI Receive TAT','ECT Repair - Part TAT','Repair TAT',
         'Total Esc Days','Esc1 (d)','Esc2 (d)','Esc3 (d)'
       ];
       
@@ -1009,6 +1278,7 @@
           r._StageAspHub !== null && !isNaN(r._StageAspHub) ? r._StageAspHub.toFixed(2) : '',
           r._StageAvailCountry !== null && !isNaN(r._StageAvailCountry) ? r._StageAvailCountry.toFixed(2) : '',
           r._StageCci !== null && !isNaN(r._StageCci) ? r._StageCci.toFixed(2) : '',
+          r._StageCciToFinish !== null && !isNaN(r._StageCciToFinish) ? r._StageCciToFinish.toFixed(2) : '',
           r._StageFinish !== null && !isNaN(r._StageFinish) ? r._StageFinish.toFixed(2) : '',
           r._TotalEscDays !== null && !isNaN(r._TotalEscDays) ? r._TotalEscDays.toFixed(2) : '',
           r._Esc1 !== null && !isNaN(r._Esc1) ? r._Esc1.toFixed(2) : '',
@@ -1067,7 +1337,7 @@
         'Escalation Create Time 2','Escalation Approval/Rejection Time 2',
         'Escalation Create Time 3','Escalation Approval/Rejection Time 3',
         'OTD (days)','OTD Flag','Most Impact Category','Most Impact for OTD','Delay Analysis',
-        'Part Apply TAT','CWH TAT','Country TAT','CCI Receive TAT','Repair TAT',
+        'Part Apply TAT','CWH TAT','Country TAT','CCI Receive TAT','ECT Repair - Part TAT','Repair TAT',
         'Total Escalation Days','Escalation 1 Days','Escalation 2 Days','Escalation 3 Days'
       ];
       
@@ -1093,6 +1363,7 @@
         r._StageAspHub !== null && !isNaN(r._StageAspHub) ? r._StageAspHub : '',
         r._StageAvailCountry !== null && !isNaN(r._StageAvailCountry) ? r._StageAvailCountry : '',
         r._StageCci !== null && !isNaN(r._StageCci) ? r._StageCci : '',
+        r._StageCciToFinish !== null && !isNaN(r._StageCciToFinish) ? r._StageCciToFinish : '',
         r._StageFinish !== null && !isNaN(r._StageFinish) ? r._StageFinish : '',
         r._TotalEscDays !== null && !isNaN(r._TotalEscDays) ? r._TotalEscDays : '',
         r._Esc1 !== null && !isNaN(r._Esc1) ? r._Esc1 : '',
@@ -1144,13 +1415,7 @@
           document.getElementById('fileInfo').innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> ${rawData.length} records loaded (Carry-In Time base)`;
           
           populateFilters(rawData);
-          selectAllWeeks();
-          selectAllMonths();
-          selectAllRepairTypes();
-          selectAllRegions();
-          selectAllWarranty();
-          selectAllModels();
-          applyFiltersToData();
+          applyFilters();
         } catch(err) {
           alert('Error processing file: ' + err.message);
           console.error(err);
@@ -1184,32 +1449,43 @@
           
           regionMap = {};
           regionMapNormalized = {};
+          regionDetailsMap = {};
           
           json.forEach(row => {
-            const stationCode = row['Station Code'] || row['StationCode'] || row['Station'] || '';
-            const region = row['Region'] || row['region'] || '';
-            if (stationCode && region) {
+            const keys = Object.keys(row);
+            const findVal = (possibleNames) => {
+              const k = keys.find(key => possibleNames.some(p => key.trim().toLowerCase() === p.toLowerCase()));
+              return k ? String(row[k]).trim() : '';
+            };
+
+            const stationCode = findVal(['Station Code', 'StationCode', 'Station', 'Station_Code', 'StationID', 'Station ID']);
+            const region = findVal(['Region', 'region', 'REGIONAL']);
+            const city = findVal(['City', 'city', 'CITY', 'Town', 'Location']);
+            const state = findVal(['State', 'state', 'STATE', 'Province']);
+            
+            if (stationCode) {
               const normalizedCode = normalizeStationCode(stationCode);
               const normalizedRegion = normalizeRegion(region);
-              regionMap[normalizedCode] = region;
-              if (!regionMapNormalized[normalizedCode]) {
-                regionMapNormalized[normalizedCode] = region;
+              if (region) {
+                regionMap[normalizedCode] = region;
+                if (!regionMapNormalized[normalizedCode]) {
+                  regionMapNormalized[normalizedCode] = region;
+                }
               }
+              regionDetailsMap[normalizedCode] = {
+                region: region || (regionMap[normalizedCode] || ''),
+                city: city,
+                state: state
+              };
             }
           });
           
-          document.getElementById('regionFileInfo').innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> ${Object.keys(regionMap).length} regions mapped (with normalization)`;
+          document.getElementById('regionFileInfo').innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> ${Object.keys(regionDetailsMap).length} regions mapped (with city & state)`;
           
           if (rawData.length > 0) {
             rawData = rawData.map(enrichRow);
             populateFilters(rawData);
-            selectAllWeeks();
-            selectAllMonths();
-            selectAllRepairTypes();
-            selectAllRegions();
-            selectAllWarranty();
-            selectAllModels();
-            applyFiltersToData();
+            applyFilters();
           }
         } catch(err) {
           alert('Error processing region file: ' + err.message);
@@ -1277,17 +1553,25 @@
         '5': 'Middle East',
         '6': 'Africa'
       };
-      document.getElementById('regionFileInfo').innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> 6 regions pre-loaded (with normalization)`;
+      regionDetailsMap = {
+        '1': { region: 'North America', city: 'Dallas', state: 'Texas' },
+        '2': { region: 'Europe', city: 'London', state: 'England' },
+        '3': { region: 'Asia Pacific', city: 'Singapore', state: 'SG' },
+        '4': { region: 'Latin America', city: 'Sao Paulo', state: 'SP' },
+        '5': { region: 'Middle East', city: 'Dubai', state: 'Dubai' },
+        '6': { region: 'Africa', city: 'Johannesburg', state: 'Gauteng' }
+      };
+      document.getElementById('regionFileInfo').innerHTML = `<i class="fas fa-check-circle" style="color:#22c55e;"></i> 6 regions pre-loaded (with city & state)`;
       
       const sample = [
         ['SO-101','IMEI-001','IMEI-002','SN-1001','iPhone 14','002','NYC','Warranty','DOA no','Hardware without parts',
-         '2026-06-22 14:43:09','','','','','2026-06-24 18:09:55','2026-06-25',
+         '2026-06-22 14:43:09','','','','2026-06-23 10:00:00','2026-06-24 18:09:55','2026-06-25',
          '','','','','',''],
         ['SO-102','IMEI-003','IMEI-004','SN-1002','Samsung S23','003','LAX','Out of Warranty','DOA no','NTF',
-         '2026-06-20 09:00:00','','','','','2026-06-21 16:30:00','2026-06-22',
+         '2026-06-20 09:00:00','','','','2026-06-21 09:00:00','2026-06-21 16:30:00','2026-06-22',
          '','','','','',''],
         ['SO-103','IMEI-005','IMEI-006','SN-1003','iPhone 14','004','CHI','Warranty','DOA no','Software',
-         '2026-06-18 11:00:00','','','','','2026-06-20 14:00:00','2026-06-21',
+         '2026-06-18 11:00:00','','','','2026-06-19 12:00:00','2026-06-20 14:00:00','2026-06-21',
          '','','','','',''],
         ['SO-104','IMEI-007','IMEI-008','SN-1004','Pixel 7','1','DAL','Out of Warranty','DOA no','Standard',
          '2025-01-10 09:00:00','2025-01-12 10:30:00','2025-01-14 11:15:00','2025-01-16 09:45:00','2025-01-18 14:20:00','2025-01-20 16:30:00','2025-01-21',
@@ -1302,7 +1586,7 @@
          '2025-01-03','2025-01-05','','2025-01-09','2025-01-11','2025-01-13','2025-01-14',
          '2025-01-06','2025-01-08','','','',''],
         ['SO-108','IMEI-015','IMEI-016','SN-1008','Samsung S23','003','LAX','Warranty','DOA no','Hardware without parts',
-         '2025-01-04','2025-01-06','','','','2025-01-14','2025-01-15',
+         '2025-01-04','2025-01-06','','','2025-01-10','2025-01-14','2025-01-15',
          '','','','','',''],
       ];
       const headers = requiredCols;
@@ -1313,13 +1597,7 @@
       });
       rawData = json.map(enrichRow);
       populateFilters(rawData);
-      selectAllWeeks();
-      selectAllMonths();
-      selectAllRepairTypes();
-      selectAllRegions();
-      selectAllWarranty();
-      selectAllModels();
-      applyFiltersToData();
+      applyFilters();
       document.getElementById('fileInfo').innerHTML = `<i class="fas fa-info-circle"></i> Sample data loaded (8 records · Carry-In Time base)`;
     });
   })();
