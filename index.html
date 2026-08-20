@@ -85,7 +85,7 @@
       overflow-x: hidden;
     }
 
-    /* Animated Ambient Glow Blobs */
+    /* Ambient Animated Glow Blobs */
     .ambient-bg {
       position: fixed;
       top: 0;
@@ -126,11 +126,9 @@
       0% {
         transform: translate(0, 0) scale(1);
       }
-
       50% {
         transform: translate(60px, 40px) scale(1.15);
       }
-
       100% {
         transform: translate(-40px, 80px) scale(0.95);
       }
@@ -187,7 +185,6 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* Calligraphy Author Signature Styling */
     .author-signature {
       font-family: 'Great Vibes', cursive;
       font-size: 1.15rem;
@@ -348,9 +345,9 @@
       transform: rotate(20deg);
     }
 
-    /* Quick Filter Chips Bar - Enhanced with Icon Folder Assets */
+    /* Filter Chips Bar */
     .filter-chips-bar {
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
     }
 
     .filter-chips {
@@ -364,7 +361,7 @@
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      padding: 0.3rem 0.85rem;
+      padding: 0.35rem 0.85rem;
       border-radius: 16px;
       background: var(--chip-bg);
       color: var(--text-secondary);
@@ -536,13 +533,13 @@
       text-align: center;
       position: relative;
       overflow: hidden;
-      min-height: 125px;
-      height: 125px;
+      min-height: 130px;
+      height: 130px;
       box-sizing: border-box;
       transition: height 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s, box-shadow 0.35s;
       opacity: 0;
       animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      animation-delay: calc(var(--order, 0) * 0.06s);
+      animation-delay: calc(var(--order, 0) * 0.05s);
     }
 
     .app-card::before {
@@ -557,8 +554,8 @@
 
     .app-card:hover {
       height: auto;
-      min-height: 125px;
-      transform: translateY(-6px) scale(1.03);
+      min-height: 130px;
+      transform: translateY(-6px) scale(1.02);
       border-color: var(--border-hover);
       box-shadow: var(--card-shadow-hover);
       z-index: 10;
@@ -581,8 +578,8 @@
     }
 
     .icon-wrapper {
-      width: 52px;
-      height: 52px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       background: #ffffff;
       border: 2px solid var(--border-color);
@@ -620,12 +617,13 @@
 
     .icon-wrapper img[src*="excel"],
     .icon-wrapper img[src*="PDF"],
+    .icon-wrapper img[src*="QR_App"],
     .icon-wrapper img[src*="Invoice"],
     .icon-wrapper img[src*="Inventory"],
     .icon-wrapper img[src*="Rupee"],
     .icon-wrapper img[src*="Zip"] {
       object-fit: contain;
-      padding: 10px;
+      padding: 9px;
       transform: scale(1);
       clip-path: none;
     }
@@ -634,8 +632,8 @@
       position: absolute;
       top: 0.65rem;
       right: 0.65rem;
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       background: var(--chip-bg);
       border: 1px solid var(--border-color);
@@ -762,14 +760,13 @@
         opacity: 0;
         transform: translateY(20px);
       }
-
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
 
-    /* Media Queries */
+    /* Responsive Queries */
     @media (max-width: 768px) {
       body {
         padding: 1.5rem 1rem 3rem;
@@ -781,17 +778,18 @@
         gap: 1rem;
       }
 
+      .search-box-header {
+        max-width: 100%;
+        width: 100%;
+      }
+
       .header-actions {
         width: 100%;
         justify-content: space-between;
       }
 
-      .hero-title {
-        font-size: 1.85rem;
-      }
-
       .apps-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       }
     }
   </style>
@@ -823,7 +821,6 @@
             <span class="brand-title">Offline Apps Hub</span>
             <span class="brand-badge">Local Workspace</span>
           </div>
-          <!-- Calligraphy Font Tagline -->
           <span class="author-signature">Developed by Pramod Kumar</span>
         </div>
       </div>
@@ -850,7 +847,7 @@
       <div class="header-actions">
         <div class="stats-pill">
           <span class="stats-dot"></span>
-          <span id="app-counter">8 Applications</span>
+          <span id="app-counter">12 Applications</span>
         </div>
 
         <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme" title="Toggle Light/Dark Theme">
@@ -874,10 +871,10 @@
       </div>
     </header>
 
-    <!-- Quick Links Category Tabs Row (With Local Folder Icons) -->
+    <!-- Quick Links Category Tabs Row -->
     <div class="filter-chips-bar">
       <div class="filter-chips">
-        <!-- All Tools Icon -->
+        <!-- All Tools -->
         <button class="chip active" data-filter="all">
           <svg class="chip-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
@@ -889,25 +886,25 @@
           <span>All Tools</span>
         </button>
 
-        <!-- Quick Utilities Icon (PDF.png) -->
+        <!-- Quick Utilities -->
         <button class="chip" data-filter="Quick Help Tools">
           <img src="Icon/PDF.png" alt="Utilities Icon" class="chip-img">
           <span>Quick Utilities</span>
         </button>
 
-        <!-- Analytics Dashboards Icon (excel.png) -->
+        <!-- Analytics Dashboards -->
         <button class="chip" data-filter="Data Summary / Analytics Tools">
           <img src="Icon/excel.png" alt="Analytics Icon" class="chip-img">
           <span>Analytics Dashboards</span>
         </button>
 
-        <!-- Motorola Icon (Motorola.png) -->
+        <!-- Motorola -->
         <button class="chip" data-filter="Motorola">
           <img src="Icon/Motorola.png" alt="Motorola Icon" class="chip-img">
           <span>Motorola</span>
         </button>
 
-        <!-- Apple Icon (Apple.jpeg) -->
+        <!-- Apple -->
         <button class="chip" data-filter="Apple">
           <img src="Icon/Apple.jpeg" alt="Apple Icon" class="chip-img">
           <span>Apple</span>
@@ -941,7 +938,7 @@
           </div>
           <h2 class="category-title">Quick Help Tools</h2>
         </div>
-        <span class="category-count">2 Utilities</span>
+        <span class="category-count">3 Utilities</span>
       </div>
 
       <div class="apps-grid">
@@ -982,7 +979,8 @@
             <div class="app-desc">Optimize, shrink, and batch compress heavy images and pdf files offline.</div>
           </div>
         </a>
-         <a class="app-card" href="tools/Multi-QR_Generator/index.html" style="--order: 2">
+
+        <a class="app-card" href="tools/Multi-QR_Generator/index.html" style="--order: 3">
           <div class="card-top">
             <div class="icon-wrapper">
               <img src="Icon/QR_App.png" alt="QR Code Generator">
@@ -997,7 +995,7 @@
           </div>
           <div class="card-body">
             <div class="app-name">QR Code Generator</div>
-            <div class="app-desc">Generate QR code for links, copy paste single or multiple links or via excel upload and generate QR Codes .</div>
+            <div class="app-desc">Generate QR code for links, copy paste single or multiple links or via excel upload and generate QR Codes.</div>
           </div>
         </a>
       </div>
@@ -1017,7 +1015,7 @@
           </div>
           <h2 class="category-title">Data Summary & Analytics Tools</h2>
         </div>
-        <span class="category-count">6 Dashboards</span>
+        <span class="category-count">9 Dashboards</span>
       </div>
 
       <!-- Sub-Category: Motorola -->
@@ -1027,11 +1025,11 @@
             <img src="Icon/Motorola.png" class="brand-badge-icon" alt="Motorola">
             <span class="brand-title">Motorola Analytics & Tracking</span>
           </div>
-          <span class="brand-count">5 Dashboards</span>
+          <span class="brand-count">7 Dashboards</span>
         </div>
 
         <div class="apps-grid">
-          <a class="app-card" href="tools/Motorola _Open_Calls_Tracker/index.html" style="--order: 3">
+          <a class="app-card" href="tools/Motorola _Open_Calls_Tracker/index.html" style="--order: 4">
             <div class="card-top">
               <div class="icon-wrapper">
                 <img src="Icon/Motorola.png" alt="Motorola Open Calls Icon">
@@ -1046,14 +1044,11 @@
             </div>
             <div class="card-body">
               <div class="app-name">Motorola Open Calls Tracker</div>
-              <div class="app-desc">Monitor Motorola repair calls with comprehensive ageing analysis, call
-                categorisation,
-                pending action tracking, and location-wise workload distribution to improve repair turnaround time.
-              </div>
+              <div class="app-desc">Monitor Motorola repair calls with comprehensive ageing analysis, call categorisation, pending action tracking, and location-wise workload distribution.</div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_ASP_CWH_TO_CCI_Shipment_Tracking/index.html" style="--order: 4">
+          <a class="app-card" href="tools/Motorola_ASP_CWH_TO_CCI_Shipment_Tracking/index.html" style="--order: 5">
             <div class="card-top">
               <div class="icon-wrapper">
                 <img src="Icon/Motorola.png" alt="Shipment Tracking Icon">
@@ -1068,14 +1063,11 @@
             </div>
             <div class="card-body">
               <div class="app-name">Motorola ASP CWH to CCI Shipments</div>
-              <div class="app-desc">Track spare part shipments from the Central Warehouse (CWH) to Customer Care
-                Infrastructure (CCI) locations with transit status, delivery ageing, courier performance, and dispatch
-                visibility.
-              </div>
+              <div class="app-desc">Track spare part shipments from Central Warehouse (CWH) to Customer Care Infrastructure (CCI) with transit status and delivery ageing.</div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_Defective_Tracking/index.html" style="--order: 5">
+          <a class="app-card" href="tools/Motorola_Defective_Tracking/index.html" style="--order: 6">
             <div class="card-top">
               <div class="icon-wrapper">
                 <img src="Icon/Motorola.png" alt="Defective Tracking Icon">
@@ -1090,13 +1082,11 @@
             </div>
             <div class="card-body">
               <div class="app-name">Motorola Defective Status Tracker</div>
-              <div class="app-desc">Monitor defective spare parts through ageing analysis, variance tracking, pending
-                returns, and inventory status to improve reverse logistics and stock reconciliation.
-              </div>
+              <div class="app-desc">Monitor defective spare parts through ageing analysis, variance tracking, pending returns, and inventory reconciliation.</div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_OTD_Performance_Dashboard/index.html" style="--order: 6">
+          <a class="app-card" href="tools/Motorola_OTD_Performance_Dashboard/index.html" style="--order: 7">
             <div class="card-top">
               <div class="icon-wrapper">
                 <img src="Icon/Motorola.png" alt="OTD Dashboard Icon">
@@ -1111,13 +1101,11 @@
             </div>
             <div class="card-body">
               <div class="app-name">Motorola OTD Performance Dashboard</div>
-              <div class="app-desc">Measure On-Time Delivery (OTD) performance across service centres with KPI
-                dashboards,
-                ageing trends, repair turnaround analysis, and SLA compliance monitoring.</div>
+              <div class="app-desc">Measure On-Time Delivery (OTD) performance across service centres with KPI dashboards, repair turnaround, and SLA compliance monitoring.</div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_TechKPI_Dashboard/index.html" style="--order: 7">
+          <a class="app-card" href="tools/Motorola_TechKPI_Dashboard/index.html" style="--order: 8">
             <div class="card-top">
               <div class="icon-wrapper">
                 <img src="Icon/Motorola.png" alt="Tech KPI Icon">
@@ -1132,15 +1120,14 @@
             </div>
             <div class="card-body">
               <div class="app-name">Motorola Technical KPI Dashboard</div>
-              <div class="app-desc">Analyse technical KPI performance across Motorola service centres with weekly and
-                monthly scorecards, trend analysis, target comparison, and performance insights for operational
-                excellence.</div>
+              <div class="app-desc">Analyse technical KPI performance across service centres with weekly/monthly scorecards, trend analysis, and performance insights.</div>
             </div>
           </a>
-          <a class="app-card" href="tools/Motorola_Parts_Status/index.html" style="--order: 7">
+
+          <a class="app-card" href="tools/Motorola_Parts_Status/index.html" style="--order: 9">
             <div class="card-top">
               <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="Tech KPI Icon">
+                <img src="Icon/Motorola.png" alt="Parts Status Icon">
               </div>
               <div class="card-arrow">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -1152,11 +1139,11 @@
             </div>
             <div class="card-body">
               <div class="app-name">Motorola Open Calls Parts Status Analysis</div>
-              <div class="app-desc">Analyse Opne Calls parts status across Motorola service centres,with dedicated analysis on "Parts in other CCI"</div>
+              <div class="app-desc">Analyse Open Calls parts status across Motorola service centres, with dedicated analytics on parts in other CCI.</div>
             </div>
           </a>
-           </a>
-          <a class="app-card" href="tools/Motorola_Parts_OtherCCI_Allocation/index.html" style="--order: 7">
+
+          <a class="app-card" href="tools/Motorola_Parts_OtherCCI_Allocation/index.html" style="--order: 10">
             <div class="card-top">
               <div class="icon-wrapper">
                 <img src="Icon/Motorola.png" alt="Other CCI Icon">
@@ -1171,13 +1158,14 @@
             </div>
             <div class="card-body">
               <div class="app-name">Motorola Other CCI Part Allocation Tool</div>
-              <div class="app-desc">Identify parts in Other CCI status and allocate available inventory stock excluding parts allocated in open calls"</div>
+              <div class="app-desc">Identify parts in Other CCI status and allocate available inventory stock excluding items reserved in open calls.</div>
             </div>
           </a>
-          <a class="app-card" href="tools/Motorola_CCI-Defective_DispatchTracking/index.html" style="--order: 7">
+
+          <a class="app-card" href="tools/Motorola_CCI-Defective_DispatchTracking/index.html" style="--order: 11">
             <div class="card-top">
               <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="Motorola Icon">
+                <img src="Icon/Motorola.png" alt="Dispatch Icon">
               </div>
               <div class="card-arrow">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -1189,7 +1177,7 @@
             </div>
             <div class="card-body">
               <div class="app-name">Motorola CCI Defective Dispatch Tracker</div>
-              <div class="app-desc">Keep a track on CCI defective dispatch with pre-formatted columns for TAT and Manual update merge with new records update sync</div>
+              <div class="app-desc">Track CCI defective dispatches with pre-formatted TAT columns and synchronized manual update records.</div>
             </div>
           </a>
         </div>
@@ -1202,11 +1190,11 @@
             <img src="Icon/Apple.jpeg" class="brand-badge-icon" alt="Apple">
             <span class="brand-title">Apple Operations</span>
           </div>
-          <span class="brand-count">1 Dashboard</span>
+          <span class="brand-count">2 Dashboards</span>
         </div>
 
         <div class="apps-grid">
-          <a class="app-card" href="tools/WorkScan_OpenCalls_Dashboard/index.html" style="--order: 8">
+          <a class="app-card" href="tools/WorkScan_OpenCalls_Dashboard/index.html" style="--order: 12">
             <div class="card-top">
               <div class="icon-wrapper">
                 <img src="Icon/Apple.jpeg" alt="Apple WorkScan Icon">
@@ -1221,12 +1209,11 @@
             </div>
             <div class="card-body">
               <div class="app-name">WorkScan Open Calls (Apple)</div>
-              <div class="app-desc">Analyze WorkScan CRM open calls in seconds. View ageing buckets, location-wise
-                distribution, and status-wise call counts through an easy-to-use dashboard designed for Apple service
-                center operations.</div>
+              <div class="app-desc">Analyze WorkScan CRM open calls in seconds. View ageing buckets, location distribution, and status breakdown.</div>
             </div>
           </a>
-           <a class="app-card" href="tools/Apple_Pending_Part_Return_Tracker/index.html" style="--order: 8">
+
+          <a class="app-card" href="tools/Apple_Pending_Part_Return_Tracker/index.html" style="--order: 12">
             <div class="card-top">
               <div class="icon-wrapper">
                 <img src="Icon/Apple.jpeg" alt="Apple PPR Icon">
@@ -1241,7 +1228,7 @@
             </div>
             <div class="card-body">
               <div class="app-name">Pending Part Return (Apple)</div>
-              <div class="app-desc">Track Pending Parts to return location wise, Expected Days Left to reach at Apple DC and Bucketed Days left </div>
+              <div class="app-desc">Track pending part returns location-wise, projected days left to reach Apple DC, and SLA aging buckets.</div>
             </div>
           </a>
         </div>
@@ -1261,7 +1248,6 @@
     const emptyState = document.getElementById('empty-state');
     const filterChips = document.querySelectorAll('.chip');
     const categorySections = document.querySelectorAll('.category-section');
-    const appCards = document.querySelectorAll('.app-card');
     const appCounter = document.getElementById('app-counter');
 
     let activeCategory = 'all';
@@ -1279,7 +1265,6 @@
       }
     }
 
-    // Load saved theme or default to system preference
     const savedTheme = localStorage.getItem('hub_theme');
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const initialDark = savedTheme ? savedTheme === 'dark' : prefersDark;
@@ -1291,18 +1276,31 @@
       localStorage.setItem('hub_theme', isDarkNow ? 'dark' : 'light');
     });
 
+    // --- Dynamic Subcategory & Header Counts ---
+    function updateBadgeCounts() {
+      document.querySelectorAll('.category-section').forEach(sec => {
+        const count = sec.querySelectorAll('.app-card').length;
+        const countBadge = sec.querySelector('.category-count');
+        if (countBadge) countBadge.innerText = `${count} ${count === 1 ? 'Tool' : 'Tools'}`;
+      });
+
+      document.querySelectorAll('.brand-subcategory').forEach(sub => {
+        const count = sub.querySelectorAll('.app-card').length;
+        const countBadge = sub.querySelector('.brand-count');
+        if (countBadge) countBadge.innerText = `${count} ${count === 1 ? 'Dashboard' : 'Dashboards'}`;
+      });
+    }
+
     // --- Search & Filter Logic ---
     function filterApps() {
       const term = searchInput.value.toLowerCase().trim();
       let visibleCount = 0;
 
-      // Show/hide clear button
       clearSearchBtn.style.display = term.length > 0 ? 'flex' : 'none';
 
       categorySections.forEach(section => {
         const categoryName = section.getAttribute('data-category');
 
-        // Strict Category Logic: 'Quick Help Tools' is only active when activeCategory is 'all' or 'Quick Help Tools'
         let isSectionAllowed = false;
         if (activeCategory === 'all' || activeCategory === categoryName) {
           isSectionAllowed = true;
@@ -1328,7 +1326,7 @@
                 if (matchesBrand && matchesSearch) {
                   card.style.display = 'flex';
                   card.style.animation = 'none';
-                  card.offsetHeight; // trigger reflow
+                  card.offsetHeight; 
                   card.style.animation = 'fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards';
                   subVisibleCards++;
                   categoryVisibleCards++;
@@ -1349,7 +1347,7 @@
               if (matchesSearch) {
                 card.style.display = 'flex';
                 card.style.animation = 'none';
-                card.offsetHeight; // trigger reflow
+                card.offsetHeight;
                 card.style.animation = 'fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards';
                 categoryVisibleCards++;
                 visibleCount++;
@@ -1360,11 +1358,9 @@
           }
         }
 
-        // Hide whole section if no cards match or section is not allowed
         section.style.display = (isSectionAllowed && categoryVisibleCards > 0) ? 'block' : 'none';
       });
 
-      // Update Counter & Empty State
       appCounter.innerText = `${visibleCount} Application${visibleCount === 1 ? '' : 's'}`;
       emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
     }
@@ -1387,7 +1383,6 @@
       searchInput.focus();
     });
 
-    // Chip Filters
     filterChips.forEach(chip => {
       chip.addEventListener('click', () => {
         filterChips.forEach(c => c.classList.remove('active'));
@@ -1397,7 +1392,6 @@
       });
     });
 
-    // Keyboard Shortcuts ('/' to search, 'Escape' to clear)
     document.addEventListener('keydown', (e) => {
       if (e.key === '/' && document.activeElement !== searchInput) {
         e.preventDefault();
@@ -1408,6 +1402,10 @@
         searchInput.blur();
       }
     });
+
+    // Run badge recount on initial load
+    updateBadgeCounts();
+    filterApps();
   </script>
 
 </body>
