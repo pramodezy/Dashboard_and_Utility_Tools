@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Defective Master Data Hub & Dynamic TAT Engine</title>
+  <!-- Tailwind CSS & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SheetJS with full formula export support -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <style>
+    .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- Top Navigation Header -->
+  <header class="bg-slate-900 border-b border-slate-800 text-white px-6 py-4 sticky top-0 z-50 flex items-center justify-between shadow-md">
+    <div class="flex items-center space-x-3">
+      <div class="p-2 bg-indigo-600 rounded-lg text-white shadow-inner">
+        <i data-lucide="layers" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="font-semibold text-lg tracking-tight">Defective Master Data Hub</h1>
+        <p class="text-xs text-slate-400">Master-Protected Upsert & Dynamic Formula Exporter</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-3">
+      <button id="exportBtn" disabled onclick="exportNewMaster()" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm">
+        <i data-lucide="download" class="w-4 h-4 mr-2"></i> Export Master (.xlsx with Formulas)
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- Upload Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Defective Master File Input -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="database" class="w-5 h-5 text-indigo-600"></i>
+            <h2 class="font-semibold text-slate-800">1. Defective Master File</h2>
+          </div>
+          <span class="text-[11px] bg-indigo-50 text-indigo-700 font-medium px-2 py-0.5 rounded-full">Source of Manual Inputs</span>
+        </div>
+        <p class="text-xs text-slate-500 mb-4">Base tracking file with existing manual inputs and TAT tracking.</p>
+        <div class="border-2 border-dashed border-slate-200 rounded-lg p-5 text-center hover:border-indigo-400 transition-colors bg-slate-50/50">
+          <input type="file" id="masterFileInput" accept=".xlsx,.xls,.xlsb,.csv" class="hidden" onchange="handleFileSelect(event, 'master')">
+          <label for="masterFileInput" class="cursor-pointer flex flex-col items-center">
+            <i data-lucide="file-spreadsheet" class="w-8 h-8 text-slate-400 mb-2"></i>
+            <span id="masterFileName" class="text-sm font-medium text-slate-700">Choose Master File</span>
+            <span id="masterRowCount" class="text-xs text-slate-400 mt-1">No file loaded</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- New Dump File Input -->
+      <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="file-plus" class="w-5 h-5 text-indigo-600"></i>
+            <h2 class="font-semibold text-slate-800">2. New Defective Dump File</h2>
+          </div>
+          <span class="text-[11px] bg-emerald-50 text-emerald-700 font-medium px-2 py-0.5 rounded-full">System Dump Updates</span>
+        </div>
+        <p class="text-xs text-slate-500 mb-4">Latest system dump to update system attributes and append unmapped SRs.</p>
+        <div class="border-2 border-dashed border-slate-200 rounded-lg p-5 text-center hover:border-indigo-400 transition-colors bg-slate-50/50">
+          <input type="file" id="dumpFileInput" accept=".xlsx,.xls,.xlsb,.csv" class="hidden" onchange="handleFileSelect(event, 'dump')">
+          <label for="dumpFileInput" class="cursor-pointer flex flex-col items-center">
+            <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 mb-2"></i>
+            <span id="dumpFileName" class="text-sm font-medium text-slate-700">Choose Dump File</span>
+            <span id="dumpRowCount" class="text-xs text-slate-400 mt-1">No file loaded</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Protected Rules Alert Banner -->
+    <div class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4 flex items-start space-x-3 text-xs text-indigo-900 shadow-sm">
+      <i data-lucide="shield-check" class="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5"></i>
+      <div>
+        <span class="font-semibold">Master Protection & Live Formulas Enabled:</span>
+        <span class="text-indigo-700 ml-1">
+          Manual master columns (<code>Main Status</code>, <code>Sub Status</code>, <code>Courier Name</code>, <code>AWB (Token)</code>, <code>AWB (Token) Rec. Date</code>, <code>CCI→ CWH pickup Date</code>, <code>CCI→ CWH Delivered Date</code>, <code>Remarks</code>) remain preserved for existing SRs. Exported Excel files embed live <code>=IF(...)</code> formulas so edits made later in Excel recalculate TATs automatically.
+        </span>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-2 text-sm text-slate-600">
+        <i data-lucide="refresh-cw" class="w-4 h-4 text-indigo-500"></i>
+        <span>Ready to process files, reconcile records, and prepare live formulas.</span>
+      </div>
+      <button id="processBtn" disabled onclick="processAndMerge()" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-indigo-600 text-white font-medium text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm">
+        <i data-lucide="play" class="w-4 h-4 mr-2"></i> Run Merge & Preview TATs
+      </button>
+    </div>
+
+    <!-- Summary Metrics Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">Master Baseline</p>
+        <p id="statMaster" class="text-2xl font-bold text-slate-800 mt-1">0</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">Dump Matches Updated</p>
+        <p id="statUpdated" class="text-2xl font-bold text-amber-600 mt-1">0</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">New Appended SRs</p>
+        <p id="statAppended" class="text-2xl font-bold text-emerald-600 mt-1">0</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">Total Merged Rows</p>
+        <p id="statTotal" class="text-2xl font-bold text-indigo-600 mt-1">0</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">Formula Columns</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1">8 Live</p>
+      </div>
+    </div>
+
+    <!-- Data Preview Table & Search -->
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+      <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="table" class="w-4 h-4 text-slate-500"></i>
+          <h3 class="font-semibold text-slate-800 text-sm">Consolidated Data Preview</h3>
+          <span id="previewCount" class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">0 records</span>
+        </div>
+        <div class="relative w-full sm:w-64">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+          <input type="text" id="searchInput" oninput="filterTable()" placeholder="Search SR Number, ASP, Status..." class="w-full text-xs pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+        </div>
+      </div>
+
+      <!-- Scrollable Table -->
+      <div class="overflow-x-auto custom-scrollbar flex-1 max-h-96">
+        <table class="w-full text-xs text-left whitespace-nowrap">
+          <thead id="tableHead" class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 sticky top-0 z-10">
+            <tr>
+              <th class="px-4 py-3">#</th>
+              <th class="px-4 py-3">Sync Status</th>
+              <th class="px-4 py-3">SR Number</th>
+              <th class="px-4 py-3">ASP Name</th>
+              <th class="px-4 py-3 bg-indigo-50/50 text-indigo-900">Main Status (Manual)</th>
+              <th class="px-4 py-3 bg-indigo-50/50 text-indigo-900">Sub Status (Manual)</th>
+              <th class="px-4 py-3 bg-indigo-50/50 text-indigo-900">Courier Name (Manual)</th>
+              <th class="px-4 py-3">Helper</th>
+              <th class="px-4 py-3">CCI→CWH Ship TAT</th>
+              <th class="px-4 py-3">CCI→CWH Rec. TAT</th>
+              <th class="px-4 py-3">CWH→RC Ship TAT</th>
+              <th class="px-4 py-3">CWH→RC Rec. TAT</th>
+              <th class="px-4 py-3">Token Issue TAT</th>
+              <th class="px-4 py-3">Pickup TAT</th>
+              <th class="px-4 py-3">Transit to CWH TAT</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-700">
+            <tr>
+              <td colspan="15" class="text-center py-8 text-slate-400">Load and process files to preview records.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    let masterData = [];
+    let dumpData = [];
+    let mergedData = [];
+
+    // Manual input columns preserved from Master for matching SR Numbers
+    const MASTER_PROTECTED_COLUMNS = new Set([
+      "Main Status",
+      "Sub Status",
+      "Courier Name",
+      "AWB (Token)",
+      "AWB (Token) Rec. Date",
+      "CCI→ CWH pickup Date",
+      "CCI→ CWH Delivered Date",
+      "Remarks"
+    ]);
+
+    // Computed formula columns
+    const FORMULA_COLUMNS = new Set([
+      "Helper",
+      "CCI→ CWH Ship TAT",
+      "CCI→ CWH Rec. TAT",
+      "CWH→ RC Ship TAT",
+      "CWH→ RC Rec. TAT",
+      "Token Issue TAT",
+      "Pickup TAT",
+      "Transit to CWH TAT"
+    ]);
+
+    // Canonical 74 Master columns in exact required order
+    const COLUMNS = [
+      "SR Number", "SR part Number", "New part Number", "Part Category", "SR Part Description", "SR Part Quantity",
+      "ASP Code", "ASP Name", "Station Code", "Station Name", "L2 Repair Code", "CCI-ASP Shipping Order Code",
+      "CCI-ASP Ship Date /Time", "CCI-ASP Receive Date/Time", "ASP-RC Shipping Order Code", "ASP-RC Ship Date / Time",
+      "SO GRN Time", "SO GRN Month", "ASP Outbound SO(AWB)", "ASP-RC Logistics Pickup Date/Time",
+      "ASP-RC Logistics Delivered Date/Time", "RC Receive Remark", "SR Warranty Status OOW", "SR CID",
+      "SR CID Description", "SR Model Name", "SR Fault Code", "SR Fault Description", "SR MTM",
+      "SR Created Date / Time", "SR Customer Pick-Up Date/ Time", "SR Close Date / Time", "SR Close Month",
+      "SR IMEI", "SR SN", "Physical Count  Quantity", "Claim Visual Inspection Result", "Claim Function Inspection Result",
+      "RC RMA", "RC Referecne code", "RC Inspection Date & Time", "RC Inspection Month", "RC Remark", "RC Remark-2",
+      "RC Comments", "Parts Status", "RC Process Done", "Inspect Pic1", "Inspect Pic2", "DESC IQC Result",
+      "DESC IQC Remark", "DESC IQC Time", "Penalty", "Parts Penalty", "Labor Penalty", "Logistic Penalty",
+      "Region", "Ageing Bucket", "Helper", "CCI→ CWH Ship TAT", "CCI→ CWH Rec. TAT", "CWH→ RC Ship TAT",
+      "CWH→ RC Rec. TAT", "Main Status", "Sub Status", "Courier Name", "AWB (Token)", "AWB (Token) Rec. Date",
+      "CCI→ CWH pickup Date", "CCI→ CWH Delivered Date", "Remarks", "Token Issue TAT", "Pickup TAT", "Transit to CWH TAT"
+    ];
+
+    function parseExcelDate(val) {
+      if (!val || val === "-" || val === "Token Date ?") return null;
+      if (val instanceof Date && !isNaN(val)) return val;
+      if (typeof val === 'number') {
+        return new Date(Math.round((val - 25569) * 86400 * 1000));
+      }
+      const parsed = Date.parse(val);
+      return !isNaN(parsed) ? new Date(parsed) : null;
+    }
+
+    function dateDiffInDays(d1, d2) {
+      const parsed1 = parseExcelDate(d1);
+      const parsed2 = parseExcelDate(d2);
+      if (!parsed1 || !parsed2) return "-";
+      const diffTime = parsed1.getTime() - parsed2.getTime();
+      return Math.round((diffTime / (1000 * 60 * 60 * 24)) * 100) / 100;
+    }
+
+    function handleFileSelect(event, type) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+
+        if (type === 'master') {
+          masterData = json;
+          document.getElementById('masterFileName').innerText = file.name;
+          document.getElementById('masterRowCount').innerText = `${json.length.toLocaleString()} rows detected`;
+        } else {
+          dumpData = json;
+          document.getElementById('dumpFileName').innerText = file.name;
+          document.getElementById('dumpRowCount').innerText = `${json.length.toLocaleString()} rows detected`;
+        }
+
+        if (masterData.length > 0 && dumpData.length > 0) {
+          document.getElementById('processBtn').disabled = false;
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function processAndMerge() {
+      const masterMap = new Map();
+      const updatedSRs = new Set();
+      const newSRs = new Set();
+
+      // Clone master baseline rows
+      const workingData = masterData.map(r => {
+        const copy = { ...r, _recordStatus: 'Unchanged' };
+        const sr = String(copy['SR Number'] || '').trim();
+        if (sr) masterMap.set(sr, copy);
+        return copy;
+      });
+
+      // Upsert Dump Data into Master
+      dumpData.forEach(dumpRow => {
+        const sr = String(dumpRow['SR Number'] || '').trim();
+        if (!sr) return;
+
+        if (masterMap.has(sr)) {
+          // Existing record: Overwrite system columns, protect manual columns & formulas
+          const existingRow = masterMap.get(sr);
+          let hasChanged = false;
+
+          Object.keys(dumpRow).forEach(key => {
+            if (!FORMULA_COLUMNS.has(key) && !MASTER_PROTECTED_COLUMNS.has(key)) {
+              const dumpVal = dumpRow[key];
+              if (dumpVal !== "" && dumpVal !== undefined && dumpVal !== existingRow[key]) {
+                existingRow[key] = dumpVal;
+                hasChanged = true;
+              }
+            }
+          });
+
+          if (hasChanged) {
+            existingRow._recordStatus = 'Updated';
+            updatedSRs.add(sr);
+          }
+        } else {
+          // New record: Append dump row
+          const newRow = { ...dumpRow, _recordStatus: 'New' };
+          masterMap.set(sr, newRow);
+          workingData.push(newRow);
+          newSRs.add(sr);
+        }
+      });
+
+      mergedData = workingData;
+
+      // In-dashboard preview calculation of Helper and TAT formulas
+      const l2Counts = {};
+
+      mergedData.forEach((row) => {
+        // 1. Helper: =IF(L2<>"", COUNTIF(L$2:$L2, L2), "-")
+        const l2Val = String(row['L2 Repair Code'] || '').trim();
+        if (l2Val !== "" && l2Val !== "-") {
+          l2Counts[l2Val] = (l2Counts[l2Val] || 0) + 1;
+          row['Helper'] = l2Counts[l2Val];
+        } else {
+          row['Helper'] = "-";
+        }
+
+        // 2. CCI→ CWH Ship TAT: =IFERROR(M2-AF2, "-")
+        const shipTat = dateDiffInDays(row['CCI-ASP Ship Date /Time'], row['SR Created Date / Time']);
+        row['CCI→ CWH Ship TAT'] = shipTat !== "-" ? shipTat : "-";
+
+        // 3. CCI→ CWH Rec. TAT: =IF(M2="","-",IF(N2="","-",N2-M2))
+        const mVal = row['CCI-ASP Ship Date /Time'];
+        const nVal = row['CCI-ASP Receive Date/Time'];
+        if (!mVal || !nVal || mVal === "-" || nVal === "-") {
+          row['CCI→ CWH Rec. TAT'] = "-";
+        } else {
+          row['CCI→ CWH Rec. TAT'] = dateDiffInDays(nVal, mVal);
+        }
+
+        // 4. CWH→ RC Ship TAT: =IF(M2="","-",IF(N2="","-",IF(P2="","-",P2-N2)))
+        const pVal = row['ASP-RC Ship Date / Time'];
+        if (!mVal || !nVal || !pVal || mVal === "-" || nVal === "-" || pVal === "-") {
+          row['CWH→ RC Ship TAT'] = "-";
+        } else {
+          row['CWH→ RC Ship TAT'] = dateDiffInDays(pVal, nVal);
+        }
+
+        // 5. CWH→ RC Rec. TAT: =IF(M2="","-",IF(N2="","-",IF(P2="","-",IF(Q2="","-",P2-N2))))
+        const qVal = row['SO GRN Time'];
+        if (!mVal || !nVal || !pVal || !qVal || mVal === "-" || nVal === "-" || pVal === "-" || qVal === "-") {
+          row['CWH→ RC Rec. TAT'] = "-";
+        } else {
+          row['CWH→ RC Rec. TAT'] = dateDiffInDays(pVal, nVal);
+        }
+
+        // 6. Token Issue TAT: =IF(BP2<>"", BP2-M2, "-")
+        const bpVal = row['AWB (Token) Rec. Date'];
+        if (bpVal && bpVal !== "-") {
+          row['Token Issue TAT'] = dateDiffInDays(bpVal, mVal);
+        } else {
+          row['Token Issue TAT'] = "-";
+        }
+
+        // 7. Pickup TAT: =IF(BQ2<>"", IF(BP2<>"", BQ2-BP2, "Token Date ?"), "-")
+        const bqVal = row['CCI→ CWH pickup Date'];
+        if (bqVal && bqVal !== "-") {
+          if (bpVal && bpVal !== "-") {
+            row['Pickup TAT'] = dateDiffInDays(bqVal, bpVal);
+          } else {
+            row['Pickup TAT'] = "Token Date ?";
+          }
+        } else {
+          row['Pickup TAT'] = "-";
+        }
+
+        // 8. Transit to CWH TAT: =IF(BR2<>"", BR2-BQ2, "-")
+        const brVal = row['CCI→ CWH Delivered Date'];
+        if (brVal && brVal !== "-") {
+          row['Transit to CWH TAT'] = dateDiffInDays(brVal, bqVal);
+        } else {
+          row['Transit to CWH TAT'] = "-";
+        }
+      });
+
+      // Update UI Counters
+      document.getElementById('statMaster').innerText = masterData.length.toLocaleString();
+      document.getElementById('statUpdated').innerText = updatedSRs.size.toLocaleString();
+      document.getElementById('statAppended').innerText = newSRs.size.toLocaleString();
+      document.getElementById('statTotal').innerText = mergedData.length.toLocaleString();
+      document.getElementById('previewCount').innerText = `${mergedData.length.toLocaleString()} records`;
+      document.getElementById('exportBtn').disabled = false;
+
+      renderTable(mergedData);
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      const previewRows = data.slice(0, 100);
+      if (previewRows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="15" class="text-center py-6 text-slate-400">No matching records found.</td></tr>`;
+        return;
+      }
+
+      previewRows.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b border-slate-100";
+        
+        let statusBadge = '<span class="px-2 py-0.5 text-[10px] rounded bg-slate-100 text-slate-600 font-medium">Unchanged</span>';
+        if (row._recordStatus === 'Updated') {
+          statusBadge = '<span class="px-2 py-0.5 text-[10px] rounded bg-amber-100 text-amber-700 font-medium">Dump Updated</span>';
+        } else if (row._recordStatus === 'New') {
+          statusBadge = '<span class="px-2 py-0.5 text-[10px] rounded bg-emerald-100 text-emerald-700 font-medium">New Appended</span>';
+        }
+
+        tr.innerHTML = `
+          <td class="px-4 py-2 text-slate-400">${idx + 1}</td>
+          <td class="px-4 py-2">${statusBadge}</td>
+          <td class="px-4 py-2 font-medium text-slate-800">${row['SR Number'] || '-'}</td>
+          <td class="px-4 py-2 text-slate-600">${row['ASP Name'] || '-'}</td>
+          <td class="px-4 py-2 font-medium text-indigo-700 bg-indigo-50/30">${row['Main Status'] || '-'}</td>
+          <td class="px-4 py-2 text-slate-700 bg-indigo-50/30">${row['Sub Status'] || '-'}</td>
+          <td class="px-4 py-2 text-slate-700 bg-indigo-50/30">${row['Courier Name'] || '-'}</td>
+          <td class="px-4 py-2 text-slate-600 font-mono">${row['Helper']}</td>
+          <td class="px-4 py-2 font-mono ${row['CCI→ CWH Ship TAT'] !== '-' ? 'text-indigo-600' : 'text-slate-400'}">${row['CCI→ CWH Ship TAT']}</td>
+          <td class="px-4 py-2 font-mono ${row['CCI→ CWH Rec. TAT'] !== '-' ? 'text-indigo-600' : 'text-slate-400'}">${row['CCI→ CWH Rec. TAT']}</td>
+          <td class="px-4 py-2 font-mono ${row['CWH→ RC Ship TAT'] !== '-' ? 'text-indigo-600' : 'text-slate-400'}">${row['CWH→ RC Ship TAT']}</td>
+          <td class="px-4 py-2 font-mono ${row['CWH→ RC Rec. TAT'] !== '-' ? 'text-indigo-600' : 'text-slate-400'}">${row['CWH→ RC Rec. TAT']}</td>
+          <td class="px-4 py-2 font-mono ${row['Token Issue TAT'] !== '-' ? 'text-indigo-600' : 'text-slate-400'}">${row['Token Issue TAT']}</td>
+          <td class="px-4 py-2 font-mono ${row['Pickup TAT'] === 'Token Date ?' ? 'text-amber-600 font-semibold' : (row['Pickup TAT'] !== '-' ? 'text-indigo-600' : 'text-slate-400')}">${row['Pickup TAT']}</td>
+          <td class="px-4 py-2 font-mono ${row['Transit to CWH TAT'] !== '-' ? 'text-indigo-600' : 'text-slate-400'}">${row['Transit to CWH TAT']}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterTable() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = mergedData.filter(r => {
+        return Object.values(r).some(val => String(val).toLowerCase().includes(q));
+      });
+      renderTable(filtered);
+    }
+
+    function exportNewMaster() {
+      if (!mergedData || mergedData.length === 0) return;
+
+      // 1. Prepare clean data objects without UI internal status
+      const cleanData = mergedData.map(r => {
+        const rowCopy = { ...r };
+        delete rowCopy._recordStatus;
+        return rowCopy;
+      });
+
+      // 2. Generate standard worksheet
+      const ws = XLSX.utils.json_to_sheet(cleanData, { header: COLUMNS });
+
+      // 3. Map column header names to Excel column letters
+      const colLetterMap = {};
+      COLUMNS.forEach((colName, colIdx) => {
+        colLetterMap[colName] = XLSX.utils.encode_col(colIdx);
+      });
+
+      // 4. Inject live Excel formulas for all rows (Row 1 = Headers, Row 2..N = Data)
+      for (let i = 0; i < cleanData.length; i++) {
+        const r = i + 2; // Excel 1-based row index
+
+        // Helper: =IF(L2<>"",COUNTIF(L$2:L2,L2),"-")
+        const helperCell = `${colLetterMap["Helper"]}${r}`;
+        ws[helperCell] = {
+          t: 's',
+          f: `IF(L${r}<>"",COUNTIF(L$2:L${r},L${r}),"-")`
+        };
+
+        // CCI→ CWH Ship TAT: =IFERROR(M2-AF2,"-")
+        const cciShipCell = `${colLetterMap["CCI→ CWH Ship TAT"]}${r}`;
+        ws[cciShipCell] = {
+          t: 'n',
+          f: `IFERROR(M${r}-AF${r},"-")`
+        };
+
+        // CCI→ CWH Rec. TAT: =IF(M2="","-",IF(N2="","-",N2-M2))
+        const cciRecCell = `${colLetterMap["CCI→ CWH Rec. TAT"]}${r}`;
+        ws[cciRecCell] = {
+          t: 'n',
+          f: `IF(M${r}="","-",IF(N${r}="","-",N${r}-M${r}))`
+        };
+
+        // CWH→ RC Ship TAT: =IF(M2="","-",IF(N2="","-",IF(P2="","-",P2-N2)))
+        const rcShipCell = `${colLetterMap["CWH→ RC Ship TAT"]}${r}`;
+        ws[rcShipCell] = {
+          t: 'n',
+          f: `IF(M${r}="","-",IF(N${r}="","-",IF(P${r}="","-",P${r}-N${r})))`
+        };
+
+        // CWH→ RC Rec. TAT: =IF(M2="","-",IF(N2="","-",IF(P2="","-",IF(Q2="","-",P2-N2))))
+        const rcRecCell = `${colLetterMap["CWH→ RC Rec. TAT"]}${r}`;
+        ws[rcRecCell] = {
+          t: 'n',
+          f: `IF(M${r}="","-",IF(N${r}="","-",IF(P${r}="","-",IF(Q${r}="","-",P${r}-N${r}))))`
+        };
+
+        // Token Issue TAT: =IF(BP2<>"",BP2-M2,"-")
+        const tokenCell = `${colLetterMap["Token Issue TAT"]}${r}`;
+        ws[tokenCell] = {
+          t: 'n',
+          f: `IF(BP${r}<>"",BP${r}-M${r},"-")`
+        };
+
+        // Pickup TAT: =IF(BQ2<>"",IF(BP2<>"",BQ2-BP2,"Token Date ?"),"-")
+        const pickupCell = `${colLetterMap["Pickup TAT"]}${r}`;
+        ws[pickupCell] = {
+          t: 'n',
+          f: `IF(BQ${r}<>"",IF(BP${r}<>"",BQ${r}-BP${r},"Token Date ?"),"-")`
+        };
+
+        // Transit to CWH TAT: =IF(BR2<>"",BR2-BQ2,"-")
+        const transitCell = `${colLetterMap["Transit to CWH TAT"]}${r}`;
+        ws[transitCell] = {
+          t: 'n',
+          f: `IF(BR${r}<>"",BR${r}-BQ${r},"-")`
+        };
+      }
+
+      // 5. Build workbook and trigger Excel file download
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Defective Master");
+
+      const dateStr = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(wb, `New_Defective_Master_File_${dateStr}.xlsx`);
+    }
+  </script>
+</body>
+</html>
