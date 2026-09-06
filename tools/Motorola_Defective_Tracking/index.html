@@ -59,6 +59,13 @@
         .search-input { padding: 0.3rem 0.8rem; font-size: 0.75rem; border: 1px solid #c8d7e6; border-radius: 20px; outline: none; width: 180px; transition: 0.2s; }
         .search-input:focus { border-color: #1a4b77; box-shadow: 0 0 0 3px rgba(26,75,119,0.1); }
 
+        .pivot-dim-toggle-container { display: flex; align-items: center; gap: 6px; background: #eef4fb; padding: 2px 6px; border-radius: 20px; border: 1px solid #d5e2f0; }
+        .dim-pill-label { font-size: 0.72rem; font-weight: 600; color: #2c4b6e; padding-left: 2px; }
+        .dim-pill-group { display: flex; gap: 2px; background: #d8e5f5; padding: 2px; border-radius: 16px; }
+        .dim-pill { background: transparent; border: none; outline: none; font-size: 0.68rem; font-weight: 600; color: #2c4b6e; padding: 2px 8px; border-radius: 12px; cursor: pointer; transition: all 0.15s ease; }
+        .dim-pill:hover { color: #0b2b4a; background: rgba(255,255,255,0.6); }
+        .dim-pill.active { background: #1a4b77; color: #ffffff; box-shadow: 0 1px 3px rgba(26,75,119,0.3); }
+
         .pivot-wrap { width: 100%; border-radius: 8px; border: 1px solid #e2ebf6; background: white; overflow-x: auto; }
         table.pivot-table { width: 100%; border-collapse: collapse; font-size: 0.6rem; table-layout: fixed; }
         table.pivot-table th { background: #e8eff9; color: #1c3d5e; font-weight: 600; padding: 0.4rem 0.2rem; text-align: center; border-bottom: 2px solid #cbdae9; font-size: 0.6rem; white-space: normal; word-wrap: break-word; line-height: 1.1; vertical-align: middle; }
@@ -248,7 +255,15 @@
         <div class="compact-pivot-grid">
             <div class="section-box">
                 <div class="section-header-row">
-                    <h2>📊 Compact Pivot: Region × Ageing × Status</h2>
+                    <h2 id="compactPivotTitle">📊 Compact Pivot: Region × Ageing × Status</h2>
+                    <div class="pivot-dim-toggle-container">
+                        <span class="dim-pill-label">Column:</span>
+                        <div class="dim-pill-group">
+                            <button type="button" class="dim-pill active" id="dimAgeingBtn" data-dim="ageing">⏳ Ageing</button>
+                            <button type="button" class="dim-pill" id="dimMonthBtn" data-dim="month">📅 Month</button>
+                            <button type="button" class="dim-pill" id="dimBothBtn" data-dim="both">⏳+📅 Both</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="pivot-wrap">
                     <table id="compactPivotTable" class="pivot-table">
@@ -260,7 +275,7 @@
             </div>
             <div class="section-box">
                 <div class="section-header-row">
-                    <h2>📈 Variance (Compare – Base)</h2>
+                    <h2 id="compactVarTitle">📈 Variance (Compare – Base)</h2>
                 </div>
                 <div class="pivot-wrap">
                     <table id="compactVarTable" class="pivot-table">
@@ -281,8 +296,8 @@
             <div class="pivot-wrap">
                 <table id="cciPivotTable" class="pivot-table">
                     <colgroup id="cciPivotColGroup"></colgroup>
-                    <thead><tr><th>Region</th><th>0-3</th><th>4-7</th><th>8-15</th><th>&gt;15</th><th>Total</th></tr></thead>
-                    <tbody id="cciPivotBody"><tr><td colspan="6" class="no-data">No CCI Send To CWH data</td></tr></tbody>
+                    <thead><tr><th>Region</th><th>0-3</th><th>4-7</th><th>8-15</th><th>16-30</th><th>&gt;30</th><th>Total</th></tr></thead>
+                    <tbody id="cciPivotBody"><tr><td colspan="7" class="no-data">No CCI Send To CWH data</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -341,8 +356,15 @@
 
         let showRegionColumn = true;
         let showAgeingColumn = true;
+        let showMonthColumn = true;
+        let firstPivotDimension = 'ageing'; // 'ageing' | 'month' | 'both'
 
-        const AGEING_BUCKETS = ['0-3', '4-7', '8-15', '>15'];
+        const AGEING_BUCKETS = ['0-3', '4-7', '8-15', '16-30', '>30'];
+
+        const dimAgeingBtn = document.getElementById('dimAgeingBtn');
+        const dimMonthBtn = document.getElementById('dimMonthBtn');
+        const dimBothBtn = document.getElementById('dimBothBtn');
+        const compactPivotTitle = document.getElementById('compactPivotTitle');
 
         const fileInput = document.getElementById('fileInput');
         const fileList = document.getElementById('fileList');
@@ -420,6 +442,52 @@
             return null;
         }
 
+        function parseMonthYear(str) {
+            if (!str) return 0;
+            const s = String(str).trim();
+            const monthNames = {
+                jan: 0, january: 0,
+                feb: 1, february: 1,
+                mar: 2, march: 2,
+                apr: 3, april: 3,
+                may: 4,
+                jun: 5, june: 5,
+                jul: 6, july: 6,
+                aug: 7, august: 7,
+                sep: 8, sept: 8, september: 8,
+                oct: 9, october: 9,
+                nov: 10, november: 10,
+                dec: 11, december: 11
+            };
+            const m1 = s.match(/^([a-z]+)[-\s/'"]+(\d{2,4})$/i);
+            if (m1) {
+                const mon = monthNames[m1[1].toLowerCase()];
+                let yr = parseInt(m1[2], 10);
+                if (yr < 100) yr += 2000;
+                if (mon !== undefined) return yr * 100 + mon;
+            }
+            const m2 = s.match(/^(\d{4})[-\s/]+(\d{1,2})$/);
+            if (m2) {
+                return parseInt(m2[1], 10) * 100 + parseInt(m2[2], 10) - 1;
+            }
+            const m3 = s.match(/^(\d{1,2})[-\s/]+(\d{4})$/);
+            if (m3) {
+                return parseInt(m3[2], 10) * 100 + parseInt(m3[1], 10) - 1;
+            }
+            const mName = monthNames[s.toLowerCase()];
+            if (mName !== undefined) return 200000 + mName;
+            return s;
+        }
+
+        function compareMonths(a, b) {
+            const vA = parseMonthYear(a);
+            const vB = parseMonthYear(b);
+            if (typeof vA === 'number' && typeof vB === 'number') {
+                return vA - vB;
+            }
+            return String(a).localeCompare(String(b));
+        }
+
         function getAgeingBucket(dateObj) {
             if (!dateObj) return null;
             const now = new Date();
@@ -428,7 +496,8 @@
             if (diffDays <= 3) return '0-3';
             if (diffDays <= 7) return '4-7';
             if (diffDays <= 15) return '8-15';
-            return '>15';
+            if (diffDays <= 30) return '16-30';
+            return '>30';
         }
 
         function getAgeingBucketFromCciShipDate(row) {
@@ -452,14 +521,22 @@
                 const closeDateKey = keys.find(k => k.toLowerCase().trim().replace(/\s/g,'') === 'srclosedate/time' || k.toLowerCase().trim() === 'sr close date / time');
                 let dateVal = closeDateKey ? row[closeDateKey] : null;
                 const parsedDate = parseSRCloseDate(dateVal);
-                const bucket = getAgeingBucket(parsedDate) || '>15';
+                const bucket = getAgeingBucket(parsedDate) || '>30';
 
                 let rawStation = row['Station Code'] || row['Station code'] || '';
                 let cleanCode = cleanStationCode(rawStation);
                 let mappedRegion = mappingLoaded && regionMap[cleanCode] ? regionMap[cleanCode] : (rawStation ? 'Unknown' : 'No mapping');
 
+                let monthKey = keys.find(k => k.toLowerCase().trim().replace(/\s/g,'') === 'srclosemonth' || k.toLowerCase().trim() === 'sr close month');
+                let monthVal = monthKey ? row[monthKey] : (row['SR Close Month'] || row['SR close month'] || '');
+                if (!monthVal && parsedDate) {
+                    const mNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    monthVal = `${mNames[parsedDate.getMonth()]}-${String(parsedDate.getFullYear()).slice(-2)}`;
+                }
+
                 return {
                     ...row,
+                    'SR Close Month': monthVal || 'Blank',
                     'Region': mappedRegion,
                     'Ageing Bucket': bucket,
                     'Parts Status': row['Parts Status'] || row['Parts status'] || 'Blank'
@@ -486,25 +563,26 @@
             const regionAgeMap = {};
             const regionAgeSet = new Set();
 
+            const displayRegion = showRegionColumn;
+            const displayMonth = (firstPivotDimension === 'month' || firstPivotDimension === 'both') && showMonthColumn;
+            const displayAgeing = (firstPivotDimension === 'ageing' || firstPivotDimension === 'both') && showAgeingColumn;
+
             data.forEach(row => {
                 const reg = row['Region'] || 'Unknown';
-                const age = row['Ageing Bucket'] || '>15';
+                const mon = row['SR Close Month'] || row['SR close month'] || 'Blank';
+                const age = row['Ageing Bucket'] || '>30';
                 const stat = row['Parts Status'] || 'Blank';
                 let qty = parseFloat(row['SR Part Quantity'] || row['SR Part quantity'] || row['Part Quantity'] || 0);
                 if (isNaN(qty)) qty = 0;
                 
                 statuses.add(stat);
                 
-                let key;
-                if (showRegionColumn && showAgeingColumn) {
-                    key = `${reg}||${age}`;
-                } else if (showRegionColumn && !showAgeingColumn) {
-                    key = reg;
-                } else if (!showRegionColumn && showAgeingColumn) {
-                    key = age;
-                } else {
-                    key = 'Total';
-                }
+                let keyParts = [];
+                if (displayRegion) keyParts.push(reg);
+                if (displayMonth) keyParts.push(mon);
+                if (displayAgeing) keyParts.push(age);
+                
+                let key = keyParts.length > 0 ? keyParts.join('||') : 'Total';
                 
                 if (!regionAgeMap[key]) regionAgeMap[key] = {};
                 if (!regionAgeMap[key][stat]) regionAgeMap[key][stat] = 0;
@@ -513,18 +591,28 @@
             });
 
             const sortedKeys = Array.from(regionAgeSet).sort((a,b) => {
-                if (showRegionColumn && showAgeingColumn) {
-                    const [regA, ageA] = a.split('||');
-                    const [regB, ageB] = b.split('||');
+                if (a === 'Total' || b === 'Total') return 0;
+                const partsA = a.split('||');
+                const partsB = b.split('||');
+                let idx = 0;
+                if (displayRegion) {
+                    const regA = partsA[idx];
+                    const regB = partsB[idx];
                     if (regA !== regB) return regA.localeCompare(regB);
-                    return AGEING_BUCKETS.indexOf(ageA) - AGEING_BUCKETS.indexOf(ageB);
-                } else if (showRegionColumn && !showAgeingColumn) {
-                    return a.localeCompare(b);
-                } else if (!showRegionColumn && showAgeingColumn) {
-                    return AGEING_BUCKETS.indexOf(a) - AGEING_BUCKETS.indexOf(b);
-                } else {
-                    return 0;
+                    idx++;
                 }
+                if (displayMonth) {
+                    const monA = partsA[idx];
+                    const monB = partsB[idx];
+                    if (monA !== monB) return compareMonths(monA, monB);
+                    idx++;
+                }
+                if (displayAgeing) {
+                    const ageA = partsA[idx];
+                    const ageB = partsB[idx];
+                    return AGEING_BUCKETS.indexOf(ageA) - AGEING_BUCKETS.indexOf(ageB);
+                }
+                return 0;
             });
 
             const sortedStatuses = Array.from(statuses).sort();
@@ -532,8 +620,14 @@
         }
 
         function renderCompactPivot(data, tableBody, colGroup, isVariance, baseData) {
+            const displayRegion = showRegionColumn;
+            const displayMonth = (firstPivotDimension === 'month' || firstPivotDimension === 'both') && showMonthColumn;
+            const displayAgeing = (firstPivotDimension === 'ageing' || firstPivotDimension === 'both') && showAgeingColumn;
+            const dimCount = (displayRegion ? 1 : 0) + (displayMonth ? 1 : 0) + (displayAgeing ? 1 : 0);
+
             if (!data || data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="3" class="no-data">No data</td></tr>`;
+                const placeholderCols = Math.max(1, dimCount) + 2;
+                tableBody.innerHTML = `<tr><td colspan="${placeholderCols}" class="no-data">No data</td></tr>`;
                 colGroup.innerHTML = '';
                 return;
             }
@@ -546,13 +640,12 @@
             }
 
             const allStatuses = sortedStatuses.length ? sortedStatuses : ['Blank'];
-            
-            const displayRegion = showRegionColumn;
-            const displayAgeing = showAgeingColumn;
 
             let thead = '<tr>';
             if (displayRegion) thead += '<th>Region</th>';
+            if (displayMonth) thead += '<th>Month</th>';
             if (displayAgeing) thead += '<th>Ageing</th>';
+            if (dimCount === 0) thead += '<th>Dimension</th>';
             allStatuses.forEach(s => thead += `<th>${s}</th>`);
             thead += '<th>Total</th></tr>';
             
@@ -568,15 +661,14 @@
                 let rowTotal = 0;
                 let cells = '';
                 
-                if (displayRegion && displayAgeing) {
-                    const [reg, age] = key.split('||');
-                    cells += `<td>${reg}</td><td>${age}</td>`;
-                } else if (displayRegion && !displayAgeing) {
-                    cells += `<td>${key}</td>`;
-                } else if (!displayRegion && displayAgeing) {
-                    cells += `<td>${key}</td>`;
+                if (dimCount === 0) {
+                    cells += `<td>Total</td>`;
                 } else {
-                    // no row label
+                    const parts = key.split('||');
+                    let idx = 0;
+                    if (displayRegion) cells += `<td>${parts[idx++] || ''}</td>`;
+                    if (displayMonth) cells += `<td>${parts[idx++] || ''}</td>`;
+                    if (displayAgeing) cells += `<td>${parts[idx++] || ''}</td>`;
                 }
                 
                 allStatuses.forEach(s => {
@@ -607,9 +699,14 @@
             });
 
             let totalRow = '<tr class="total-row">';
-            if (displayRegion) totalRow += '<td colspan="1">Grand Total</td>';
-            if (displayAgeing) totalRow += '<td colspan="1"></td>';
-            if (!displayRegion && !displayAgeing) totalRow += '<td colspan="1">Grand Total</td>';
+            if (dimCount === 0) {
+                totalRow += '<td colspan="1">Grand Total</td>';
+            } else {
+                totalRow += '<td colspan="1">Grand Total</td>';
+                for (let i = 1; i < dimCount; i++) {
+                    totalRow += '<td colspan="1"></td>';
+                }
+            }
             
             allStatuses.forEach(s => {
                 const v = colTotals[s] || 0;
@@ -630,12 +727,19 @@
             tableBody.innerHTML = tbody;
 
             let colHtml = '';
-            if (displayRegion) colHtml += `<col style="width:12%">`;
-            if (displayAgeing) colHtml += `<col style="width:10%">`;
-            const statusCols = allStatuses.length;
-            const remaining = (displayRegion ? 1 : 0) + (displayAgeing ? 1 : 0) + statusCols + 1 > 2 ? 78 / statusCols : 78;
-            allStatuses.forEach(() => colHtml += `<col style="width:${remaining}%">`);
-            colHtml += `<col style="width:10%">`;
+            let usedWidth = 0;
+            if (displayRegion) { colHtml += `<col style="width:12%">`; usedWidth += 12; }
+            if (displayMonth) { colHtml += `<col style="width:10%">`; usedWidth += 10; }
+            if (displayAgeing) { colHtml += `<col style="width:10%">`; usedWidth += 10; }
+            if (dimCount === 0) { colHtml += `<col style="width:12%">`; usedWidth += 12; }
+
+            const totalColWidth = 10;
+            usedWidth += totalColWidth;
+            const statusCols = allStatuses.length || 1;
+            const remaining = Math.max(30, 100 - usedWidth);
+            const perStatusWidth = (remaining / statusCols).toFixed(2);
+            allStatuses.forEach(() => colHtml += `<col style="width:${perStatusWidth}%">`);
+            colHtml += `<col style="width:${totalColWidth}%">`;
             colGroup.innerHTML = colHtml;
         }
 
@@ -645,7 +749,7 @@
             const cciRows = compareRows.filter(r => (r['Parts Status'] || '').trim() === 'CCI Send To CWH');
             
             if (!cciRows.length) {
-                cciPivotBody.innerHTML = `<tr><td colspan="6" class="no-data">No CCI Send To CWH data</td></tr>`;
+                cciPivotBody.innerHTML = `<tr><td colspan="7" class="no-data">No CCI Send To CWH data</td></tr>`;
                 cciPivotColGroup.innerHTML = '';
                 return;
             }
@@ -659,7 +763,7 @@
                 const reg = row['Region'] || 'Unknown';
                 // Calculate ageing from CCI-ASP Ship Date
                 let ageBucket = getAgeingBucketFromCciShipDate(row);
-                if (!ageBucket) ageBucket = '>15'; // fallback
+                if (!ageBucket) ageBucket = '>30'; // fallback
                 // Also respect ageing bucket filter
                 if (selectedAgeingBuckets.length > 0 && !selectedAgeingBuckets.includes(ageBucket)) return;
                 
@@ -685,7 +789,7 @@
                 Object.assign(regionAgeMap, newMap);
                 // If no keys left, show empty
                 if (Object.keys(regionAgeMap).length === 0) {
-                    cciPivotBody.innerHTML = `<tr><td colspan="6" class="no-data">No data after filters</td></tr>`;
+                    cciPivotBody.innerHTML = `<tr><td colspan="7" class="no-data">No data after filters</td></tr>`;
                     cciPivotColGroup.innerHTML = '';
                     return;
                 }
@@ -738,7 +842,7 @@
 
             // Colgroup
             let colHtml = `<col style="width:14%">`;
-            allBuckets.forEach(() => colHtml += `<col style="width:${78 / allBuckets.length}%">`);
+            allBuckets.forEach(() => colHtml += `<col style="width:${76 / allBuckets.length}%">`);
             colHtml += `<col style="width:10%">`;
             cciPivotColGroup.innerHTML = colHtml;
         }
@@ -760,7 +864,7 @@
             // Map to required columns
             const exportData = cciRows.map(row => {
                 // Calculate ageing bucket from CCI-ASP Ship Date
-                const ageBucket = getAgeingBucketFromCciShipDate(row) || '>15';
+                const ageBucket = getAgeingBucketFromCciShipDate(row) || '>30';
                 return {
                     'SR Number': row['SR Number'] || '',
                     'SR Part Number': row['SR Part Number'] || '',
@@ -824,7 +928,7 @@
                 const code = String(row['Station Code'] || row['Station code'] || '').trim() || 'Blank';
                 const name = String(row['Station Name'] || row['Station name'] || '').trim() || 'Blank';
                 const region = row['Region'] || 'Unknown';
-                const bucket = row['Ageing Bucket'] || '>15';
+                const bucket = row['Ageing Bucket'] || '>30';
                 const status = row['Parts Status'] || 'Blank';
                 let qty = parseFloat(row['SR Part Quantity'] || row['SR Part quantity'] || row['Part Quantity'] || 0);
                 if (isNaN(qty)) qty = 0;
@@ -913,7 +1017,7 @@
 
             // Month
             monthItemsList.innerHTML = '';
-            Array.from(months).sort().forEach(m => {
+            Array.from(months).sort(compareMonths).forEach(m => {
                 const checked = selectedMonths.includes(m);
                 const item = document.createElement('div');
                 item.className = 'multiselect-item';
@@ -968,7 +1072,32 @@
             updateAgeingLabel();
         }
 
-        function updateMonthSelection() { const cbs = monthItemsList.querySelectorAll('input:checked'); selectedMonths = Array.from(cbs).map(cb=>cb.value); updateMonthLabel(); updateUI(); }
+        function updateMonthSelection() { 
+            const cbs = monthItemsList.querySelectorAll('input:checked'); 
+            const newSelection = Array.from(cbs).map(cb=>cb.value); 
+            if ((firstPivotDimension === 'month' || firstPivotDimension === 'both') && newSelection.length === 0 && selectedMonths.length > 0) {
+                showConfirmation(
+                    'Do you want to remove the Month column from the pivot tables?',
+                    (confirmed) => {
+                        if (confirmed) {
+                            showMonthColumn = false;
+                            selectedMonths = [];
+                            updateMonthLabel();
+                            updateUI();
+                        } else {
+                            checkAll(monthItemsList, true);
+                            updateMonthSelection();
+                        }
+                    }
+                );
+                return;
+            }
+            selectedMonths = newSelection; 
+            if (selectedMonths.length > 0) showMonthColumn = true;
+            updateMonthLabel(); 
+            updateUI(); 
+        }
+
         function updateMonthLabel() { const total = monthItemsList.querySelectorAll('input').length; const sel = selectedMonths.length; if (sel===0) monthBoxText.textContent='None'; else if (sel===total && total>0) monthBoxText.textContent='All Months'; else if (sel===1) monthBoxText.textContent=selectedMonths[0]; else monthBoxText.textContent=`${sel} Selected`; }
         function updateCatSelection() { const cbs = catItemsList.querySelectorAll('input:checked'); selectedCategories = Array.from(cbs).map(cb=>cb.value); updateCatLabel(); updateUI(); }
         function updateCatLabel() { const total = catItemsList.querySelectorAll('input').length; const sel = selectedCategories.length; if (sel===0) catBoxText.textContent='None'; else if (sel===total && total>0) catBoxText.textContent='All Categories'; else if (sel===1) catBoxText.textContent=selectedCategories[0]; else catBoxText.textContent=`${sel} Selected`; }
@@ -1014,7 +1143,7 @@
         function updateAgeingSelection() {
             const cbs = ageingItemsList.querySelectorAll('input:checked');
             const newSelection = Array.from(cbs).map(cb=>cb.value);
-            if (newSelection.length === 0 && selectedAgeingBuckets.length > 0) {
+            if ((firstPivotDimension === 'ageing' || firstPivotDimension === 'both') && newSelection.length === 0 && selectedAgeingBuckets.length > 0) {
                 showConfirmation(
                     'Do you want to remove the Ageing Bucket column from the pivot tables?',
                     (confirmed) => {
@@ -1048,6 +1177,25 @@
 
         function checkAll(list, state) { list.querySelectorAll('input').forEach(cb => cb.checked = state); }
 
+        function setPivotDimension(dim) {
+            firstPivotDimension = dim;
+            [dimAgeingBtn, dimMonthBtn, dimBothBtn].forEach(btn => {
+                if (btn) btn.classList.toggle('active', btn.getAttribute('data-dim') === dim);
+            });
+            if (dim === 'ageing') {
+                showAgeingColumn = true;
+                if (compactPivotTitle) compactPivotTitle.innerHTML = '📊 Compact Pivot: Region × Ageing × Status';
+            } else if (dim === 'month') {
+                showMonthColumn = true;
+                if (compactPivotTitle) compactPivotTitle.innerHTML = '📊 Compact Pivot: Region × Month × Status';
+            } else if (dim === 'both') {
+                showAgeingColumn = true;
+                showMonthColumn = true;
+                if (compactPivotTitle) compactPivotTitle.innerHTML = '📊 Compact Pivot: Region × Month × Ageing × Status';
+            }
+            updateUI();
+        }
+
         function syncControlDropdowns() {
             const files = Object.keys(rawSnapshotData).sort();
             const prevBase = baseSnapshotSel.value, prevComp = compareSnapshotSel.value;
@@ -1069,6 +1217,7 @@
             checkAll(ageingItemsList, true); updateAgeingSelection();
             showRegionColumn = true;
             showAgeingColumn = true;
+            showMonthColumn = true;
         }
 
         // ---- file handlers ----
@@ -1165,6 +1314,10 @@
         compareSnapshotSel.addEventListener('change', updateUI);
         stationSearchInput.addEventListener('input', renderMasterTable);
 
+        if (dimAgeingBtn) dimAgeingBtn.addEventListener('click', () => setPivotDimension('ageing'));
+        if (dimMonthBtn) dimMonthBtn.addEventListener('click', () => setPivotDimension('month'));
+        if (dimBothBtn) dimBothBtn.addEventListener('click', () => setPivotDimension('both'));
+
         monthBox.addEventListener('click', (e) => { e.stopPropagation(); catOptionsContainer.classList.remove('show'); regionOptionsContainer.classList.remove('show'); statusOptionsContainer.classList.remove('show'); ageingOptionsContainer.classList.remove('show'); monthOptionsContainer.classList.toggle('show'); });
         catBox.addEventListener('click', (e) => { e.stopPropagation(); monthOptionsContainer.classList.remove('show'); regionOptionsContainer.classList.remove('show'); statusOptionsContainer.classList.remove('show'); ageingOptionsContainer.classList.remove('show'); catOptionsContainer.classList.toggle('show'); });
         regionBox.addEventListener('click', (e) => { e.stopPropagation(); monthOptionsContainer.classList.remove('show'); catOptionsContainer.classList.remove('show'); statusOptionsContainer.classList.remove('show'); ageingOptionsContainer.classList.remove('show'); regionOptionsContainer.classList.toggle('show'); });
@@ -1176,7 +1329,28 @@
         });
 
         document.getElementById('monthSelectAll').addEventListener('click', () => { checkAll(monthItemsList, true); updateMonthSelection(); });
-        document.getElementById('monthUnselectAll').addEventListener('click', () => { checkAll(monthItemsList, false); updateMonthSelection(); });
+        document.getElementById('monthUnselectAll').addEventListener('click', () => { 
+            if ((firstPivotDimension === 'month' || firstPivotDimension === 'both') && selectedMonths.length > 0) {
+                showConfirmation(
+                    'Do you want to remove the Month column from the pivot tables?',
+                    (confirmed) => {
+                        if (confirmed) {
+                            showMonthColumn = false;
+                            selectedMonths = [];
+                            checkAll(monthItemsList, false);
+                            updateMonthLabel();
+                            updateUI();
+                        } else {
+                            checkAll(monthItemsList, true);
+                            updateMonthSelection();
+                        }
+                    }
+                );
+            } else {
+                checkAll(monthItemsList, false); 
+                updateMonthSelection(); 
+            }
+        });
         document.getElementById('catSelectAll').addEventListener('click', () => { checkAll(catItemsList, true); updateCatSelection(); });
         document.getElementById('catUnselectAll').addEventListener('click', () => { checkAll(catItemsList, false); updateCatSelection(); });
         document.getElementById('regionSelectAll').addEventListener('click', () => { checkAll(regionItemsList, true); updateRegionSelection(); });
@@ -1232,6 +1406,8 @@
             stationSearchInput.value = '';
             showRegionColumn = true;
             showAgeingColumn = true;
+            showMonthColumn = true;
+            setPivotDimension('ageing');
             checkAll(monthItemsList, true); updateMonthSelection();
             checkAll(catItemsList, true); updateCatSelection();
             checkAll(regionItemsList, true); updateRegionSelection();
@@ -1245,6 +1421,8 @@
             selectedMonths = []; selectedCategories = []; selectedRegions = []; selectedStatuses = []; selectedAgeingBuckets = [];
             showRegionColumn = true;
             showAgeingColumn = true;
+            showMonthColumn = true;
+            setPivotDimension('ageing');
             fileList.innerHTML = "No snapshot files loaded yet.";
             baseSnapshotSel.innerHTML = '<option value="">-- Base --</option>';
             compareSnapshotSel.innerHTML = '<option value="">-- Compare --</option>';
