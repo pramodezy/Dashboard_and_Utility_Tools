@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Delivery Challan Generator</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; font-family: Arial, Helvetica, sans-serif; font-size: 11px; }
+  body { background: #f0f2f5; padding: 20px; margin: 0; }
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 12mm 15mm;
+    margin: 0 auto 20px auto;
+    background: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  .controls {
+    width: 210mm;
+    margin: 0 auto 15px auto;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
+  button {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #0056b3;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  button:hover { background: #004085; }
+  button.add-row { background: #28a745; margin-top: 5px; }
+  button.add-row:hover { background: #1e7e34; }
+  button.btn-sec { background: #17a2b8; }
+  button.btn-sec:hover { background: #117a8b; }
+  button.btn-tmpl { background: #6c757d; }
+  button.btn-tmpl:hover { background: #545b62; }
+  button.btn-clear { background: #dc3545; }
+  button.btn-clear:hover { background: #bd2130; }
+  button.delete-btn { background: #dc3545; padding: 2px 6px; font-size: 10px; }
+
+  /* Info Icon Button */
+  .btn-info {
+    background: #343a40;
+    color: #fff;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 14px;
+    font-weight: bold;
+    font-style: italic;
+    font-family: "Georgia", serif;
+  }
+  .btn-info:hover { background: #1d2124; }
+
+  /* Modal Styles */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-box {
+    background: #fff;
+    width: 580px;
+    max-width: 90%;
+    border-radius: 6px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    padding: 20px;
+    position: relative;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  .modal-header h3 { margin: 0; font-size: 15px; color: #212529; }
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .modal-close:hover { color: #000; background: transparent; }
+  .modal-content ol { margin: 0; padding-left: 20px; }
+  .modal-content li { margin-bottom: 8px; font-size: 12px; }
+  .modal-content li strong { font-size: 12px; color: #111; }
+  
+  .header-table, .info-table, .items-table, .remarks-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .border-box { border: 1px solid #000; }
+  .header-table td { padding: 4px; vertical-align: top; }
+  .title { font-size: 16px; font-weight: bold; text-align: center; margin-bottom: 8px; }
+  
+  .info-table td {
+    border: 1px solid #000;
+    padding: 4px 6px;
+    vertical-align: top;
+    width: 50%;
+  }
+  .section-title { font-weight: bold; text-decoration: underline; margin-bottom: 4px; }
+  .field-row { display: flex; margin-bottom: 2px; }
+  .field-label { width: 130px; font-weight: bold; }
+  .field-val { flex: 1; }
+
+  input, textarea {
+    border: 1px dashed #aaa;
+    width: 100%;
+    padding: 2px 4px;
+    font-size: 11px;
+    font-family: inherit;
+  }
+  input:focus, textarea:focus { outline: none; border: 1px solid #000; background: #fafafa; }
+
+  .items-table { margin-top: 8px; }
+  .items-table th, .items-table td {
+    border: 1px solid #000;
+    padding: 4px;
+    text-align: left;
+  }
+  .items-table th { background: #f2f2f2; text-align: center; }
+  .col-id { width: 30px; text-align: center !important; }
+  .col-code { width: 110px; }
+  .col-desc { width: auto; }
+  .col-hsn { width: 80px; }
+  .col-price { width: 75px; text-align: right; }
+  .col-qty { width: 45px; text-align: right; }
+  .col-amt { width: 85px; text-align: right; }
+  .col-act { width: 30px; text-align: center; }
+
+  .totals-row td { font-weight: bold; border-top: 2px solid #000; }
+  .in-words-row td { padding: 5px; font-weight: bold; border: 1px solid #000; }
+
+  .remarks-table { margin-top: 8px; }
+  .remarks-table td {
+    border: 1px solid #000;
+    padding: 6px;
+    vertical-align: top;
+  }
+
+  @media print {
+    body { background: transparent; padding: 0; }
+    .page { border: none; box-shadow: none; margin: 0; width: 100%; min-height: auto; padding: 0; }
+    .controls, .col-act, .add-row, .modal-overlay { display: none !important; }
+    input, textarea { border: none !important; background: transparent !important; padding: 0 !important; }
+    @page { margin: 12mm 10mm; size: portrait; }
+  }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button type="button" class="btn-info" onclick="toggleModal(true)" title="Instructions / Guidelines">i</button>
+  <button type="button" class="btn-tmpl" onclick="downloadTemplate()">Download Excel Template</button>
+  <button type="button" class="btn-sec" onclick="document.getElementById('fileUploadInput').click()">Bulk Upload (.xlsx / .csv)</button>
+  <input type="file" id="fileUploadInput" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleFileUpload(event)">
+  <button type="button" class="btn-clear" onclick="clearAllInputs()">Clear All</button>
+  <button type="button" onclick="window.print()">Print to PDF</button>
+</div>
+
+<!-- Instructions Modal -->
+<div class="modal-overlay" id="guideModal" onclick="handleBackdropClick(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Guidelines: How to Use Delivery Challan Generator</h3>
+      <button type="button" class="modal-close" onclick="toggleModal(false)">&times;</button>
+    </div>
+    <div class="modal-content">
+      <ol>
+        <li><strong>Challan Numbering:</strong> Enter your <strong>Station Code</strong> (e.g., <code>065</code>) and <strong>Sequence</strong> (e.g., <code>01</code>). The Challan ID auto-generates as <code>RLC[Code][DDMMYY][Seq]</code>.</li>
+        <li><strong>Sending Plant:</strong> Modify Sender Name, Address, GSTIN, and Transporter details as required. Receiving plant details remain fixed.</li>
+        <li><strong>Adding Items Manually:</strong> Click <strong>+ Add Item Row</strong> to insert spare parts. Enter Unit Price and Quantity; line totals, overall quantity, grand total, and amount in words calculate automatically.</li>
+        <li><strong>Bulk Upload:</strong>
+          <ul>
+            <li>Click <strong>Download Excel Template</strong> to get the standard format.</li>
+            <li>Fill columns: <code>Item Code</code>, <code>Description</code>, <code>HSN</code>, <code>Unit Price</code>, <code>Qty</code>.</li>
+            <li>Click <strong>Bulk Upload (.xlsx / .csv)</strong> to import and auto-populate all line items.</li>
+          </ul>
+        </li>
+        <li><strong>Clear All:</strong> Click <strong>Clear All</strong> to wipe all items, transport inputs, and sending plant fields to start a fresh Challan.</li>
+        <li><strong>Export to PDF:</strong> Click <strong>Print to PDF</strong>. All input outlines, action buttons, and tools will be hidden to generate a clean A4 print document.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="title">Delivery Challan</div>
+
+  <!-- Header Section -->
+  <table class="header-table border-box" style="margin-bottom: 6px;">
+    <tr>
+      <td style="width: 50%; border-right: 1px solid #000;">
+        <div class="field-row"><span class="field-label">Delivery Challan No.:</span><span class="field-val"><input id="dcNo" type="text" readonly style="font-weight:bold; background:#eee;"></span></div>
+        <div class="field-row"><span class="field-label">Date Issued:</span><span class="field-val"><input id="dcDate" type="text"></span></div>
+        <div class="field-row"><span class="field-label">Stock Type:</span><span class="field-val"><input id="stockType" type="text" value="Good"></span></div>
+      </td>
+      <td style="width: 50%;">
+        <div class="field-row"><span class="field-label">Way Bill No:</span><span class="field-val"><input id="wayBill" type="text" placeholder="courier AWB 123456"></span></div>
+        <div class="field-row"><span class="field-label">Road Permit No:</span><span class="field-val"><input id="roadPermit" type="text"></span></div>
+        <div class="field-row"><span class="field-label">Transporter Name:</span><span class="field-val"><input id="transporterName" type="text" placeholder="DTDC"></span></div>
+        <div class="field-row"><span class="field-label">Mode of Transport:</span><span class="field-val"><input id="modeOfTransport" type="text" value="road"></span></div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Addresses -->
+  <table class="info-table">
+    <tr>
+      <td>
+        <div class="section-title">Sending Plant</div>
+        <div class="field-row"><span class="field-label">Station Code*:</span><span class="field-val"><input id="senderCode" type="text" value="065" oninput="generateDCNo()" placeholder="e.g. 065"></span></div>
+        <div class="field-row"><span class="field-label">Sequence (2 digit)*:</span><span class="field-val"><input id="dcSeq" type="text" value="01" maxlength="2" oninput="generateDCNo()"></span></div>
+        <div class="field-row"><span class="field-label">Sender:</span><span class="field-val"><input id="senderName" type="text" value="RRLC-065-Nilawar Alliance Pvt Ltd"></span></div>
+        <div class="field-row"><span class="field-label">Addr1:</span><span class="field-val"><input id="senderAddr1" type="text" value="Shree Ram Mandir, Plot No. 48, Indira"></span></div>
+        <div class="field-row"><span class="field-label">Addr2:</span><span class="field-val"><input id="senderAddr2" type="text" value="Gandhi Market Road, Jai Hind Chowk 445001"></span></div>
+        <div class="field-row"><span class="field-label">City / State / Zip:</span><span class="field-val"><input id="senderCityStateZip" type="text" value="Yavatmal, Maharashtra - 445001"></span></div>
+        <div class="field-row"><span class="field-label">Phone No.:</span><span class="field-val"><input id="senderPhone" type="text" value="8421111000"></span></div>
+        <div class="field-row"><span class="field-label">Contact Person:</span><span class="field-val"><input id="senderContact" type="text" value="Ritesh"></span></div>
+        <div class="field-row"><span class="field-label">GSTIN No. (VAT)*:</span><span class="field-val"><input id="senderGstin" type="text" value="27AAICN2203R1Z5"></span></div>
+      </td>
+      <td>
+        <div class="section-title">Receiving Plant</div>
+        <div class="field-row"><span class="field-label">Receiver:</span><span class="field-val">Reliance Retail Limited-Consign</span></div>
+        <div class="field-row"><span class="field-label">Addr1:</span><span class="field-val">312 Reliance Retail Ltd, ResQ Care Centre,</span></div>
+        <div class="field-row"><span class="field-label">Addr2:</span><span class="field-val">Maithili Signet, Second Floor, 39/4, Sector-30A,</span></div>
+        <div class="field-row"><span class="field-label">City / State / Zip:</span><span class="field-val">Vashi, Navi Mumbai, Thane, MH - 400705</span></div>
+        <div class="field-row"><span class="field-label">Phone No.:</span><span class="field-val">8591908311 / 8077783367</span></div>
+        <div class="field-row"><span class="field-label">Contact Person:</span><span class="field-val">Nilesh Pachauri</span></div>
+        <div class="field-row"><span class="field-label">GSTIN No. (VAT)*:</span><span class="field-val">27AABCR1718E1ZP</span></div>
+        <div class="field-row"><span class="field-label">Service Center code*:</span><span class="field-val">RLC578</span></div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Items Table -->
+  <table class="items-table" id="itemsTable">
+    <thead>
+      <tr>
+        <th class="col-id">ID</th>
+        <th class="col-code">ITEM CODE</th>
+        <th class="col-desc">DESCRIPTION & SPECIFICATION</th>
+        <th class="col-hsn">HSN</th>
+        <th class="col-price">Unit Price (INR)</th>
+        <th class="col-qty">Qty</th>
+        <th class="col-amt">Amount (INR)</th>
+        <th class="col-act"></th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody"></tbody>
+    <tfoot>
+      <tr class="totals-row">
+        <td colspan="5" style="text-align: right; padding-right: 10px;">Total:</td>
+        <td id="totalQtyDisplay" style="text-align: right;">0</td>
+        <td id="grandTotalDisplay" style="text-align: right;">0.00</td>
+        <td class="col-act"></td>
+      </tr>
+      <tr class="in-words-row">
+        <td colspan="8">Amount in words: <span id="amountInWordsDisplay" style="font-weight: normal; text-transform: uppercase;">Zero Rupees Only</span></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <button type="button" class="add-row" onclick="addRow()">+ Add Item Row</button>
+
+  <!-- Special Remarks & Signatures -->
+  <table class="remarks-table">
+    <tr>
+      <td style="width: 65%;">
+        <b>Special Remarks:</b><br><br>
+        Above Items are sent for warranty replacement and are not for SALE. The value declared is only for purpose of transit and insurance purpose only.<br><br>
+        Goods covered under this Challan must be examined & verified by the consignee for quality, shortage if any, and incase the package is delivered in damage condition or with the seal broken or missing or with seal other than as stated in the shipping documents or any shortage than it should be mentioned in the carrier (GR) or any such carrier documents and also informed to the nearest office immediately within 24 hours.<br><br>
+        <div style="text-align: right; font-weight: bold;">E.& O.E</div>
+      </td>
+      <td style="width: 35%;">
+        <b>Received the above goods in good condition</b><br><br><br><br>
+        Customer Signature: _______________________<br><br>
+        Name: ___________________________________<br><br>
+        Seal of the organization:<br><br>
+        Date: ___________________________________
+      </td>
+    </tr>
+  </table>
+</div>
+
+<script>
+  let rawDateDigits = "";
+
+  function toggleModal(show) {
+    const modal = document.getElementById('guideModal');
+    modal.classList.toggle('active', show);
+  }
+
+  function handleBackdropClick(event) {
+    if (event.target.id === 'guideModal') {
+      toggleModal(false);
+    }
+  }
+
+  function setInitialDate() {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    const yy = String(yyyy).slice(-2);
+    
+    document.getElementById('dcDate').value = `${yyyy}${mm}${dd}`;
+    rawDateDigits = `${dd}${mm}${yy}`;
+    generateDCNo();
+  }
+
+  function generateDCNo() {
+    const station = (document.getElementById('senderCode').value || "").trim();
+    const seq = (document.getElementById('dcSeq').value || "01").padStart(2, '0').slice(-2);
+    document.getElementById('dcNo').value = station ? `RLC${station}${rawDateDigits}${seq}` : "";
+  }
+
+  function addRow(code="", desc="", hsn="", price="", qty=1) {
+    const tbody = document.getElementById('itemsBody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="col-id row-index"></td>
+      <td><input type="text" value="${code}"></td>
+      <td><input type="text" value="${desc}"></td>
+      <td><input type="text" value="${hsn}"></td>
+      <td><input type="number" step="0.01" class="item-price" value="${price}" oninput="recalcRow(this)"></td>
+      <td><input type="number" step="1" class="item-qty" value="${qty}" oninput="recalcRow(this)"></td>
+      <td class="item-amount" style="text-align: right; font-weight: bold;">0.00</td>
+      <td class="col-act"><button type="button" class="delete-btn" onclick="removeRow(this)">×</button></td>
+    `;
+    tbody.appendChild(tr);
+    recalcRow(tr.querySelector('.item-price'));
+  }
+
+  function removeRow(btn) {
+    btn.closest('tr').remove();
+    renumberRows();
+    calculateTotals();
+  }
+
+  function renumberRows() {
+    document.querySelectorAll('#itemsBody tr').forEach((tr, i) => {
+      tr.querySelector('.row-index').textContent = i + 1;
+    });
+  }
+
+  function recalcRow(inputElem) {
+    const tr = inputElem.closest('tr');
+    const price = parseFloat(tr.querySelector('.item-price').value) || 0;
+    const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
+    const amt = (price * qty);
+    tr.querySelector('.item-amount').textContent = amt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    tr.querySelector('.item-amount').dataset.val = amt;
+    renumberRows();
+    calculateTotals();
+  }
+
+  function calculateTotals() {
+    let totalQty = 0;
+    let grandTotal = 0;
+
+    document.querySelectorAll('#itemsBody tr').forEach(tr => {
+      const q = parseFloat(tr.querySelector('.item-qty').value) || 0;
+      const a = parseFloat(tr.querySelector('.item-amount').dataset.val) || 0;
+      totalQty += q;
+      grandTotal += a;
+    });
+
+    document.getElementById('totalQtyDisplay').textContent = totalQty;
+    document.getElementById('grandTotalDisplay').textContent = grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('amountInWordsDisplay').textContent = numberToWordsINR(grandTotal);
+  }
+
+  function numberToWordsINR(amount) {
+    if (amount <= 0) return "Zero Rupees Only";
+    const [whole, dec] = amount.toFixed(2).split('.');
+
+    function numToWords(n) {
+      const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+      const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+      n = parseInt(n);
+      if (n === 0) return '';
+      if (n < 20) return ones[n] + ' ';
+      if (n < 100) return tens[Math.floor(n / 10)] + ' ' + ones[n % 10] + ' ';
+      return ones[Math.floor(n / 100)] + ' Hundred ' + numToWords(n % 100);
+    }
+
+    let n = parseInt(whole);
+    let str = "";
+    
+    const cr = Math.floor(n / 10000000); n %= 10000000;
+    const lk = Math.floor(n / 100000); n %= 100000;
+    const th = Math.floor(n / 1000); n %= 1000;
+    const rem = n;
+
+    if (cr > 0) str += numToWords(cr) + "Crore ";
+    if (lk > 0) str += numToWords(lk) + "Lakh ";
+    if (th > 0) str += numToWords(th) + "Thousand ";
+    if (rem > 0) str += numToWords(rem);
+
+    str = str.trim() + " Rupees";
+    const paise = parseInt(dec);
+    if (paise > 0) {
+      str += " and " + numToWords(paise).trim() + " Paise";
+    }
+    return str + " Only";
+  }
+
+  function clearAllInputs() {
+    if (!confirm("Are you sure you want to clear all input fields and item rows?")) {
+      return;
+    }
+
+    // Clear transport & sender fields
+    document.getElementById('wayBill').value = "";
+    document.getElementById('roadPermit').value = "";
+    document.getElementById('transporterName').value = "";
+    document.getElementById('modeOfTransport').value = "road";
+    document.getElementById('stockType').value = "Good";
+
+    document.getElementById('senderCode').value = "";
+    document.getElementById('dcSeq').value = "01";
+    document.getElementById('senderName').value = "";
+    document.getElementById('senderAddr1').value = "";
+    document.getElementById('senderAddr2').value = "";
+    document.getElementById('senderCityStateZip').value = "";
+    document.getElementById('senderPhone').value = "";
+    document.getElementById('senderContact').value = "";
+    document.getElementById('senderGstin').value = "";
+
+    // Clear items table and reset totals
+    document.getElementById('itemsBody').innerHTML = "";
+    addRow();
+    generateDCNo();
+  }
+
+  function downloadTemplate() {
+    const templateData = [
+      {
+        "Item Code": "5948C24385",
+        "Description": "XT2429 Batt CoverAdhesive",
+        "HSN": "39199090",
+        "Unit Price": 100.70,
+        "Qty": 1
+      },
+      {
+        "Item Code": "5B28C31936",
+        "Description": "XT2603-1 MB+NFC 16+512G ROW",
+        "HSN": "85177990",
+        "Unit Price": 34223.31,
+        "Qty": 2
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Items Template");
+    XLSX.writeFile(workbook, "Challan_Items_Template.xlsx");
+  }
+
+  function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+      if (rows.length === 0) {
+        alert("The selected file contains no data.");
+        return;
+      }
+
+      document.getElementById('itemsBody').innerHTML = "";
+
+      rows.forEach(row => {
+        const code = row["Item Code"] || row["ITEM CODE"] || row["ItemCode"] || row["Code"] || "";
+        const desc = row["Description"] || row["DESCRIPTION"] || row["DESCRIPTION & SPECIFICATION"] || row["Desc"] || "";
+        const hsn = row["HSN"] || row["Hsn"] || row["HSN Code"] || "";
+        const price = parseFloat(row["Unit Price"] || row["Price"] || row["UNIT PRICE"] || row["Unit Price (INR)"] || 0);
+        const qty = parseInt(row["Qty"] || row["QTY"] || row["Quantity"] || 1, 10);
+
+        if (code || desc || price || qty) {
+          addRow(code, desc, hsn, isNaN(price) ? "" : price, isNaN(qty) ? 1 : qty);
+        }
+      });
+
+      calculateTotals();
+      event.target.value = "";
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  window.onload = function() {
+    setInitialDate();
+    addRow("5948C24385", "XT2429 Batt CoverAdhesive", "39199090", 100.70, 1);
+    addRow("5948C28430", "ZN70805457H001+BATCVR-deco ADH", "39199090", 24.08, 1);
+    addRow("5B28C31936", "XT2603-1 MB+NFC 16+512G ROW", "85177990", 34223.31, 2);
+  };
+</script>
+</body>
+</html>
