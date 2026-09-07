@@ -92,6 +92,42 @@
       color: #94a3b8;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .icon-btn {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #2563eb;
+      font-size: 1.05rem;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: #eff6ff;
+      border-color: #2563eb;
+    }
+
+    body.dark .icon-btn {
+      background: #1e293b;
+      border-color: #475569;
+      color: #60a5fa;
+    }
+
+    body.dark .icon-btn:hover {
+      background: #334155;
+    }
+
     .theme-toggle {
       background: none;
       border: 1px solid #cbd5e1;
@@ -104,6 +140,112 @@
     body.dark .theme-toggle {
       border-color: #475569;
       color: #e2e8f0;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: white;
+      border-radius: 18px;
+      max-width: 680px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.18);
+      border: 1px solid #e2e8f0;
+    }
+
+    body.dark .modal-card {
+      background: #1e293b;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+
+    .modal-header {
+      padding: 1.1rem 1.4rem;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    body.dark .modal-header {
+      border-bottom-color: #334155;
+    }
+
+    .modal-header h3 {
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: #1e293b;
+    }
+
+    body.dark .modal-header h3 {
+      color: #f8fafc;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: #94a3b8;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 4px;
+    }
+
+    .modal-close:hover {
+      color: #e11d48;
+    }
+
+    .modal-body {
+      padding: 1.4rem;
+      overflow-y: auto;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    .modal-body h4 {
+      font-size: 0.95rem;
+      margin: 1.1rem 0 0.4rem;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .modal-body h4:first-child {
+      margin-top: 0;
+    }
+
+    body.dark .modal-body h4 {
+      color: #60a5fa;
+    }
+
+    .modal-body ul {
+      padding-left: 1.25rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .modal-body li {
+      margin-bottom: 0.35rem;
     }
 
     .upload-row {
@@ -774,6 +916,27 @@
       font-size: 0.8rem;
       cursor: pointer;
       font-weight: 500;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .export-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .export-btn.reset-btn {
+      background: #64748b;
+    }
+
+    .export-btn.reset-btn:hover {
+      background: #475569;
+    }
+
+    body.dark .export-btn.reset-btn {
+      background: #475569;
+    }
+
+    body.dark .export-btn.reset-btn:hover {
+      background: #334155;
     }
 
     .export-btn-small {
@@ -861,7 +1024,50 @@
           <span class="subtitle">Service Repair Turnaround Time Analysis · Carry‑In Time base · Target 95%</span>
         </div>
       </div>
-      <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i> Dark</button>
+      <div class="header-actions">
+        <button class="icon-btn" id="guideBtn" title="How to use this dashboard" type="button">
+          <i class="fas fa-info-circle"></i>
+        </button>
+        <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i> Dark</button>
+      </div>
+    </div>
+
+    <!-- Quick Guide Modal -->
+    <div class="modal-overlay" id="guideModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i class="fas fa-book-open" style="color:#2563eb;"></i> Dashboard User Guide</h3>
+          <button class="modal-close" id="closeGuideModal" type="button">&times;</button>
+        </div>
+        <div class="modal-body">
+          <h4><i class="fas fa-upload"></i> 1. Load Your Files</h4>
+          <ul>
+            <li><strong>Upload Data File:</strong> Click or drag-and-drop your main service repair file (<code>.xlsx</code>, <code>.xls</code>, or <code>.csv</code>) containing required fields such as Service Order, Carry-In Time, Finish Repair Time, Station Code, and timestamps.</li>
+            <li><strong>Upload Region Mapping (Optional):</strong> Upload a mapping file matching Station Code to Region, City, and State for geographic segmentation.</li>
+          </ul>
+
+          <h4><i class="fas fa-sliders-h"></i> 2. Filter the Data</h4>
+          <ul>
+            <li>Use the dropdown menus to filter by <strong>Week</strong>, <strong>Month</strong>, <strong>Repair Type</strong>, <strong>Region</strong>, <strong>Warranty Status</strong>, or <strong>Device Model</strong>.</li>
+            <li>Each dropdown includes live search, <strong>Select All</strong>, and <strong>Clear</strong> options.</li>
+            <li>Click <strong>Apply Filters</strong> to refresh the dashboard or <strong>Reset Filters</strong> to restore all records.</li>
+          </ul>
+
+          <h4><i class="fas fa-chart-pie"></i> 3. Analyze Across Tabs</h4>
+          <ul>
+            <li><strong>Dashboard &amp; Charts:</strong> Review operational KPIs (Total Orders, Avg OTD, ECT, ECT Repair - Part, OTD %, Achieved vs. Missed) and visual breakdowns by stage TAT, repair types, and model warranty volumes.</li>
+            <li><strong>Station OTD Table:</strong> View service center-level delivery compliance against the <strong>95% target</strong> with color-coded status bars (Green &ge; 95%, Amber 80–94%, Red &lt; 80%).</li>
+            <li><strong>Repair TAT - Pivot:</strong> Analyze hourly turnaround time buckets (&le;2hrs, 2–3hrs, 3–4hrs, 4–8hrs, &gt;8hrs) against the <strong>100% target (&le;2hrs)</strong>. Adjust table text size with the <strong>+ / -</strong> controls.</li>
+            <li><strong>Data Preview:</strong> Explore the fully enriched raw dataset with multi-column sorting, pagination, and instant search.</li>
+          </ul>
+
+          <h4><i class="fas fa-file-export"></i> 4. Export Results</h4>
+          <ul>
+            <li><strong>Spreadsheets:</strong> Use <strong>Export Excel</strong> from the Station Table, Pivot Table, or Data Preview tab to save filtered metrics to <code>.xlsx</code>.</li>
+            <li><strong>Snapshots:</strong> Click <strong>Export PNG</strong> on the Station or Pivot tabs to generate high-resolution images for reports and presentations.</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
     <!-- Upload Section -->
@@ -988,8 +1194,12 @@
           </div>
         </div>
 
-        <button class="export-btn" id="applyFiltersBtn" style="padding:0.45rem 1.2rem; align-self:flex-end;"><i
-            class="fas fa-filter"></i> Apply Filters</button>
+        <div style="display:flex; gap:0.5rem; align-self:flex-end;">
+          <button class="export-btn" id="applyFiltersBtn" style="padding:0.45rem 1.2rem;" type="button"><i
+              class="fas fa-filter"></i> Apply Filters</button>
+          <button class="export-btn reset-btn" id="resetFiltersBtn" style="padding:0.45rem 1.2rem;" type="button" title="Reset all filters to default (all selected)"><i
+              class="fas fa-undo-alt"></i> Reset Filters</button>
+        </div>
       </div>
     </div>
 
@@ -1115,7 +1325,7 @@
         <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:1rem;">
           <div>
             <h3><i class="fas fa-columns"></i> Repair TAT Bucket Pivot</h3>
-            <span style="font-size:0.8rem; color:#64748b;">Target &lt;2hrs 90% · Target &lt;4hrs 95% · Region-wise Segmentation</span>
+            <span style="font-size:0.8rem; color:#64748b;">Target &lt;=2hrs 100% · Region-wise Segmentation</span>
           </div>
           <div class="export-buttons">
             <div class="font-size-ctrls" title="Adjust Pivot Text Size">
@@ -1136,14 +1346,13 @@
                 <th>Station Name</th>
                 <th>City</th>
                 <th>State</th>
-                <th class="num-col b-green">&lt;2hrs</th>
+                <th class="num-col b-green">&lt;=2hrs</th>
                 <th class="num-col b-amber">2-3hrs</th>
                 <th class="num-col b-amber">3-4hrs</th>
                 <th class="num-col b-red">4-8hrs</th>
                 <th class="num-col b-darkred">&gt;8hrs</th>
                 <th class="num-col">Total</th>
-                <th style="min-width:140px;">&lt;2hrs Perf (Target 90%)</th>
-                <th style="min-width:140px;">&lt;4hrs Perf (Target 95%)</th>
+                <th style="min-width:140px;">&lt;=2hrs TAT (Target 100%)</th>
               </tr>
             </thead>
             <tbody id="pivotTableBody"></tbody>
@@ -1218,9 +1427,9 @@
 
       function getRepairTatBucket(decimalHrs) {
         if (decimalHrs === null || isNaN(decimalHrs) || decimalHrs < 0) return '-';
-        if (decimalHrs < 2.0) return '<2hrs';
-        if (decimalHrs < 3.0) return '2-3hrs';
-        if (decimalHrs < 4.0) return '3-4hrs';
+        if (decimalHrs <= 2.0) return '<=2hrs';
+        if (decimalHrs <= 3.0) return '2-3hrs';
+        if (decimalHrs <= 4.0) return '3-4hrs';
         if (decimalHrs <= 8.0) return '4-8hrs';
         return '>8hrs';
       }
@@ -1719,6 +1928,19 @@
         applyFiltersToData();
       }
 
+      function resetFilters() {
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+        selectedFilters.weeks = new Set(availableOptions.weeks);
+        selectedFilters.months = new Set(availableOptions.months);
+        selectedFilters.repairTypes = new Set(availableOptions.repairTypes);
+        selectedFilters.regions = new Set(availableOptions.regions);
+        selectedFilters.warranties = new Set(availableOptions.warranties);
+        selectedFilters.models = new Set(availableOptions.models);
+
+        Object.values(dropdownManagers).forEach(mgr => mgr.rebuild());
+        applyFilters();
+      }
+
       function applyFiltersToData() {
         let filtered = rawData.filter(r => {
           const weekMatch = currentFilters.weeks.length === 0 || (r._WeekNum !== null && currentFilters.weeks.includes(r._WeekNum));
@@ -1891,7 +2113,7 @@
       // ---------- Pivot Table (Region 1st Column, Same Formatting as OTD % Table) ----------
       function updatePivotTable(data) {
         const pivotMap = {};
-        const buckets = ['<2hrs', '2-3hrs', '3-4hrs', '4-8hrs', '>8hrs'];
+        const buckets = ['<=2hrs', '2-3hrs', '3-4hrs', '4-8hrs', '>8hrs'];
 
         data.forEach(r => {
           const stationCode = r._StationCode || 'Unknown';
@@ -1909,7 +2131,7 @@
               name: stationName,
               city: city,
               state: state,
-              '<2hrs': 0,
+              '<=2hrs': 0,
               '2-3hrs': 0,
               '3-4hrs': 0,
               '4-8hrs': 0,
@@ -1918,7 +2140,8 @@
             };
           }
 
-          const b = r._RepairTatBucket;
+          let b = r._RepairTatBucket;
+          if (b === '<2hrs') b = '<=2hrs';
           if (buckets.includes(b)) {
             pivotMap[key][b]++;
           }
@@ -1939,7 +2162,7 @@
         tbody.innerHTML = '';
         tfoot.innerHTML = '';
 
-        const totals = { '<2hrs': 0, '2-3hrs': 0, '3-4hrs': 0, '4-8hrs': 0, '>8hrs': 0, total: 0 };
+        const totals = { '<=2hrs': 0, '2-3hrs': 0, '3-4hrs': 0, '4-8hrs': 0, '>8hrs': 0, total: 0 };
 
         function makeBar(pct, target) {
           let barClass = '';
@@ -1956,7 +2179,7 @@
           }
           const pctDisplay = pct.toFixed(1) + '%';
           return `
-            <div style="width:100%; background:#e9edf2; border-radius:10px; overflow:hidden;">
+            <div style="width:100%; background:#e9edf2; border-radius:10px; overflow:hidden;" title="${pctDisplay}">
               <div class="station-otd-bar ${barClass}" style="width:${Math.min(pct, 100)}%; background:${barColor};">
                 ${pct >= 28 ? pctDisplay : ''}
               </div>
@@ -1971,20 +2194,19 @@
             currentRegion = r.region;
             const headerRow = document.createElement('tr');
             headerRow.className = 'region-header';
-            headerRow.innerHTML = `<td colspan="13"><i class="fas fa-map-marker-alt" style="margin-right:8px;"></i> ${r.region}</td>`;
+            headerRow.innerHTML = `<td colspan="12"><i class="fas fa-map-marker-alt" style="margin-right:8px;"></i> ${r.region}</td>`;
             tbody.appendChild(headerRow);
           }
 
-          totals['<2hrs'] += r['<2hrs'];
+          const countUnder2hrs = r['<=2hrs'] !== undefined ? r['<=2hrs'] : (r['<2hrs'] || 0);
+          totals['<=2hrs'] += countUnder2hrs;
           totals['2-3hrs'] += r['2-3hrs'];
           totals['3-4hrs'] += r['3-4hrs'];
           totals['4-8hrs'] += r['4-8hrs'];
           totals['>8hrs'] += r['>8hrs'];
           totals.total += r.total;
 
-          const pct2hrs = r.total > 0 ? (r['<2hrs'] / r.total) * 100 : 0;
-          const ordersUnder4hrs = r['<2hrs'] + r['2-3hrs'] + r['3-4hrs'];
-          const pct4hrs = r.total > 0 ? (ordersUnder4hrs / r.total) * 100 : 0;
+          const pct2hrs = r.total > 0 ? (countUnder2hrs / r.total) * 100 : 0;
 
           const tr = document.createElement('tr');
           tr.innerHTML = `
@@ -1993,33 +2215,29 @@
             <td>${r.name}</td>
             <td>${r.city || '-'}</td>
             <td>${r.state || '-'}</td>
-            <td class="num-col b-green">${r['<2hrs']}</td>
+            <td class="num-col b-green">${countUnder2hrs}</td>
             <td class="num-col b-amber">${r['2-3hrs']}</td>
             <td class="num-col b-amber">${r['3-4hrs']}</td>
             <td class="num-col b-red">${r['4-8hrs']}</td>
             <td class="num-col b-darkred">${r['>8hrs']}</td>
             <td class="num-col"><strong>${r.total}</strong></td>
-            <td>${makeBar(pct2hrs, 90.00)}</td>
-            <td>${makeBar(pct4hrs, 95.00)}</td>
+            <td>${makeBar(pct2hrs, 100.00)}</td>
           `;
           tbody.appendChild(tr);
         });
 
-        const totalPct2hrs = totals.total > 0 ? (totals['<2hrs'] / totals.total) * 100 : 0;
-        const totalUnder4hrs = totals['<2hrs'] + totals['2-3hrs'] + totals['3-4hrs'];
-        const totalPct4hrs = totals.total > 0 ? (totalUnder4hrs / totals.total) * 100 : 0;
+        const totalPct2hrs = totals.total > 0 ? (totals['<=2hrs'] / totals.total) * 100 : 0;
 
         tfoot.innerHTML = `
           <tr class="pivot-total-row">
             <td colspan="5">Grand Total</td>
-            <td class="num-col b-green">${totals['<2hrs']}</td>
+            <td class="num-col b-green">${totals['<=2hrs']}</td>
             <td class="num-col b-amber">${totals['2-3hrs']}</td>
             <td class="num-col b-amber">${totals['3-4hrs']}</td>
             <td class="num-col b-red">${totals['4-8hrs']}</td>
             <td class="num-col b-darkred">${totals['>8hrs']}</td>
             <td class="num-col">${totals.total}</td>
-            <td>${makeBar(totalPct2hrs, 90.00)}</td>
-            <td>${makeBar(totalPct4hrs, 95.00)}</td>
+            <td>${makeBar(totalPct2hrs, 100.00)}</td>
           </tr>
         `;
       }
@@ -2089,14 +2307,14 @@
           alert('No pivot data to export');
           return;
         }
-        const headers = ['Region', 'Station Code', 'Station Name', 'City', 'State', '<2hrs', '2-3hrs', '3-4hrs', '4-8hrs', '>8hrs', 'Total', '<2hrs % (Target 90%)', '<4hrs % (Target 95%)'];
+        const headers = ['Region', 'Station Code', 'Station Name', 'City', 'State', '<=2hrs', '2-3hrs', '3-4hrs', '4-8hrs', '>8hrs', 'Total', '<=2hrs TAT (Target 100%)'];
         const rows = currentPivotData.map(r => {
-          const pct2 = r.total > 0 ? ((r['<2hrs'] / r.total) * 100).toFixed(1) + '%' : '0.0%';
-          const pct4 = r.total > 0 ? (((r['<2hrs'] + r['2-3hrs'] + r['3-4hrs']) / r.total) * 100).toFixed(1) + '%' : '0.0%';
+          const under2 = r['<=2hrs'] !== undefined ? r['<=2hrs'] : (r['<2hrs'] || 0);
+          const pct2 = r.total > 0 ? ((under2 / r.total) * 100).toFixed(1) + '%' : '0.0%';
           return [
             r.region, r.code, r.name, r.city, r.state,
-            r['<2hrs'], r['2-3hrs'], r['3-4hrs'], r['4-8hrs'], r['>8hrs'], r.total,
-            pct2, pct4
+            under2, r['2-3hrs'], r['3-4hrs'], r['4-8hrs'], r['>8hrs'], r.total,
+            pct2
           ];
         });
         const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -2617,6 +2835,7 @@
 
       document.getElementById('exportExcelBtn').addEventListener('click', exportFiltered);
       document.getElementById('applyFiltersBtn').addEventListener('click', applyFilters);
+      document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
 
       document.getElementById('exportStationExcel').addEventListener('click', exportStationExcel);
       document.getElementById('exportStationPNG').addEventListener('click', exportStationPNG);
@@ -2627,6 +2846,31 @@
       document.getElementById('themeToggle').addEventListener('click', function () {
         document.body.classList.toggle('dark');
         this.innerHTML = document.body.classList.contains('dark') ? '<i class="fas fa-sun"></i> Light' : '<i class="fas fa-moon"></i> Dark';
+      });
+
+      // Guide Modal Handlers
+      const guideModal = document.getElementById('guideModal');
+      const guideBtn = document.getElementById('guideBtn');
+      const closeGuideModal = document.getElementById('closeGuideModal');
+
+      guideBtn.addEventListener('click', () => {
+        guideModal.classList.add('active');
+      });
+
+      closeGuideModal.addEventListener('click', () => {
+        guideModal.classList.remove('active');
+      });
+
+      guideModal.addEventListener('click', (e) => {
+        if (e.target === guideModal) {
+          guideModal.classList.remove('active');
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && guideModal.classList.contains('active')) {
+          guideModal.classList.remove('active');
+        }
       });
 
       // Sample data load
