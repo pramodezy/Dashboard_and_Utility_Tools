@@ -176,28 +176,31 @@
   .items-table th, .items-table td {
     border: 1px solid #000;
     padding: 3px 3px;
-    text-align: left;
     white-space: nowrap;
     overflow: hidden;
     vertical-align: middle;
   }
   .items-table th { 
     background: #f2f2f2; 
-    text-align: center; 
     font-weight: bold; 
     font-size: 8.5px; 
     line-height: 1.1;
   }
 
+  /* Alignment specifications */
+  .align-left { text-align: left !important; }
+  .align-center { text-align: center !important; }
+  .align-right { text-align: right !important; }
+
   /* Column Widths */
-  .col-sno   { width: 26px; text-align: center !important; font-size: 8.5px; }
+  .col-sno   { width: 26px; }
   .col-so    { width: 132px; }
   .col-code  { width: 78px; }
   .col-desc  { width: auto; }
   .col-hsn   { width: 56px; }
-  .col-price { width: 68px; text-align: right; }
-  .col-qty   { width: 34px; text-align: center !important; }
-  .col-amt   { width: 74px; text-align: right !important; font-size: 9px; }
+  .col-price { width: 68px; }
+  .col-qty   { width: 34px; }
+  .col-amt   { width: 74px; font-size: 9px; }
   .col-act   { width: 24px; text-align: center !important; }
 
   .items-table input {
@@ -207,17 +210,17 @@
     padding: 1px 2px;
     border: 1px dashed #bbb;
   }
-  .items-table input.item-so {
+  .items-table input.item-so,
+  .items-table input.item-code,
+  .items-table input.item-desc {
     text-align: left;
   }
-  .items-table input.item-hsn {
+  .items-table input.item-hsn,
+  .items-table input.item-qty {
     text-align: center;
   }
   .items-table input.item-price {
     text-align: right;
-  }
-  .items-table input.item-qty {
-    text-align: center;
   }
 
   .totals-row td { 
@@ -295,7 +298,7 @@
       <ol>
         <li><strong>Challan Numbering:</strong> Enter your <strong>Station Code</strong> (e.g., <code>065</code>) and <strong>Sequence</strong> (e.g., <code>01</code>). The Challan ID auto-generates as <code>RLC[Code][DDMMYY][Seq]</code>.</li>
         <li><strong>Sending Plant:</strong> Modify Sender Name, Address, GSTIN, and Transporter details as required. Receiving plant details remain fixed.</li>
-        <li><strong>Adding Items Manually:</strong> Click <strong>+ Add Item Row</strong>. Enter the Service Order, Item Code, Description, HSN, Unit Price, and Quantity. Calculations update automatically.</li>
+        <li><strong>Adding Items Manually:</strong> Click <strong>+ Add Item Row</strong>. Fill Service Order, Item Code, Description, HSN, Unit Price, and Quantity. Calculations update automatically.</li>
         <li><strong>Bulk Upload:</strong>
           <ul>
             <li>Click <strong>Download Excel Template</strong> to get the standard format.</li>
@@ -363,14 +366,14 @@
   <table class="items-table" id="itemsTable">
     <thead>
       <tr>
-        <th class="col-sno">S.No.</th>
-        <th class="col-so">Service Order</th>
-        <th class="col-code">ITEM CODE</th>
-        <th class="col-desc">DESCRIPTION & SPECIFICATION</th>
-        <th class="col-hsn">HSN</th>
-        <th class="col-price">Unit Price<br>(INR)</th>
-        <th class="col-qty">Qty</th>
-        <th class="col-amt">Amount<br>(INR)</th>
+        <th class="col-sno align-center">S.No.</th>
+        <th class="col-so align-left">Service Order</th>
+        <th class="col-code align-left">ITEM CODE</th>
+        <th class="col-desc align-left">DESCRIPTION & SPECIFICATION</th>
+        <th class="col-hsn align-center">HSN</th>
+        <th class="col-price align-right">Unit Price<br>(INR)</th>
+        <th class="col-qty align-center">Qty</th>
+        <th class="col-amt align-right">Amount<br>(INR)</th>
         <th class="col-act"></th>
       </tr>
     </thead>
@@ -378,8 +381,8 @@
     <tfoot>
       <tr class="totals-row">
         <td colspan="6" style="text-align: right; padding-right: 8px;">Total:</td>
-        <td id="totalQtyDisplay" class="col-qty" style="font-weight: bold; text-align: center !important;">0</td>
-        <td id="grandTotalDisplay" class="col-amt" style="font-weight: bold; padding-right: 3px;">0.00</td>
+        <td id="totalQtyDisplay" class="col-qty align-center" style="font-weight: bold;">0</td>
+        <td id="grandTotalDisplay" class="col-amt align-right" style="font-weight: bold; padding-right: 3px;">0.00</td>
         <td class="col-act"></td>
       </tr>
       <tr class="in-words-row">
@@ -447,14 +450,14 @@
     const tbody = document.getElementById('itemsBody');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="col-sno row-index"></td>
-      <td class="col-so"><input type="text" class="item-so" value="${so}"></td>
-      <td class="col-code"><input type="text" class="item-code" value="${code}"></td>
-      <td class="col-desc"><input type="text" class="item-desc" value="${desc}"></td>
-      <td class="col-hsn"><input type="text" class="item-hsn" value="${hsn}"></td>
-      <td class="col-price"><input type="number" step="0.01" class="item-price" value="${price}" oninput="recalcRow(this)"></td>
-      <td class="col-qty"><input type="number" step="1" class="item-qty" value="${qty}" oninput="recalcRow(this)"></td>
-      <td class="col-amt item-amount" style="font-weight: bold; padding-right: 3px;">0.00</td>
+      <td class="col-sno align-center row-index"></td>
+      <td class="col-so align-left"><input type="text" class="item-so" value="${so}"></td>
+      <td class="col-code align-left"><input type="text" class="item-code" value="${code}"></td>
+      <td class="col-desc align-left"><input type="text" class="item-desc" value="${desc}"></td>
+      <td class="col-hsn align-center"><input type="text" class="item-hsn" value="${hsn}"></td>
+      <td class="col-price align-right"><input type="number" step="0.01" class="item-price" value="${price}" oninput="recalcRow(this)"></td>
+      <td class="col-qty align-center"><input type="number" step="1" class="item-qty" value="${qty}" oninput="recalcRow(this)"></td>
+      <td class="col-amt align-right item-amount" style="font-weight: bold; padding-right: 3px;">0.00</td>
       <td class="col-act"><button type="button" class="delete-btn" onclick="removeRow(this)">×</button></td>
     `;
     tbody.appendChild(tr);
