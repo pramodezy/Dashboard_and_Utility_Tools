@@ -11,7 +11,7 @@
   <!-- Google Fonts & Font Awesome Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- QR Code Styling & JSZip CDN for Styled Batch QR Codes -->
@@ -22,7 +22,7 @@
 
   <style>
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -43,7 +43,27 @@
 </head>
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
 
-  <header class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sticky top-0 z-30 shadow-sm">
+  <!-- Top Navigation Bar -->
+  <div class="bg-slate-950 text-slate-400 px-4 sm:px-8 h-12 flex items-center justify-between border-b border-white/10 sticky top-0 z-40 text-xs">
+    <div class="flex items-center gap-3">
+      <a href="../../index.html" class="inline-flex items-center gap-1.5 text-slate-200 hover:text-white px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 transition font-semibold">
+        <span>&larr;</span>
+        <span>Workspace Hub</span>
+      </a>
+      <span class="text-white/20">/</span>
+      <div class="flex items-center gap-2">
+        <span class="text-white font-bold">Multi-QR Generator</span>
+        <span class="font-mono text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">PRO MAX</span>
+      </div>
+    </div>
+    <div class="hidden sm:flex items-center gap-3">
+      <span class="font-mono text-[11px] bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+        100% Client-Side Engine
+      </span>
+    </div>
+  </div>
+
+  <header class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 sticky top-12 z-30 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
         <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">

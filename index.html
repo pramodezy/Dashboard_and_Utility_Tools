@@ -3,59 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Offline Apps Hub | Workspace Dashboard</title>
+  <title>Offline Apps Hub | Enterprise Workspace Suite</title>
 
-  <!-- Apple SF Pro Font & System Fallback -->
+  <!-- Typography: Plus Jakarta Sans (Display/UI), JetBrains Mono (Tech/Metrics), Great Vibes (Signature) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      /* Apple Design Tokens (per design.md) */
-      --colors-primary: #0066cc;
-      --colors-primary-focus: #0071e3;
-      --colors-primary-on-dark: #2997ff;
-      --colors-canvas: #ffffff;
-      --colors-canvas-parchment: #f5f5f7;
-      --colors-surface-pearl: #fafafc;
-      --colors-surface-tile-1: #272729;
-      --colors-surface-tile-2: #2a2a2c;
-      --colors-surface-tile-3: #252527;
-      --colors-surface-black: #000000;
-      --colors-ink: #1d1d1f;
-      --colors-ink-muted-80: #333333;
-      --colors-ink-muted-48: #7a7a7a;
-      --colors-divider-soft: #f0f0f0;
-      --colors-hairline: #e5e5e7;
-      --colors-card-border: rgba(0, 0, 0, 0.08);
-      --product-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0;
-      --product-shadow-subtle: rgba(0, 0, 0, 0.12) 2px 4px 16px 0;
+      /* Base System Colors (Light Theme) */
+      --bg-canvas: #f8fafc;
+      --bg-subtle: #f1f5f9;
+      --bg-card: rgba(255, 255, 255, 0.88);
+      --bg-card-hover: #ffffff;
+      --bg-glass-nav: rgba(248, 250, 252, 0.82);
+      
+      --border-subtle: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --border-focus: #3b82f6;
 
-      --rounded-xs: 5px;
-      --rounded-sm: 8px;
-      --rounded-md: 11px;
-      --rounded-lg: 18px;
-      --rounded-pill: 9999px;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-faint: #64748b;
+
+      /* Brand Accents */
+      --brand-primary: #2563eb;
+      --brand-primary-glow: rgba(37, 99, 235, 0.18);
+      --brand-motorola: #0284c7;
+      --brand-motorola-glow: rgba(2, 132, 199, 0.16);
+      --brand-apple: #475569;
+      --brand-apple-glow: rgba(71, 85, 105, 0.14);
+      --brand-utility: #059669;
+      --brand-utility-glow: rgba(5, 150, 105, 0.15);
+      
+      --accent-star: #eab308;
+      --accent-star-hover: #ca8a04;
+
+      /* Shadows & Radii */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+      --shadow-card-hover: 0 20px 25px -5px rgba(37, 99, 235, 0.09), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-pill: 9999px;
+
+      /* Ambient Mesh Gradient */
+      --mesh-1: rgba(37, 99, 235, 0.08);
+      --mesh-2: rgba(14, 165, 233, 0.06);
+      --mesh-3: rgba(16, 185, 129, 0.05);
     }
 
     body.dark {
-      --colors-canvas: #1d1d1f;
-      --colors-canvas-parchment: #121214;
-      --colors-surface-pearl: #252527;
-      --colors-surface-tile-1: #272729;
-      --colors-surface-tile-2: #2a2a2c;
-      --colors-surface-tile-3: #1a1a1c;
-      --colors-ink: #f5f5f7;
-      --colors-ink-muted-80: #e0e0e0;
-      --colors-ink-muted-48: #a1a1a6;
-      --colors-divider-soft: #2c2c2e;
-      --colors-hairline: #38383a;
-      --colors-card-border: rgba(255, 255, 255, 0.12);
-      --colors-primary: #2997ff;
-      --colors-primary-focus: #52aaff;
-      --product-shadow: rgba(0, 0, 0, 0.5) 3px 5px 30px 0;
-      --product-shadow-subtle: rgba(0, 0, 0, 0.4) 2px 4px 16px 0;
+      /* Deep Obsidian Palette (Dark Theme) */
+      --bg-canvas: #090d16;
+      --bg-subtle: #0e1526;
+      --bg-card: rgba(17, 24, 39, 0.72);
+      --bg-card-hover: rgba(24, 33, 53, 0.9);
+      --bg-glass-nav: rgba(9, 13, 22, 0.85);
+
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.16);
+      --border-focus: #60a5fa;
+
+      --text-main: #f8fafc;
+      --text-muted: #cbd5e1;
+      --text-faint: #94a3b8;
+
+      --brand-primary: #3b82f6;
+      --brand-primary-glow: rgba(59, 130, 246, 0.28);
+      --brand-motorola: #38bdf8;
+      --brand-motorola-glow: rgba(56, 189, 248, 0.24);
+      --brand-apple: #cbd5e1;
+      --brand-apple-glow: rgba(203, 213, 225, 0.2);
+      --brand-utility: #34d399;
+      --brand-utility-glow: rgba(52, 211, 153, 0.22);
+
+      --accent-star: #facc15;
+      --accent-star-hover: #fde047;
+
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 8px -1px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.65);
+      --shadow-card-hover: 0 20px 30px -5px rgba(0, 0, 0, 0.7), 0 0 24px rgba(59, 130, 246, 0.16);
+
+      --mesh-1: rgba(59, 130, 246, 0.12);
+      --mesh-2: rgba(14, 165, 233, 0.09);
+      --mesh-3: rgba(16, 185, 129, 0.07);
     }
 
     * {
@@ -65,130 +102,209 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
-      font-size: 17px;
-      line-height: 1.47;
-      letter-spacing: -0.022em;
-      color: var(--colors-ink);
-      background-color: var(--colors-canvas-parchment);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       transition: background-color 0.25s ease, color 0.25s ease;
+      overflow-x: hidden;
+      position: relative;
     }
 
-    /* 1. Global Navigation Bar (Height 44px, Pure Black #000000) */
-    .global-nav {
-      position: sticky;
+    /* Ambient Background Mesh */
+    .bg-mesh-container {
+      position: fixed;
       top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .mesh-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.85;
+      transition: opacity 0.5s ease;
+    }
+
+    .mesh-1 {
+      top: -10%;
+      left: 15%;
+      width: 550px;
+      height: 550px;
+      background: var(--mesh-1);
+    }
+
+    .mesh-2 {
+      top: 40%;
+      right: -10%;
+      width: 650px;
+      height: 650px;
+      background: var(--mesh-2);
+    }
+
+    .mesh-3 {
+      bottom: -15%;
+      left: 20%;
+      width: 600px;
+      height: 600px;
+      background: var(--mesh-3);
+    }
+
+    /* 1. Global Utility Header Bar */
+    .global-bar {
+      position: relative;
       z-index: 100;
-      height: 44px;
-      background-color: var(--colors-surface-black);
-      color: #ffffff;
+      background: #020617;
+      color: #94a3b8;
+      font-size: 12px;
+      height: 38px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
-      font-size: 12px;
+      padding: 0 32px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .global-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .global-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      color: #ffffff;
       letter-spacing: -0.01em;
     }
 
-    .global-nav a, .global-nav span {
-      color: #cccccc;
+    .global-brand-logo {
+      width: 18px;
+      height: 18px;
+      color: #38bdf8;
+    }
+
+    .global-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .global-links a {
+      color: #94a3b8;
       text-decoration: none;
+      transition: color 0.15s ease;
+      cursor: pointer;
+    }
+
+    .global-links a:hover {
+      color: #f8fafc;
+    }
+
+    .global-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    .engine-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: color 0.15s ease;
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      font-weight: 500;
     }
 
-    .global-nav a:hover {
-      color: #ffffff;
+    .engine-pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulseAnim 2s infinite;
     }
 
-    .global-nav .brand-cluster {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 600;
-      color: #ffffff;
+    @keyframes pulseAnim {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.8; }
     }
 
-    .global-nav-items {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    @media (max-width: 768px) {
-      .global-nav-items {
-        display: none;
-      }
-    }
-
-    /* 2. Sub-Nav Frosted Glass (Height 54px, backdrop-filter blur) */
-    .sub-nav-frosted {
+    /* 2. Glassmorphic Main Navigation */
+    .glass-nav {
       position: sticky;
-      top: 44px;
+      top: 0;
       z-index: 90;
-      min-height: 56px;
-      background-color: rgba(245, 245, 247, 0.82);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
-      border-bottom: 1px solid var(--colors-card-border);
+      background-color: var(--bg-glass-nav);
+      backdrop-filter: saturate(180%) blur(16px);
+      -webkit-backdrop-filter: saturate(180%) blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 10px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 32px;
-      gap: 16px;
+      gap: 20px;
       flex-wrap: wrap;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
     }
 
-    body.dark .sub-nav-frosted {
-      background-color: rgba(18, 18, 20, 0.85);
-    }
-
-    .sub-nav-left {
+    .nav-title-group {
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .sub-nav-title {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-      font-size: 21px;
-      font-weight: 600;
-      letter-spacing: -0.015em;
-      color: var(--colors-ink);
+    .portal-name {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .sub-nav-tag {
+    .portal-version-tag {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      font-weight: 400;
-      color: var(--colors-ink-muted-48);
-      background: rgba(0, 0, 0, 0.05);
-      padding: 3px 9px;
-      border-radius: var(--rounded-pill);
-    }
-
-    body.dark .sub-nav-tag {
-      background: rgba(255, 255, 255, 0.1);
+      font-weight: 600;
+      color: var(--brand-primary);
+      background: var(--brand-primary-glow);
+      padding: 2px 7px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(59, 130, 246, 0.2);
     }
 
     .author-signature {
       font-family: 'Great Vibes', cursive;
-      font-size: 1.15rem;
-      color: var(--colors-primary);
-      margin-left: 0.35rem;
+      font-size: 1.35rem;
+      color: var(--brand-primary);
       font-weight: 400;
+      margin-left: 4px;
     }
 
-    /* Search Box (Apple Pill Grammar) */
-    .search-box-header {
+    /* Command Center Search Box */
+    .search-container {
       position: relative;
-      width: 340px;
+      width: 420px;
       max-width: 100%;
       display: flex;
       align-items: center;
@@ -197,48 +313,57 @@
     .search-icon {
       position: absolute;
       left: 14px;
-      color: var(--colors-ink-muted-48);
+      color: var(--text-faint);
       pointer-events: none;
+      transition: color 0.15s ease;
     }
 
     .search-input {
       width: 100%;
-      height: 40px;
-      padding: 8px 38px 8px 40px;
+      height: 42px;
+      padding: 8px 42px 8px 40px;
       font-size: 14px;
       font-family: inherit;
-      color: var(--colors-ink);
-      background-color: var(--colors-canvas);
-      border: 1px solid var(--colors-hairline);
-      border-radius: var(--rounded-pill);
+      color: var(--text-main);
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-pill);
       outline: none;
-      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .search-input:focus {
-      border-color: var(--colors-primary);
-      box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
+      border-color: var(--border-focus);
+      background-color: var(--bg-card-hover);
+      box-shadow: 0 0 0 3px var(--brand-primary-glow), var(--shadow-sm);
     }
 
-    .search-shortcut {
+    .search-input:focus + .search-icon {
+      color: var(--brand-primary);
+    }
+
+    .search-shortcut-badge {
       position: absolute;
-      right: 12px;
-      padding: 1px 6px;
-      border-radius: var(--rounded-xs);
-      background: var(--colors-canvas-parchment);
-      color: var(--colors-ink-muted-48);
+      right: 14px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--bg-subtle);
+      color: var(--text-faint);
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 600;
-      border: 1px solid var(--colors-hairline);
+      border: 1px solid var(--border-subtle);
       pointer-events: none;
+      user-select: none;
     }
 
     .clear-search-btn {
       position: absolute;
-      right: 10px;
+      right: 12px;
       background: none;
       border: none;
-      color: var(--colors-ink-muted-48);
+      color: var(--text-faint);
       cursor: pointer;
       padding: 4px;
       border-radius: 50%;
@@ -249,142 +374,340 @@
     }
 
     .clear-search-btn:hover {
-      color: var(--colors-ink);
+      color: var(--text-main);
+      background-color: var(--bg-subtle);
     }
 
-    /* Actions on Header */
-    .header-actions {
+    /* Nav Actions Cluster */
+    .nav-actions {
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .stats-pill {
+    .view-toggle-group {
+      display: inline-flex;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-pill);
+      padding: 3px;
+    }
+
+    .view-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-faint);
+      padding: 5px 9px;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .view-btn:hover {
+      color: var(--text-main);
+    }
+
+    .view-btn.active {
+      background: var(--bg-card-hover);
+      color: var(--brand-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .counter-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 12px;
-      border-radius: var(--rounded-pill);
-      background: var(--colors-canvas);
-      border: 1px solid var(--colors-hairline);
-      font-size: 12px;
-      font-weight: 400;
-      color: var(--colors-ink-muted-80);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    .stats-dot {
+    .counter-pill-dot {
       width: 7px;
       height: 7px;
       border-radius: 50%;
       background: #10b981;
     }
 
-    /* Theme Toggle */
-    .theme-toggle {
-      background: var(--colors-canvas);
-      border: 1px solid var(--colors-hairline);
-      color: var(--colors-ink);
-      width: 36px;
-      height: 36px;
-      border-radius: var(--rounded-pill);
+    .theme-toggle-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-pill);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background-color 0.15s ease, transform 0.1s ease;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.15s ease;
     }
 
-    .theme-toggle:active {
-      transform: scale(0.95);
+    .theme-toggle-btn:hover {
+      background-color: var(--bg-card-hover);
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
     }
 
-    .theme-toggle:hover {
-      background-color: var(--colors-surface-pearl);
+    .theme-toggle-btn:active {
+      transform: scale(0.94);
     }
 
-    /* Main Content Layout */
-    .main-container {
-      max-width: 1320px;
+    /* Main Container */
+    .main-wrapper {
+      position: relative;
+      z-index: 10;
+      max-width: 1340px;
       width: 100%;
       margin: 0 auto;
-      padding: 36px 32px 80px 32px;
+      padding: 32px 32px 90px 32px;
       display: flex;
       flex-direction: column;
       gap: 36px;
+      flex: 1;
     }
 
-    /* Hero Section */
-    .hero-tile {
+    /* Hero & Telemetry Strip */
+    .hero-section {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .hero-header {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      padding: 10px 0 6px 0;
+    }
+
+    .hero-pretitle {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--brand-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .hero-headline {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-      font-size: 40px;
-      font-weight: 600;
+      font-size: 38px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: var(--text-main);
+    }
+
+    .hero-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 780px;
+      line-height: 1.55;
+    }
+
+    /* Telemetry KPI Cards */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 1024px) {
+      .telemetry-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 580px) {
+      .telemetry-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .kpi-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .kpi-icon-all {
+      background: var(--brand-primary-glow);
+      color: var(--brand-primary);
+    }
+
+    .kpi-icon-moto {
+      background: var(--brand-motorola-glow);
+      color: var(--brand-motorola);
+    }
+
+    .kpi-icon-apple {
+      background: var(--brand-apple-glow);
+      color: var(--brand-apple);
+    }
+
+    .kpi-icon-util {
+      background: var(--brand-utility-glow);
+      color: var(--brand-utility);
+    }
+
+    .kpi-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
       line-height: 1.1;
-      letter-spacing: -0.025em;
-      color: var(--colors-ink);
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    .lead-text {
-      font-size: 17px;
-      font-weight: 400;
-      line-height: 1.47;
-      color: var(--colors-ink-muted-48);
+    .kpi-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 2px;
     }
 
-    /* Filter Option Chips (configurator-option-chip) */
-    .filter-chips-bar {
+    /* Filter Chips Bar */
+    .filter-bar {
       display: flex;
       align-items: center;
       gap: 8px;
       flex-wrap: wrap;
+      padding-bottom: 4px;
     }
 
-    .chip {
-      background-color: var(--colors-canvas);
-      color: var(--colors-ink);
+    .filter-chip {
+      background-color: var(--bg-card);
+      color: var(--text-main);
       font-size: 13px;
-      font-weight: 400;
-      border: 1px solid var(--colors-hairline);
-      border-radius: var(--rounded-pill);
-      padding: 7px 18px;
+      font-weight: 500;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-pill);
+      padding: 7px 16px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       text-decoration: none;
-      transition: background-color 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.15s ease;
+      user-select: none;
     }
 
-    .chip:hover {
-      background-color: var(--colors-surface-pearl);
+    .filter-chip:hover {
+      background-color: var(--bg-card-hover);
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
     }
 
-    .chip:active {
-      transform: scale(0.95);
+    .filter-chip:active {
+      transform: scale(0.96);
     }
 
-    .chip.active {
-      background-color: var(--colors-ink);
-      color: var(--colors-canvas);
-      border-color: var(--colors-ink);
+    .filter-chip.active {
+      background-color: var(--text-main);
+      color: var(--bg-canvas);
+      border-color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    .chip-img {
+    .filter-chip .chip-img {
       width: 16px;
       height: 16px;
       object-fit: contain;
       border-radius: 3px;
     }
 
-    .chip-svg-icon {
-      width: 14px;
-      height: 14px;
+    .filter-chip-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-subtle);
+      color: var(--text-faint);
+    }
+
+    .filter-chip.active .filter-chip-count {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+
+    /* Pinned Shelf Section */
+    .pinned-section {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--bg-subtle);
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      border: 1px dashed var(--border-strong);
+    }
+
+    .pinned-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pinned-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .pinned-star-icon {
+      color: var(--accent-star);
+    }
+
+    .pinned-count-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: var(--bg-card);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
     }
 
     /* Category Section */
@@ -398,8 +721,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-bottom: 1px solid var(--colors-hairline);
-      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 14px;
     }
 
     .category-title-group {
@@ -408,45 +731,49 @@
       gap: 12px;
     }
 
-    .category-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: var(--rounded-sm);
-      background: var(--colors-canvas);
-      border: 1px solid var(--colors-hairline);
+    .category-icon-box {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--colors-primary);
+      color: var(--brand-primary);
+      box-shadow: var(--shadow-sm);
     }
 
     .category-title {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-      font-size: 24px;
-      font-weight: 600;
+      font-size: 22px;
+      font-weight: 700;
       letter-spacing: -0.02em;
-      color: var(--colors-ink);
+      color: var(--text-main);
     }
 
-    .category-count {
-      font-size: 13px;
-      color: var(--colors-ink-muted-48);
-      font-weight: 400;
+    .category-count-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-faint);
+      background: var(--bg-card);
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
     }
 
-    /* Sub-category Header (Motorola / Apple) */
+    /* Sub-Category Block */
     .brand-subcategory {
       display: flex;
       flex-direction: column;
       gap: 16px;
-      margin-top: 8px;
+      margin-top: 4px;
     }
 
     .brand-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 4px 0;
+      padding: 4px 2px;
     }
 
     .brand-title-group {
@@ -455,33 +782,38 @@
       gap: 10px;
     }
 
-    .brand-badge-icon {
-      width: 22px;
-      height: 22px;
+    .brand-badge-img {
+      width: 24px;
+      height: 24px;
       object-fit: contain;
       border-radius: 4px;
     }
 
     .brand-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--colors-ink);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
       letter-spacing: -0.015em;
     }
 
-    .brand-count {
-      font-size: 12px;
-      color: var(--colors-ink-muted-48);
+    .brand-count-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-faint);
+      background: var(--bg-subtle);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
     }
 
-    /* Apps Grid */
+    /* Grid Layout for Cards */
     .apps-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 20px;
     }
 
-    @media (max-width: 1068px) {
+    @media (max-width: 1120px) {
       .apps-grid {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -493,11 +825,18 @@
       }
     }
 
-    /* App Card (store-utility-card style per design.md) */
+    /* List View Modifier */
+    .apps-grid.list-view {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* App Card Specification (UI/UX Pro Max) */
     .app-card {
-      background-color: var(--colors-canvas);
-      border: 1px solid var(--colors-card-border);
-      border-radius: var(--rounded-lg);
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
       padding: 24px;
       text-decoration: none;
       color: inherit;
@@ -505,17 +844,38 @@
       flex-direction: column;
       justify-content: space-between;
       gap: 16px;
-      transition: border-color 0.2s ease, transform 0.15s ease;
-      cursor: pointer;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-sm);
       position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .app-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, transparent);
+      transition: background 0.3s ease;
     }
 
     .app-card:hover {
-      border-color: var(--colors-primary);
+      background-color: var(--bg-card-hover);
+      border-color: var(--brand-primary);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-card-hover);
+    }
+
+    .app-card:hover::before {
+      background: linear-gradient(90deg, var(--brand-primary), #38bdf8);
     }
 
     .app-card:active {
-      transform: scale(0.98);
+      transform: scale(0.985);
     }
 
     .card-top {
@@ -524,152 +884,291 @@
       justify-content: space-between;
     }
 
-    .icon-wrapper {
+    .icon-container {
       width: 52px;
       height: 52px;
-      border-radius: var(--rounded-sm);
-      background-color: var(--colors-surface-pearl);
-      border: 1px solid var(--colors-hairline);
+      border-radius: var(--radius-md);
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 6px;
-      box-shadow: var(--product-shadow-subtle);
+      padding: 8px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      flex-shrink: 0;
     }
 
-    .icon-wrapper img {
+    .icon-container img {
       width: 100%;
       height: 100%;
       object-fit: contain;
       border-radius: 4px;
     }
 
-    .card-arrow {
+    .fallback-svg-icon {
+      display: none;
+      width: 26px;
+      height: 26px;
+      color: var(--brand-primary);
+    }
+
+    .card-actions-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Pin / Star Button */
+    .pin-btn {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-faint);
       width: 32px;
       height: 32px;
-      border-radius: var(--rounded-pill);
-      background-color: var(--colors-surface-pearl);
-      color: var(--colors-primary);
+      border-radius: var(--radius-pill);
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background-color 0.15s ease, transform 0.15s ease;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      z-index: 5;
     }
 
-    .app-card:hover .card-arrow {
-      background-color: var(--colors-primary);
+    .pin-btn:hover {
+      color: var(--accent-star);
+      border-color: var(--accent-star);
+      background: var(--bg-card);
+      transform: scale(1.08);
+    }
+
+    .pin-btn.pinned {
+      color: var(--accent-star);
+      background: rgba(234, 179, 8, 0.12);
+      border-color: var(--accent-star);
+    }
+
+    .card-launch-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-pill);
+      background-color: var(--bg-subtle);
+      color: var(--text-faint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .app-card:hover .card-launch-arrow {
+      background-color: var(--brand-primary);
       color: #ffffff;
-      transform: translateX(2px);
+      transform: translateX(3px);
     }
 
     .card-body {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
     .app-name {
       font-size: 17px;
-      font-weight: 600;
-      color: var(--colors-ink);
+      font-weight: 700;
+      color: var(--text-main);
       line-height: 1.25;
       letter-spacing: -0.015em;
     }
 
     .app-desc {
-      font-size: 14px;
-      color: var(--colors-ink-muted-48);
-      line-height: 1.45;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .card-footer-tags {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .meta-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--bg-subtle);
+      color: var(--text-faint);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* List View Styling Customizations */
+    .apps-grid.list-view .app-card {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      gap: 20px;
+    }
+
+    .apps-grid.list-view .app-card .card-top {
+      gap: 16px;
+      justify-content: flex-start;
+      flex-shrink: 0;
+    }
+
+    .apps-grid.list-view .app-card .card-body {
+      flex: 1;
+      gap: 4px;
+    }
+
+    .apps-grid.list-view .app-card .card-footer-tags {
+      margin-top: 0;
+    }
+
+    .apps-grid.list-view .app-card .card-actions-top {
+      flex-shrink: 0;
     }
 
     /* Empty State */
     .empty-state {
       display: none;
       text-align: center;
-      padding: 64px 24px;
-      background-color: var(--colors-canvas);
-      border: 1px solid var(--colors-hairline);
-      border-radius: var(--rounded-lg);
+      padding: 70px 24px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-sm);
     }
 
-    .empty-icon {
-      width: 44px;
-      height: 44px;
-      color: var(--colors-ink-muted-48);
-      margin-bottom: 12px;
+    .empty-icon-box {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-faint);
+      margin-bottom: 16px;
     }
 
     .empty-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--colors-ink);
-      margin-bottom: 6px;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
     }
 
     .empty-text {
       font-size: 14px;
-      color: var(--colors-ink-muted-48);
-      margin-bottom: 20px;
+      color: var(--text-muted);
+      max-width: 480px;
+      margin: 0 auto 24px auto;
+      line-height: 1.5;
     }
 
     .reset-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background-color: var(--colors-primary);
+      gap: 8px;
+      background-color: var(--brand-primary);
       color: #ffffff;
       font-size: 14px;
+      font-weight: 600;
       border: none;
-      border-radius: var(--rounded-pill);
-      padding: 9px 20px;
+      border-radius: var(--radius-pill);
+      padding: 10px 24px;
       cursor: pointer;
-      transition: background-color 0.15s ease, transform 0.1s ease;
+      box-shadow: 0 4px 12px var(--brand-primary-glow);
+      transition: all 0.15s ease;
+    }
+
+    .reset-btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
     }
 
     .reset-btn:active {
-      transform: scale(0.95);
+      transform: scale(0.96);
     }
 
-    /* Apple Footer */
-    .apple-footer {
-      background-color: var(--colors-canvas-parchment);
-      border-top: 1px solid var(--colors-hairline);
+    /* Footer Section */
+    .hub-footer {
+      background-color: var(--bg-subtle);
+      border-top: 1px solid var(--border-subtle);
       padding: 48px 32px 64px 32px;
-      font-size: 12px;
-      color: var(--colors-ink-muted-48);
+      font-size: 13px;
+      color: var(--text-muted);
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      margin-top: auto;
+      gap: 28px;
+      position: relative;
+      z-index: 10;
     }
 
     .footer-columns {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 24px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--colors-hairline);
+      gap: 32px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 860px) {
       .footer-columns {
         grid-template-columns: 1fr 1fr;
       }
     }
 
+    @media (max-width: 520px) {
+      .footer-columns {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .footer-col-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--colors-ink);
-      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-main);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .footer-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
       line-height: 1.6;
+    }
+
+    .footer-list li {
+      color: var(--text-muted);
+    }
+
+    .footer-badge-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .kbd-tag {
+      font-family: 'JetBrains Mono', monospace;
+      padding: 1px 6px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--text-main);
     }
 
     .legal-row {
@@ -677,60 +1176,95 @@
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 16px;
+      font-size: 12.5px;
     }
 
-    @keyframes fadeInUp {
+    .developer-callout {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Micro Animations */
+    @keyframes cardFadeIn {
       from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(10px);
       }
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
+
+    .card-animate {
+      animation: cardFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Accessibility: Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <!-- 1. Global Navigation Bar -->
-  <header class="global-nav">
-    <div class="brand-cluster">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-        <path d="M2 17l10 5 10-5" />
-        <path d="M2 12l10 5 10-5" />
-      </svg>
-      <span>Offline Apps Hub</span>
+  <!-- Ambient Background Mesh Glows -->
+  <div class="bg-mesh-container" aria-hidden="true">
+    <div class="mesh-glow mesh-1"></div>
+    <div class="mesh-glow mesh-2"></div>
+    <div class="mesh-glow mesh-3"></div>
+  </div>
+
+  <!-- 1. Global Utility Bar -->
+  <header class="global-bar">
+    <div class="global-bar-left">
+      <div class="global-brand">
+        <svg class="global-brand-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        <span>Offline Apps Hub</span>
+      </div>
+      <nav class="global-links" aria-label="Quick Category Jump">
+        <a href="#quick-help-section">Quick Utilities</a>
+        <a href="#motorola-section">Motorola Analytics</a>
+        <a href="#apple-section">Apple Operations</a>
+      </nav>
     </div>
-    <div class="global-nav-items">
-      <span>Quick Utilities</span>
-      <span>Motorola Analytics</span>
-      <span>Apple Operations</span>
-    </div>
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <span class="sub-nav-tag" style="background: rgba(255,255,255,0.1); color: #ffffff;">Local Workspace</span>
+
+    <div class="global-bar-right">
+      <div class="engine-badge">
+        <span class="engine-pulse"></span>
+        <span>100% Client-Side &bull; Offline Safe</span>
+      </div>
     </div>
   </header>
 
-  <!-- 2. Sub-Nav Frosted Glass -->
-  <nav class="sub-nav-frosted">
-    <div class="sub-nav-left">
-      <h2 class="sub-nav-title">Workspace Portal</h2>
-      <span class="sub-nav-tag">Offline Execution</span>
+  <!-- 2. Glassmorphic Main Navigation Bar -->
+  <nav class="glass-nav" aria-label="Main Navigation">
+    <div class="nav-title-group">
+      <h1 class="portal-name">
+        Workspace Portal
+        <span class="portal-version-tag">PRO MAX</span>
+      </h1>
       <span class="author-signature">Developed by Pramod Kumar</span>
     </div>
 
-    <!-- Integrated Search Input -->
-    <div class="search-box-header">
-      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Live Command-Style Search Box -->
+    <div class="search-container">
+      <svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8" />
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
       </svg>
-      <input type="text" id="search" class="search-input" placeholder="Search applications or modules..." autocomplete="off">
-      <span class="search-shortcut">/</span>
-      <button class="clear-search-btn" id="clear-search-btn" title="Clear search">
+      <input type="text" id="search" class="search-input" placeholder="Search applications, modules, keywords..." autocomplete="off" spellcheck="false">
+      <span class="search-shortcut-badge" id="shortcut-badge">/</span>
+      <button class="clear-search-btn" id="clear-search-btn" title="Clear search (Esc)" aria-label="Clear search">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" />
@@ -738,15 +1272,40 @@
       </button>
     </div>
 
-    <!-- Header Stats and Theme Button -->
-    <div class="header-actions">
-      <div class="stats-pill">
-        <span class="stats-dot"></span>
-        <span id="app-counter">14 Applications</span>
+    <!-- Navigation Actions Cluster -->
+    <div class="nav-actions">
+      <!-- Grid / List Switcher -->
+      <div class="view-toggle-group" role="group" aria-label="View Layout">
+        <button class="view-btn active" id="view-grid-btn" title="Grid View" aria-label="Grid View">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </button>
+        <button class="view-btn" id="view-list-btn" title="Compact List View" aria-label="List View">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+        </button>
       </div>
 
-      <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle theme" title="Toggle Light/Dark Theme">
-        <svg class="sun-icon" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Live Counter Pill -->
+      <div class="counter-pill" title="Visible Applications">
+        <span class="counter-pill-dot"></span>
+        <span id="app-counter">14 Tools</span>
+      </div>
+
+      <!-- Theme Switcher -->
+      <button class="theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle Light/Dark Theme" title="Toggle Light/Dark Theme">
+        <!-- Sun Icon (Shown in Dark Mode) -->
+        <svg class="sun-icon" style="display:none;" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="5" />
           <line x1="12" y1="1" x2="12" y2="3" />
           <line x1="12" y1="21" x2="12" y2="23" />
@@ -757,380 +1316,620 @@
           <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
           <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
         </svg>
-        <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Moon Icon (Shown in Light Mode) -->
+        <svg class="moon-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       </button>
     </div>
   </nav>
 
-  <!-- Main Container -->
-  <main class="main-container">
+  <!-- Main Content Layout -->
+  <main class="main-wrapper">
 
-    <!-- Hero Introduction -->
-    <section class="hero-tile">
-      <h1 class="hero-headline">Operations & Analytics Suite</h1>
-      <p class="lead-text">
-        High-performance local utilities, reverse logistics consoles, and enterprise telemetry dashboards.
-      </p>
+    <!-- Hero Header & Telemetry Grid -->
+    <section class="hero-section">
+      <div class="hero-header">
+        <div class="hero-pretitle">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          OPERATIONAL COMMAND SUITE
+        </div>
+        <h2 class="hero-headline">Operations & Analytics Dashboard</h2>
+        <p class="hero-subtitle">
+          Unified local ecosystem for high-volume Excel consolidation, reverse logistics telemetry, repair ageing analytics, and RMA tracking.
+        </p>
+      </div>
+
+      <!-- Telemetry KPI Cards -->
+      <div class="telemetry-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon-box kpi-icon-all">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="kpi-total-tools">14</span>
+            <span class="kpi-label">Active Modules</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-box kpi-icon-moto">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20V10"></path>
+              <path d="M18 20V4"></path>
+              <path d="M6 20v-4"></path>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="kpi-moto-tools">9</span>
+            <span class="kpi-label">Motorola Analytics</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-box kpi-icon-apple">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="kpi-apple-tools">2</span>
+            <span class="kpi-label">Apple Operations</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-box kpi-icon-util">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="kpi-util-tools">3</span>
+            <span class="kpi-label">Quick Help Utilities</span>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- Category Option Chips Bar -->
-    <section class="filter-chips-bar">
+    <!-- Filter Option Chips Bar -->
+    <section class="filter-bar" aria-label="Category Filters">
       <!-- All Tools -->
-      <button class="chip active" data-filter="all">
-        <svg class="chip-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <button class="filter-chip active" data-filter="all">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="3" width="7" height="7"></rect>
           <rect x="14" y="3" width="7" height="7"></rect>
           <rect x="14" y="14" width="7" height="7"></rect>
           <rect x="3" y="14" width="7" height="7"></rect>
         </svg>
         <span>All Tools</span>
+        <span class="filter-chip-count">14</span>
+      </button>
+
+      <!-- Pinned Tools Filter -->
+      <button class="filter-chip" data-filter="pinned" id="pinned-filter-chip" style="display: none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" class="pinned-star-icon">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+        <span>Pinned Tools</span>
+        <span class="filter-chip-count" id="pinned-filter-count">0</span>
       </button>
 
       <!-- Quick Utilities -->
-      <button class="chip" data-filter="Quick Help Tools">
-        <img src="Icon/PDF.png" alt="Utilities Icon" class="chip-img">
+      <button class="filter-chip" data-filter="Quick Help Tools">
+        <img src="Icon/PDF.png" alt="Utilities" class="chip-img" onerror="this.style.display='none'">
         <span>Quick Utilities</span>
+        <span class="filter-chip-count">3</span>
       </button>
 
       <!-- Analytics Dashboards -->
-      <button class="chip" data-filter="Data Summary / Analytics Tools">
-        <img src="Icon/excel.png" alt="Analytics Icon" class="chip-img">
+      <button class="filter-chip" data-filter="Data Summary / Analytics Tools">
+        <img src="Icon/excel.png" alt="Analytics" class="chip-img" onerror="this.style.display='none'">
         <span>Analytics Dashboards</span>
+        <span class="filter-chip-count">11</span>
       </button>
 
       <!-- Motorola -->
-      <button class="chip" data-filter="Motorola">
-        <img src="Icon/Motorola.png" alt="Motorola Icon" class="chip-img">
+      <button class="filter-chip" data-filter="Motorola">
+        <img src="Icon/Motorola.png" alt="Motorola" class="chip-img" onerror="this.style.display='none'">
         <span>Motorola</span>
+        <span class="filter-chip-count">9</span>
       </button>
 
       <!-- Apple -->
-      <button class="chip" data-filter="Apple">
-        <img src="Icon/Apple.jpeg" alt="Apple Icon" class="chip-img">
+      <button class="filter-chip" data-filter="Apple">
+        <img src="Icon/Apple.jpeg" alt="Apple" class="chip-img" onerror="this.style.display='none'">
         <span>Apple</span>
+        <span class="filter-chip-count">2</span>
       </button>
     </section>
 
-    <!-- Empty State Container -->
+    <!-- Pinned / Favorites Shelf -->
+    <section class="pinned-section" id="pinned-shelf">
+      <div class="pinned-header">
+        <div class="pinned-title-group">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="pinned-star-icon">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span>Pinned Quick Access</span>
+          <span class="pinned-count-badge" id="pinned-shelf-count">0 Pinned</span>
+        </div>
+      </div>
+      <div class="apps-grid" id="pinned-grid"></div>
+    </section>
+
+    <!-- Empty State -->
     <div class="empty-state" id="empty-state">
-      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8" />
-        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        <line x1="8" y1="11" x2="14" y2="11" />
-      </svg>
-      <div class="empty-title">No matching tools found</div>
-      <div class="empty-text">Try adjusting your search keyword or selecting a different category filter.</div>
-      <button class="reset-btn" id="reset-search-btn">Reset Search</button>
+      <div class="empty-icon-box">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <line x1="8" y1="11" x2="14" y2="11" />
+        </svg>
+      </div>
+      <h3 class="empty-title">No matching modules found</h3>
+      <p class="empty-text">We couldn't find any tool matching your criteria. Try adjusting your search keyword or switching your filter chips.</p>
+      <button class="reset-btn" id="reset-search-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"></polyline>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+        </svg>
+        Reset All Filters
+      </button>
     </div>
 
     <!-- Category 1: Quick Help Tools -->
-    <section class="category-section" data-category="Quick Help Tools">
+    <section class="category-section" id="quick-help-section" data-category="Quick Help Tools">
       <div class="category-header">
         <div class="category-title-group">
-          <div class="category-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <div class="category-icon-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
             </svg>
           </div>
           <h2 class="category-title">Quick Help Tools</h2>
         </div>
-        <span class="category-count">3 Utilities</span>
+        <span class="category-count-badge">3 Utilities</span>
       </div>
 
       <div class="apps-grid">
-        <a class="app-card" href="tools/Utility_Zip_and_Excel_Cosolidator/index.html">
+        <!-- Tool 1: Merge Excels -->
+        <a class="app-card" href="tools/Utility_Zip_and_Excel_Cosolidator/index.html" data-tool-id="merge-excels" data-category="Quick Help Tools">
           <div class="card-top">
-            <div class="icon-wrapper">
-              <img src="Icon/excel.png" alt="Excel Consolidation Icon">
-            </div>
-            <div class="card-arrow">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
+            <div class="icon-container">
+              <img src="Icon/excel.png" alt="Excel Consolidation Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="8" y1="13" x2="16" y2="13"></line>
+                <line x1="8" y1="17" x2="16" y2="17"></line>
               </svg>
+            </div>
+            <div class="card-actions-top">
+              <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Merge Excels" onclick="event.preventDefault(); togglePin('merge-excels');">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </button>
+              <div class="card-launch-arrow">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </div>
             </div>
           </div>
           <div class="card-body">
-            <div class="app-name">Merge Excels</div>
-            <div class="app-desc">Consolidate multiple Excel spreadsheets and ZIP archives into unified datasets.</div>
+            <h3 class="app-name">Merge Excels</h3>
+            <p class="app-desc">Consolidate multiple Excel spreadsheets and ZIP archives into unified datasets seamlessly.</p>
+            <div class="card-footer-tags">
+              <span class="meta-tag">Excel / ZIP</span>
+              <span class="meta-tag">Batch Process</span>
+            </div>
           </div>
         </a>
 
-        <a class="app-card" href="tools/Universal_File_Compressor/index.html">
+        <!-- Tool 2: Universal File Compressor -->
+        <a class="app-card" href="tools/Universal_File_Compressor/index.html" data-tool-id="compress-files" data-category="Quick Help Tools">
           <div class="card-top">
-            <div class="icon-wrapper">
-              <img src="Icon/PDF.png" alt="PDF Compressor Icon">
-            </div>
-            <div class="card-arrow">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
+            <div class="icon-container">
+              <img src="Icon/PDF.png" alt="PDF Compressor Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                <path d="M12 12v9"></path>
+                <path d="m8 17 4 4 4-4"></path>
               </svg>
+            </div>
+            <div class="card-actions-top">
+              <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin File Compressor" onclick="event.preventDefault(); togglePin('compress-files');">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </button>
+              <div class="card-launch-arrow">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </div>
             </div>
           </div>
           <div class="card-body">
-            <div class="app-name">Compress Image or PDF Files</div>
-            <div class="app-desc">Optimize, shrink, and batch compress heavy images and PDF files offline.</div>
+            <h3 class="app-name">Compress Image or PDF Files</h3>
+            <p class="app-desc">Optimize, shrink, and batch compress heavy images and PDF documents directly in your browser.</p>
+            <div class="card-footer-tags">
+              <span class="meta-tag">PDF / Images</span>
+              <span class="meta-tag">Lossless</span>
+            </div>
           </div>
         </a>
 
-        <a class="app-card" href="tools/Multi-QR_Generator/index.html">
+        <!-- Tool 3: QR Generator -->
+        <a class="app-card" href="tools/Multi-QR_Generator/index.html" data-tool-id="qr-generator" data-category="Quick Help Tools">
           <div class="card-top">
-            <div class="icon-wrapper">
-              <img src="Icon/QR_App.png" alt="QR Code Generator">
-            </div>
-            <div class="card-arrow">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
+            <div class="icon-container">
+              <img src="Icon/QR_App.png" alt="QR Code Generator" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
               </svg>
+            </div>
+            <div class="card-actions-top">
+              <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin QR Code Generator" onclick="event.preventDefault(); togglePin('qr-generator');">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </button>
+              <div class="card-launch-arrow">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </div>
             </div>
           </div>
           <div class="card-body">
-            <div class="app-name">QR Code Generator</div>
-            <div class="app-desc">Generate QR codes for links, copy-paste single or multiple links or upload via Excel.</div>
+            <h3 class="app-name">QR Code Generator</h3>
+            <p class="app-desc">Generate QR codes for links, copy-paste single or bulk URLs, or upload batches via Excel spreadsheets.</p>
+            <div class="card-footer-tags">
+              <span class="meta-tag">Bulk Generator</span>
+              <span class="meta-tag">Excel Input</span>
+            </div>
           </div>
         </a>
       </div>
     </section>
 
     <!-- Category 2: Data Summary / Analytics Tools -->
-    <section class="category-section" data-category="Data Summary / Analytics Tools">
+    <section class="category-section" id="analytics-section" data-category="Data Summary / Analytics Tools">
       <div class="category-header">
         <div class="category-title-group">
-          <div class="category-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <div class="category-icon-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="20" x2="18" y2="10" />
               <line x1="12" y1="20" x2="12" y2="4" />
               <line x1="6" y1="20" x2="6" y2="14" />
             </svg>
           </div>
-          <h2 class="category-title">Data Summary & Analytics Tools</h2>
+          <h2 class="category-title">Data Summary & Analytics Dashboards</h2>
         </div>
-        <span class="category-count">10 Dashboards</span>
+        <span class="category-count-badge">11 Dashboards</span>
       </div>
 
       <!-- Sub-Category: Motorola -->
-      <div class="brand-subcategory" data-brand="Motorola">
+      <div class="brand-subcategory" id="motorola-section" data-brand="Motorola">
         <div class="brand-header">
           <div class="brand-title-group">
-            <img src="Icon/Motorola.png" class="brand-badge-icon" alt="Motorola">
-            <span class="brand-title">Motorola Analytics & Tracking</span>
+            <img src="Icon/Motorola.png" class="brand-badge-img" alt="Motorola" onerror="this.style.display='none'">
+            <h3 class="brand-title">Motorola Analytics & Tracking</h3>
           </div>
-          <span class="brand-count">8 Dashboards</span>
+          <span class="brand-count-badge">9 Modules</span>
         </div>
 
         <div class="apps-grid">
-          <a class="app-card" href="tools/Motorola _Open_Calls_Tracker/index.html">
+          <!-- Moto 1: Open Calls Tracker -->
+          <a class="app-card" href="tools/Motorola _Open_Calls_Tracker/index.html" data-tool-id="moto-open-calls" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="Motorola Open Calls Icon">
+              <div class="icon-container">
+                <img src="Icon/Motorola.png" alt="Motorola Open Calls Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Open Calls Tracker" onclick="event.preventDefault(); togglePin('moto-open-calls');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">Motorola Open Calls Tracker</div>
-              <div class="app-desc">Monitor Motorola repair calls with comprehensive ageing analysis, categorisation, and pending action tracking.</div>
+              <h4 class="app-name">Motorola Open Calls Tracker</h4>
+              <p class="app-desc">Monitor Motorola repair calls with comprehensive ageing analysis, categorisation, and pending action tracking.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">Ageing Analysis</span>
+                <span class="meta-tag">SLA Tracking</span>
+              </div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_ASP_CWH_TO_CCI_Shipment_Tracking/index.html">
+          <!-- Moto 2: ASP CWH to CCI -->
+          <a class="app-card" href="tools/Motorola_ASP_CWH_TO_CCI_Shipment_Tracking/index.html" data-tool-id="moto-shipment-tracking" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="Shipment Tracking Icon">
+              <div class="icon-container">
+                <img src="Icon/Motorola.png" alt="Shipment Tracking Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Shipment Tracking" onclick="event.preventDefault(); togglePin('moto-shipment-tracking');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">Motorola ASP CWH to CCI Shipments</div>
-              <div class="app-desc">Track spare part shipments from Central Warehouse (CWH) to CCI with transit status and delivery ageing.</div>
+              <h4 class="app-name">Motorola ASP CWH to CCI Shipments</h4>
+              <p class="app-desc">Track spare part shipments from Central Warehouse (CWH) to CCI with transit status and delivery ageing.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">Logistics</span>
+                <span class="meta-tag">Transit Status</span>
+              </div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_Defective_Tracking/index.html">
+          <!-- Moto 3: Defective Status -->
+          <a class="app-card" href="tools/Motorola_Defective_Tracking/index.html" data-tool-id="moto-defective-tracking" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="Defective Tracking Icon">
+              <div class="icon-container">
+                <img src="Icon/Motorola.png" alt="Defective Tracking Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Defective Tracker" onclick="event.preventDefault(); togglePin('moto-defective-tracking');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">Motorola Defective Status Tracker</div>
-              <div class="app-desc">Monitor defective spare parts through ageing analysis, variance tracking, and inventory reconciliation.</div>
+              <h4 class="app-name">Motorola Defective Status Tracker</h4>
+              <p class="app-desc">Monitor defective spare parts through ageing analysis, variance tracking, and inventory reconciliation.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">Variance Analysis</span>
+                <span class="meta-tag">Reconciliation</span>
+              </div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_OTD_Performance_Dashboard/index.html">
+          <!-- Moto 4: OTD Performance -->
+          <a class="app-card" href="tools/Motorola_OTD_Performance_Dashboard/index.html" data-tool-id="moto-otd-dashboard" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="OTD Dashboard Icon">
+              <div class="icon-container">
+                <img src="Icon/Motorola.png" alt="OTD Dashboard Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin OTD Dashboard" onclick="event.preventDefault(); togglePin('moto-otd-dashboard');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">Motorola OTD Performance Dashboard</div>
-              <div class="app-desc">Measure On-Time Delivery performance across service centres with KPI scorecards and SLA monitoring.</div>
+              <h4 class="app-name">Motorola OTD Performance Dashboard</h4>
+              <p class="app-desc">Measure On-Time Delivery performance across service centres with KPI scorecards and SLA monitoring.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">KPI Scorecards</span>
+                <span class="meta-tag">SLA Performance</span>
+              </div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_TechKPI_Dashboard/index.html">
+          <!-- Moto 5: Tech KPI -->
+          <a class="app-card" href="tools/Motorola_TechKPI_Dashboard/index.html" data-tool-id="moto-techkpi" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="Tech KPI Icon">
+              <div class="icon-container">
+                <img src="Icon/Motorola.png" alt="Tech KPI Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Technical KPI" onclick="event.preventDefault(); togglePin('moto-techkpi');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">Motorola Technical KPI Dashboard</div>
-              <div class="app-desc">Analyse technical KPI performance across service centres with weekly scorecards and trend insights.</div>
+              <h4 class="app-name">Motorola Technical KPI Dashboard</h4>
+              <p class="app-desc">Analyse technical KPI performance across service centres with weekly scorecards and trend insights.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">Weekly Trends</span>
+                <span class="meta-tag">Benchmarking</span>
+              </div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_Parts_Status/index.html">
+          <!-- Moto 6: Parts Status -->
+          <a class="app-card" href="tools/Motorola_Parts_Status/index.html" data-tool-id="moto-parts-status" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="Parts Status Icon">
+              <div class="icon-container">
+                <img src="Icon/Motorola.png" alt="Parts Status Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Parts Status" onclick="event.preventDefault(); togglePin('moto-parts-status');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">Motorola Open Calls Parts Status Analysis</div>
-              <div class="app-desc">Analyse Open Calls parts status across service centres, with dedicated analytics on parts in other CCI.</div>
+              <h4 class="app-name">Motorola Open Calls Parts Status Analysis</h4>
+              <p class="app-desc">Analyse Open Calls parts status across service centres, with dedicated analytics on parts in other CCI.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">Inventory State</span>
+                <span class="meta-tag">Other CCI</span>
+              </div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_Parts_OtherCCI_Allocation/index.html">
+          <!-- Moto 7: Parts Other CCI -->
+          <a class="app-card" href="tools/Motorola_Parts_OtherCCI_Allocation/index.html" data-tool-id="moto-other-cci" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="Other CCI Icon">
+              <div class="icon-container">
+                <img src="Icon/Motorola.png" alt="Other CCI Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin CCI Allocation Tool" onclick="event.preventDefault(); togglePin('moto-other-cci');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">Motorola Other CCI Part Allocation Tool</div>
-              <div class="app-desc">Identify parts in Other CCI status and allocate available inventory stock excluding reserved items.</div>
+              <h4 class="app-name">Motorola Other CCI Part Allocation Tool</h4>
+              <p class="app-desc">Identify parts in Other CCI status and allocate available inventory stock excluding reserved items.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">Stock Allocation</span>
+                <span class="meta-tag">Optimization</span>
+              </div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_CCI-Defective_DispatchTracking/index.html">
+          <!-- Moto 8: Dispatch Tracking -->
+          <a class="app-card" href="tools/Motorola_CCI-Defective_DispatchTracking/index.html" data-tool-id="moto-dispatch-tracking" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="Dispatch Icon">
+              <div class="icon-container">
+                <img src="Icon/Motorola.png" alt="Dispatch Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Dispatch Tracker" onclick="event.preventDefault(); togglePin('moto-dispatch-tracking');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">Motorola CCI Defective Dispatch Tracker</div>
-              <div class="app-desc">Track CCI defective dispatches with pre-formatted TAT columns and synchronized manual update records.</div>
+              <h4 class="app-name">Motorola CCI Defective Dispatch Tracker</h4>
+              <p class="app-desc">Track CCI defective dispatches with pre-formatted TAT columns and synchronized manual update records.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">TAT Tracking</span>
+                <span class="meta-tag">Manual Sync</span>
+              </div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Motorola_CCI_to_CWH_Manual_DC/index.html">
+          <!-- Moto 9: Manual DC Template -->
+          <a class="app-card" href="tools/Motorola_CCI_to_CWH_Manual_DC/index.html" data-tool-id="moto-manual-dc" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Motorola.png" alt="Motorola Icon">
+              <div class="icon-container">
+                <img src="Icon/Motorola.png" alt="Motorola Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Manual DC Template" onclick="event.preventDefault(); togglePin('moto-manual-dc');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">Motorola CCI to CWH Manual DC Template</div>
-              <div class="app-desc">Manual DC template for offline Motorola returns in specialized cases like customer refunds.</div>
+              <h4 class="app-name">Motorola CCI to CWH Manual DC Template</h4>
+              <p class="app-desc">Manual Delivery Challan (DC) generator for offline Motorola returns in specialized customer refund scenarios.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">Challan Formatter</span>
+                <span class="meta-tag">Offline DC</span>
+              </div>
             </div>
           </a>
         </div>
       </div>
 
       <!-- Sub-Category: Apple -->
-      <div class="brand-subcategory" data-brand="Apple">
+      <div class="brand-subcategory" id="apple-section" data-brand="Apple">
         <div class="brand-header">
           <div class="brand-title-group">
-            <img src="Icon/Apple.jpeg" class="brand-badge-icon" alt="Apple">
-            <span class="brand-title">Apple Operations</span>
+            <img src="Icon/Apple.jpeg" class="brand-badge-img" alt="Apple" onerror="this.style.display='none'">
+            <h3 class="brand-title">Apple Operations</h3>
           </div>
-          <span class="brand-count">2 Dashboards</span>
+          <span class="brand-count-badge">2 Modules</span>
         </div>
 
         <div class="apps-grid">
-          <a class="app-card" href="tools/WorkScan_OpenCalls_Dashboard/index.html">
+          <!-- Apple 1: WorkScan Open Calls -->
+          <a class="app-card" href="tools/WorkScan_OpenCalls_Dashboard/index.html" data-tool-id="apple-workscan" data-category="Data Summary / Analytics Tools" data-brand="Apple">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Apple.jpeg" alt="Apple WorkScan Icon">
+              <div class="icon-container">
+                <img src="Icon/Apple.jpeg" alt="Apple WorkScan Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin WorkScan Open Calls" onclick="event.preventDefault(); togglePin('apple-workscan');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">WorkScan Open Calls (Apple)</div>
-              <div class="app-desc">Analyze WorkScan CRM open calls in seconds. View ageing buckets, location distribution, and status breakdown.</div>
+              <h4 class="app-name">WorkScan Open Calls (Apple)</h4>
+              <p class="app-desc">Analyze WorkScan CRM open calls in seconds. View ageing buckets, location distribution, and repair status breakdown.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">CRM WorkScan</span>
+                <span class="meta-tag">Ageing Buckets</span>
+              </div>
             </div>
           </a>
 
-          <a class="app-card" href="tools/Apple_Pending_Part_Return_Tracker/index.html">
+          <!-- Apple 2: Pending Part Return -->
+          <a class="app-card" href="tools/Apple_Pending_Part_Return_Tracker/index.html" data-tool-id="apple-ppr" data-category="Data Summary / Analytics Tools" data-brand="Apple">
             <div class="card-top">
-              <div class="icon-wrapper">
-                <img src="Icon/Apple.jpeg" alt="Apple PPR Icon">
+              <div class="icon-container">
+                <img src="Icon/Apple.jpeg" alt="Apple PPR Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
               </div>
-              <div class="card-arrow">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
+              <div class="card-actions-top">
+                <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Pending Part Return" onclick="event.preventDefault(); togglePin('apple-ppr');">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </button>
+                <div class="card-launch-arrow">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                </div>
               </div>
             </div>
             <div class="card-body">
-              <div class="app-name">Pending Part Return (Apple)</div>
-              <div class="app-desc">Track pending part returns location-wise, projected days left to reach Apple DC, and SLA aging buckets.</div>
+              <h4 class="app-name">Pending Part Return (Apple)</h4>
+              <p class="app-desc">Track pending part returns location-wise, projected transit days to Apple DC, and strict SLA aging escalations.</p>
+              <div class="card-footer-tags">
+                <span class="meta-tag">PPR Return</span>
+                <span class="meta-tag">Apple DC SLA</span>
+              </div>
             </div>
           </a>
         </div>
@@ -1139,52 +1938,74 @@
 
   </main>
 
-  <!-- Apple Standard Footer -->
-  <footer class="apple-footer">
+  <!-- Hub Pro Footer -->
+  <footer class="hub-footer">
     <div class="footer-columns">
       <div>
-        <h4 class="footer-col-title">Quick Help Tools</h4>
+        <h4 class="footer-col-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+          Quick Utilities
+        </h4>
         <ul class="footer-list">
-          <li>Merge Excels & Zip Consolidator</li>
-          <li>Universal Image & PDF Compressor</li>
+          <li>Merge Excels &amp; ZIP Consolidator</li>
+          <li>Universal Image &amp; PDF Compressor</li>
           <li>Multi-QR Code Batch Generator</li>
         </ul>
       </div>
+
       <div>
-        <h4 class="footer-col-title">Motorola Analytics</h4>
+        <h4 class="footer-col-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Motorola Analytics
+        </h4>
         <ul class="footer-list">
-          <li>Open Calls & Parts Status</li>
-          <li>CWH to CCI Shipment Tracking</li>
-          <li>Defective Status & Dispatch Tracking</li>
-          <li>OTD & Technical KPI Dashboards</li>
+          <li>Open Calls &amp; Parts Status Tracking</li>
+          <li>ASP CWH to CCI Transit &amp; Ageing</li>
+          <li>Defective Status &amp; Dispatch Tracker</li>
+          <li>OTD &amp; Technical KPI Scorecards</li>
+          <li>Manual DC Return Generator</li>
         </ul>
       </div>
+
       <div>
-        <h4 class="footer-col-title">Apple Operations</h4>
+        <h4 class="footer-col-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Apple Operations
+        </h4>
         <ul class="footer-list">
-          <li>WorkScan CRM Open Calls</li>
+          <li>WorkScan CRM Open Calls Telemetry</li>
           <li>Pending Part Return (PPR) Tracker</li>
-          <li>Location SLA Aging Metrics</li>
+          <li>SLA Aging Buckets &amp; DC Projections</li>
         </ul>
       </div>
+
       <div>
-        <h4 class="footer-col-title">Keyboard Shortcuts</h4>
+        <h4 class="footer-col-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line></svg>
+          Quick Shortcuts
+        </h4>
         <ul class="footer-list">
-          <li>Press <code style="padding: 1px 4px; border: 1px solid var(--colors-hairline); border-radius: 4px;">/</code> to focus search</li>
-          <li>Press <code style="padding: 1px 4px; border: 1px solid var(--colors-hairline); border-radius: 4px;">Esc</code> to clear search</li>
-          <li>Toggle Light/Dark at top right</li>
+          <li class="footer-badge-item">Press <span class="kbd-tag">/</span> to activate search</li>
+          <li class="footer-badge-item">Press <span class="kbd-tag">Esc</span> to clear filters</li>
+          <li class="footer-badge-item">Click <span class="kbd-tag">&star;</span> on any card to pin it</li>
+          <li>Toggle theme anytime via top right switch</li>
         </ul>
       </div>
     </div>
 
     <div class="legal-row">
-      <span>Offline Workspace Hub &bull; Designed in accordance with Apple design standards.</span>
-      <span>Developed by Pramod Kumar &bull; All relative tools and icons preserved.</span>
+      <div class="developer-callout">
+        <span>Offline Workspace Hub &bull; Built with <strong>UI/UX Pro Max</strong> design standards.</span>
+      </div>
+      <div class="developer-callout">
+        <span>Crafted by <strong>Pramod Kumar</strong> &bull; 100% Client-Side Privacy</span>
+      </div>
     </div>
   </footer>
 
+  <!-- Application Logic -->
   <script>
-    // Elements
+    // Elements Cache
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const sunIcon = themeToggleBtn.querySelector('.sun-icon');
     const moonIcon = themeToggleBtn.querySelector('.moon-icon');
@@ -1192,11 +2013,102 @@
     const clearSearchBtn = document.getElementById('clear-search-btn');
     const resetSearchBtn = document.getElementById('reset-search-btn');
     const emptyState = document.getElementById('empty-state');
-    const filterChips = document.querySelectorAll('.chip');
+    const filterChips = document.querySelectorAll('.filter-chip');
     const categorySections = document.querySelectorAll('.category-section');
     const appCounter = document.getElementById('app-counter');
+    const viewGridBtn = document.getElementById('view-grid-btn');
+    const viewListBtn = document.getElementById('view-list-btn');
+    const appsGrids = document.querySelectorAll('.apps-grid');
+    const pinnedShelf = document.getElementById('pinned-shelf');
+    const pinnedGrid = document.getElementById('pinned-grid');
+    const pinnedShelfCount = document.getElementById('pinned-shelf-count');
+    const pinnedFilterChip = document.getElementById('pinned-filter-chip');
+    const pinnedFilterCount = document.getElementById('pinned-filter-count');
 
-    let activeCategory = 'all';
+    let activeFilter = 'all';
+    let pinnedToolIds = [];
+
+    // --- Pinned Tools Persistence ---
+    function loadPinnedTools() {
+      try {
+        const stored = localStorage.getItem('hub_pinned_tools');
+        pinnedToolIds = stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        pinnedToolIds = [];
+      }
+      updatePinnedUI();
+    }
+
+    function savePinnedTools() {
+      try {
+        localStorage.setItem('hub_pinned_tools', JSON.stringify(pinnedToolIds));
+      } catch (e) {}
+      updatePinnedUI();
+    }
+
+    function togglePin(toolId) {
+      const index = pinnedToolIds.indexOf(toolId);
+      if (index > -1) {
+        pinnedToolIds.splice(index, 1);
+      } else {
+        pinnedToolIds.push(toolId);
+      }
+      savePinnedTools();
+      filterApps();
+    }
+
+    function updatePinnedUI() {
+      // Update pin star buttons on all cards
+      document.querySelectorAll('.app-card').forEach(card => {
+        const toolId = card.getAttribute('data-tool-id');
+        const pinBtn = card.querySelector('.pin-btn');
+        if (pinBtn && toolId) {
+          if (pinnedToolIds.includes(toolId)) {
+            pinBtn.classList.add('pinned');
+            pinBtn.title = 'Remove from Quick Access';
+            pinBtn.querySelector('svg').setAttribute('fill', 'currentColor');
+          } else {
+            pinBtn.classList.remove('pinned');
+            pinBtn.title = 'Pin to Quick Access';
+            pinBtn.querySelector('svg').setAttribute('fill', 'none');
+          }
+        }
+      });
+
+      // Update pinned filter chip visibility and count
+      const count = pinnedToolIds.length;
+      if (count > 0) {
+        pinnedFilterChip.style.display = 'inline-flex';
+        pinnedFilterCount.innerText = count;
+        pinnedShelf.style.display = (activeFilter === 'pinned' || activeFilter === 'all') ? 'flex' : 'none';
+        pinnedShelfCount.innerText = `${count} ${count === 1 ? 'Tool' : 'Tools'}`;
+      } else {
+        pinnedFilterChip.style.display = 'none';
+        pinnedShelf.style.display = 'none';
+        if (activeFilter === 'pinned') {
+          activeFilter = 'all';
+          filterChips.forEach(c => c.classList.remove('active'));
+          document.querySelector('.filter-chip[data-filter="all"]').classList.add('active');
+        }
+      }
+
+      // Populate pinned grid clones
+      pinnedGrid.innerHTML = '';
+      pinnedToolIds.forEach(id => {
+        const originalCard = document.querySelector(`.category-section .app-card[data-tool-id="${id}"]`);
+        if (originalCard) {
+          const clone = originalCard.cloneNode(true);
+          const clonePinBtn = clone.querySelector('.pin-btn');
+          if (clonePinBtn) {
+            clonePinBtn.onclick = (e) => {
+              e.preventDefault();
+              togglePin(id);
+            };
+          }
+          pinnedGrid.appendChild(clone);
+        }
+      });
+    }
 
     // --- Theme Management ---
     function applyTheme(isDark) {
@@ -1222,35 +2134,66 @@
       localStorage.setItem('hub_theme', isDarkNow ? 'dark' : 'light');
     });
 
-    // --- Dynamic Subcategory & Header Counts ---
-    function updateBadgeCounts() {
-      document.querySelectorAll('.category-section').forEach(sec => {
-        const count = sec.querySelectorAll('.app-card').length;
-        const countBadge = sec.querySelector('.category-count');
-        if (countBadge) countBadge.innerText = `${count} ${count === 1 ? 'Tool' : 'Tools'}`;
+    // --- View Layout (Grid vs List) ---
+    function applyViewMode(mode) {
+      appsGrids.forEach(grid => {
+        if (mode === 'list') {
+          grid.classList.add('list-view');
+        } else {
+          grid.classList.remove('list-view');
+        }
       });
 
-      document.querySelectorAll('.brand-subcategory').forEach(sub => {
-        const count = sub.querySelectorAll('.app-card').length;
-        const countBadge = sub.querySelector('.brand-count');
-        if (countBadge) countBadge.innerText = `${count} ${count === 1 ? 'Dashboard' : 'Dashboards'}`;
-      });
+      if (mode === 'list') {
+        viewListBtn.classList.add('active');
+        viewGridBtn.classList.remove('active');
+      } else {
+        viewGridBtn.classList.add('active');
+        viewListBtn.classList.remove('active');
+      }
+      localStorage.setItem('hub_view_mode', mode);
     }
 
-    // --- Search & Filter Logic ---
+    const savedViewMode = localStorage.getItem('hub_view_mode') || 'grid';
+    applyViewMode(savedViewMode);
+
+    viewGridBtn.addEventListener('click', () => applyViewMode('grid'));
+    viewListBtn.addEventListener('click', () => applyViewMode('list'));
+
+    // --- Search & Filter Engine ---
     function filterApps() {
       const term = searchInput.value.toLowerCase().trim();
       let visibleCount = 0;
 
       clearSearchBtn.style.display = term.length > 0 ? 'flex' : 'none';
 
+      // If Pinned Only mode
+      if (activeFilter === 'pinned') {
+        pinnedShelf.style.display = 'flex';
+        categorySections.forEach(sec => sec.style.display = 'none');
+
+        const pinnedCards = pinnedGrid.querySelectorAll('.app-card');
+        pinnedCards.forEach(card => {
+          const matches = card.innerText.toLowerCase().includes(term);
+          card.style.display = matches ? 'flex' : 'none';
+          if (matches) visibleCount++;
+        });
+
+        appCounter.innerText = `${visibleCount} ${visibleCount === 1 ? 'Tool' : 'Tools'}`;
+        emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+        return;
+      }
+
+      // Normal Filtering
+      pinnedShelf.style.display = (pinnedToolIds.length > 0 && activeFilter === 'all' && term.length === 0) ? 'flex' : 'none';
+
       categorySections.forEach(section => {
         const categoryName = section.getAttribute('data-category');
 
         let isSectionAllowed = false;
-        if (activeCategory === 'all' || activeCategory === categoryName) {
+        if (activeFilter === 'all' || activeFilter === categoryName) {
           isSectionAllowed = true;
-        } else if ((activeCategory === 'Motorola' || activeCategory === 'Apple') && categoryName !== 'Quick Help Tools') {
+        } else if ((activeFilter === 'Motorola' || activeFilter === 'Apple') && categoryName === 'Data Summary / Analytics Tools') {
           isSectionAllowed = true;
         }
 
@@ -1261,7 +2204,7 @@
           if (subcategories.length > 0) {
             subcategories.forEach(sub => {
               const brandName = sub.getAttribute('data-brand');
-              const matchesBrand = (activeCategory === 'all' || activeCategory === categoryName || activeCategory === brandName);
+              const matchesBrand = (activeFilter === 'all' || activeFilter === categoryName || activeFilter === brandName);
               let subVisibleCards = 0;
 
               const cards = sub.querySelectorAll('.app-card');
@@ -1271,9 +2214,9 @@
 
                 if (matchesBrand && matchesSearch) {
                   card.style.display = 'flex';
-                  card.style.animation = 'none';
-                  card.offsetHeight; 
-                  card.style.animation = 'fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+                  card.classList.remove('card-animate');
+                  void card.offsetWidth; // Force reflow
+                  card.classList.add('card-animate');
                   subVisibleCards++;
                   categoryVisibleCards++;
                   visibleCount++;
@@ -1292,9 +2235,9 @@
 
               if (matchesSearch) {
                 card.style.display = 'flex';
-                card.style.animation = 'none';
-                card.offsetHeight; 
-                card.style.animation = 'fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+                card.classList.remove('card-animate');
+                void card.offsetWidth; // Force reflow
+                card.classList.add('card-animate');
                 categoryVisibleCards++;
                 visibleCount++;
               } else {
@@ -1307,7 +2250,7 @@
         section.style.display = (isSectionAllowed && categoryVisibleCards > 0) ? 'flex' : 'none';
       });
 
-      appCounter.innerText = `${visibleCount} Application${visibleCount === 1 ? '' : 's'}`;
+      appCounter.innerText = `${visibleCount} ${visibleCount === 1 ? 'Tool' : 'Tools'}`;
       emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
     }
 
@@ -1322,9 +2265,9 @@
 
     resetSearchBtn.addEventListener('click', () => {
       searchInput.value = '';
-      activeCategory = 'all';
+      activeFilter = 'all';
       filterChips.forEach(c => c.classList.remove('active'));
-      document.querySelector('.chip[data-filter="all"]').classList.add('active');
+      document.querySelector('.filter-chip[data-filter="all"]').classList.add('active');
       filterApps();
       searchInput.focus();
     });
@@ -1333,24 +2276,28 @@
       chip.addEventListener('click', () => {
         filterChips.forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
-        activeCategory = chip.getAttribute('data-filter');
+        activeFilter = chip.getAttribute('data-filter');
         filterApps();
       });
     });
 
+    // Keyboard Navigation Shortcuts
     document.addEventListener('keydown', (e) => {
       if (e.key === '/' && document.activeElement !== searchInput) {
         e.preventDefault();
         searchInput.focus();
       } else if (e.key === 'Escape' && document.activeElement === searchInput) {
-        searchInput.value = '';
-        filterApps();
-        searchInput.blur();
+        if (searchInput.value.length > 0) {
+          searchInput.value = '';
+          filterApps();
+        } else {
+          searchInput.blur();
+        }
       }
     });
 
-    // Run badge recount on initial load
-    updateBadgeCounts();
+    // Initial Launch Setup
+    loadPinnedTools();
     filterApps();
   </script>
 </body>

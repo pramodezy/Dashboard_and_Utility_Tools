@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Apple Open Calls Dashboard</title>
 
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
   <!-- AG Grid Community CSS -->
@@ -25,7 +30,7 @@
 
     body {
       background-color: var(--bg-color);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       color: #334155;
       padding-bottom: 2rem;
     }
@@ -177,6 +182,26 @@
 </head>
 
 <body>
+
+  <!-- Workspace Hub Top Navigation -->
+  <div style="background: #090d16; color: #94a3b8; padding: 0.6rem 1.5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); position: sticky; top: 0; z-index: 1050; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-size: 0.8rem;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <a href="../../index.html" style="display: inline-flex; align-items: center; gap: 0.4rem; color: #f1f5f9; text-decoration: none; padding: 0.3rem 0.65rem; border-radius: 6px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); font-weight: 600; font-size: 0.75rem; transition: background 0.15s ease;">
+        <span>&larr;</span>
+        <span>Workspace Hub</span>
+      </a>
+      <span style="color: rgba(255,255,255,0.25);">/</span>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="color: #ffffff; font-weight: 700;">Apple Open Calls Analytics</span>
+        <span style="font-family: monospace; font-size: 0.65rem; padding: 0.15rem 0.45rem; border-radius: 9999px; background: rgba(37,99,235,0.2); color: #60a5fa; border: 1px solid rgba(37,99,235,0.35);">PRO MAX</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span style="font-family: monospace; font-size: 0.7rem; background: rgba(16,185,129,0.1); color: #34d399; padding: 0.2rem 0.6rem; border-radius: 9999px; border: 1px solid rgba(16,185,129,0.25);">
+        100% Client-Side Engine
+      </span>
+    </div>
+  </div>
 
   <!-- Top Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
