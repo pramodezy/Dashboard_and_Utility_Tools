@@ -853,20 +853,14 @@
       border: 1px solid var(--border-subtle);
     }
 
-    /* Grid Layout for Cards */
+    /* Grid Layout for Cards - Highly Responsive Multi-Column */
     .apps-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
     }
 
-    @media (max-width: 1120px) {
-      .apps-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 680px) {
+    @media (max-width: 600px) {
       .apps-grid {
         grid-template-columns: 1fr;
       }
@@ -876,27 +870,26 @@
     .apps-grid.list-view {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
-    /* App Card Specification (UI/UX Pro Max) */
+    /* App Card Specification (UI/UX Pro Max - Compact Tile + Floating Detail Popover) */
     .app-card {
       background-color: var(--bg-card);
       border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 24px;
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
       text-decoration: none;
       color: inherit;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      gap: 16px;
+      justify-content: center;
+      min-height: 74px;
       backdrop-filter: blur(12px);
       box-shadow: var(--shadow-sm);
       position: relative;
-      overflow: hidden;
       cursor: pointer;
-      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .app-card::before {
@@ -905,16 +898,18 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, transparent);
-      transition: background 0.3s ease;
+      height: 2px;
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+      background: transparent;
+      transition: background 0.25s ease;
     }
 
     .app-card:hover {
       background-color: var(--bg-card-hover);
       border-color: var(--brand-primary);
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-card-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.2), 0 4px 10px -2px rgba(0, 0, 0, 0.08);
+      z-index: 60;
     }
 
     .app-card:hover::before {
@@ -925,25 +920,32 @@
       transform: scale(0.985);
     }
 
-    .card-top {
+    /* Compact View Inside Card Tile */
+    .card-compact-view {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
     }
 
     .icon-container {
-      width: 52px;
-      height: 52px;
-      border-radius: var(--radius-md);
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
       background-color: var(--bg-subtle);
       border: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 8px;
+      padding: 6px;
       box-shadow: var(--shadow-sm);
       position: relative;
       flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+
+    .app-card:hover .icon-container {
+      transform: scale(1.05);
     }
 
     .icon-container img {
@@ -955,15 +957,48 @@
 
     .fallback-svg-icon {
       display: none;
-      width: 26px;
-      height: 26px;
+      width: 24px;
+      height: 24px;
       color: var(--brand-primary);
     }
 
-    .card-actions-top {
+    .card-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .app-name {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.25;
+      letter-spacing: -0.015em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-pill-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg-subtle);
+      padding: 1px 6px;
+      border-radius: 4px;
+      align-self: flex-start;
+      border: 1px solid var(--border-subtle);
+      letter-spacing: 0.02em;
+    }
+
+    .card-actions-compact {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-shrink: 0;
     }
 
     /* Pin / Star Button */
@@ -971,8 +1006,8 @@
       background: var(--bg-subtle);
       border: 1px solid var(--border-subtle);
       color: var(--text-faint);
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       border-radius: var(--radius-pill);
       display: flex;
       align-items: center;
@@ -986,98 +1021,103 @@
       color: var(--accent-star);
       border-color: var(--accent-star);
       background: var(--bg-card);
-      transform: scale(1.08);
+      transform: scale(1.1);
     }
 
     .pin-btn.pinned {
       color: var(--accent-star);
-      background: rgba(234, 179, 8, 0.12);
+      background: rgba(234, 179, 8, 0.14);
       border-color: var(--accent-star);
     }
 
-    .card-launch-arrow {
-      width: 32px;
-      height: 32px;
-      border-radius: var(--radius-pill);
-      background-color: var(--bg-subtle);
-      color: var(--text-faint);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-    }
-
-    .app-card:hover .card-launch-arrow {
-      background-color: var(--brand-primary);
-      color: #ffffff;
-      transform: translateX(3px);
-    }
-
-    .card-body {
+    /* Floating Detail Popover on Hover (Approach A) */
+    .card-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      min-width: 270px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      box-shadow: 0 20px 36px -4px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.05);
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(6px);
+      transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.18s;
+      pointer-events: none;
+      backdrop-filter: blur(16px);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .app-name {
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--text-main);
-      line-height: 1.25;
-      letter-spacing: -0.015em;
+    .card-popover::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 28px;
+      width: 10px;
+      height: 10px;
+      background: var(--bg-card);
+      border-left: 1px solid var(--border-strong);
+      border-top: 1px solid var(--border-strong);
+      transform: rotate(45deg);
+    }
+
+    .app-card:hover .card-popover {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
     }
 
     .app-desc {
-      font-size: 13.5px;
+      font-size: 12.5px;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.45;
+      margin: 0;
     }
 
     .card-footer-tags {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
-      margin-top: 4px;
     }
 
     .meta-tag {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 500;
-      padding: 2px 7px;
+      padding: 2px 6px;
       border-radius: 4px;
       background: var(--bg-subtle);
-      color: var(--text-faint);
       border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
     }
 
-    /* List View Styling Customizations */
-    .apps-grid.list-view .app-card {
-      flex-direction: row;
+    .popover-launch-action {
+      display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 20px;
-      gap: 20px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--brand-primary);
     }
 
-    .apps-grid.list-view .app-card .card-top {
-      gap: 16px;
-      justify-content: flex-start;
-      flex-shrink: 0;
+    /* List View Styling */
+    .apps-grid.list-view .app-card {
+      min-height: auto;
+      padding: 10px 16px;
     }
 
-    .apps-grid.list-view .app-card .card-body {
-      flex: 1;
-      gap: 4px;
-    }
-
-    .apps-grid.list-view .app-card .card-footer-tags {
-      margin-top: 0;
-    }
-
-    .apps-grid.list-view .app-card .card-actions-top {
-      flex-shrink: 0;
+    .apps-grid.list-view .card-popover {
+      display: none !important;
     }
 
     /* Empty State */
@@ -1505,7 +1545,7 @@
       <div class="apps-grid">
         <!-- Tool 1: Merge Excels -->
         <a class="app-card" href="tools/Utility_Zip_and_Excel_Cosolidator/index.html" data-tool-id="merge-excels" data-category="Quick Help Tools">
-          <div class="card-top">
+          <div class="card-compact-view">
             <div class="icon-container">
               <img src="Icon/excel.png" alt="Excel Consolidation Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
               <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1515,33 +1555,37 @@
                 <line x1="8" y1="17" x2="16" y2="17"></line>
               </svg>
             </div>
-            <div class="card-actions-top">
+            <div class="card-title-group">
+              <h3 class="app-name">Merge Excels</h3>
+              <span class="card-pill-tag">Excel / ZIP</span>
+            </div>
+            <div class="card-actions-compact">
               <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Merge Excels" onclick="event.preventDefault(); togglePin('merge-excels');">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                 </svg>
               </button>
-              <div class="card-launch-arrow">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
-              </div>
             </div>
           </div>
-          <div class="card-body">
-            <h3 class="app-name">Merge Excels</h3>
+          <div class="card-popover">
             <p class="app-desc">Consolidate multiple Excel spreadsheets and ZIP archives into unified datasets seamlessly.</p>
             <div class="card-footer-tags">
               <span class="meta-tag">Excel / ZIP</span>
               <span class="meta-tag">Batch Process</span>
+            </div>
+            <div class="popover-launch-action">
+              <span>Open Tool</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
             </div>
           </div>
         </a>
 
         <!-- Tool 2: Universal File Compressor -->
         <a class="app-card" href="tools/Universal_File_Compressor/index.html" data-tool-id="compress-files" data-category="Quick Help Tools">
-          <div class="card-top">
+          <div class="card-compact-view">
             <div class="icon-container">
               <img src="Icon/PDF.png" alt="PDF Compressor Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
               <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1550,33 +1594,37 @@
                 <path d="m8 17 4 4 4-4"></path>
               </svg>
             </div>
-            <div class="card-actions-top">
+            <div class="card-title-group">
+              <h3 class="app-name">Compress Files</h3>
+              <span class="card-pill-tag">PDF / Images</span>
+            </div>
+            <div class="card-actions-compact">
               <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin File Compressor" onclick="event.preventDefault(); togglePin('compress-files');">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                 </svg>
               </button>
-              <div class="card-launch-arrow">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
-              </div>
             </div>
           </div>
-          <div class="card-body">
-            <h3 class="app-name">Compress Image or PDF Files</h3>
+          <div class="card-popover">
             <p class="app-desc">Optimize, shrink, and batch compress heavy images and PDF documents directly in your browser.</p>
             <div class="card-footer-tags">
-              <span class="meta-tag">PDF / Images</span>
               <span class="meta-tag">Lossless</span>
+              <span class="meta-tag">Client-Side</span>
+            </div>
+            <div class="popover-launch-action">
+              <span>Open Tool</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
             </div>
           </div>
         </a>
 
         <!-- Tool 3: QR Generator -->
         <a class="app-card" href="tools/Multi-QR_Generator/index.html" data-tool-id="qr-generator" data-category="Quick Help Tools">
-          <div class="card-top">
+          <div class="card-compact-view">
             <div class="icon-container">
               <img src="Icon/QR_App.png" alt="QR Code Generator" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
               <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1586,26 +1634,30 @@
                 <rect x="3" y="14" width="7" height="7"></rect>
               </svg>
             </div>
-            <div class="card-actions-top">
+            <div class="card-title-group">
+              <h3 class="app-name">QR Generator</h3>
+              <span class="card-pill-tag">Bulk QR</span>
+            </div>
+            <div class="card-actions-compact">
               <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin QR Code Generator" onclick="event.preventDefault(); togglePin('qr-generator');">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                 </svg>
               </button>
-              <div class="card-launch-arrow">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="12 5 19 12 12 19" />
-                </svg>
-              </div>
             </div>
           </div>
-          <div class="card-body">
-            <h3 class="app-name">QR Code Generator</h3>
+          <div class="card-popover">
             <p class="app-desc">Generate QR codes for links, copy-paste single or bulk URLs, or upload batches via Excel spreadsheets.</p>
             <div class="card-footer-tags">
               <span class="meta-tag">Bulk Generator</span>
               <span class="meta-tag">Excel Input</span>
+            </div>
+            <div class="popover-launch-action">
+              <span>Open Tool</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
             </div>
           </div>
         </a>
@@ -1641,234 +1693,270 @@
         <div class="apps-grid">
           <!-- Moto 1: Open Calls Tracker -->
           <a class="app-card" href="tools/Motorola _Open_Calls_Tracker/index.html" data-tool-id="moto-open-calls" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Motorola.png" alt="Motorola Open Calls Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">Open Calls Tracker</h4>
+                <span class="card-pill-tag">Ageing SLA</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Open Calls Tracker" onclick="event.preventDefault(); togglePin('moto-open-calls');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">Motorola Open Calls Tracker</h4>
+            <div class="card-popover">
               <p class="app-desc">Monitor Motorola repair calls with comprehensive ageing analysis, categorisation, and pending action tracking.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">Ageing Analysis</span>
                 <span class="meta-tag">SLA Tracking</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
 
           <!-- Moto 2: ASP CWH to CCI -->
           <a class="app-card" href="tools/Motorola_ASP_CWH_TO_CCI_Shipment_Tracking/index.html" data-tool-id="moto-shipment-tracking" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Motorola.png" alt="Shipment Tracking Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">ASP CWH to CCI Shipments</h4>
+                <span class="card-pill-tag">Transit Logistics</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Shipment Tracking" onclick="event.preventDefault(); togglePin('moto-shipment-tracking');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">Motorola ASP CWH to CCI Shipments</h4>
+            <div class="card-popover">
               <p class="app-desc">Track spare part shipments from Central Warehouse (CWH) to CCI with transit status and delivery ageing.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">Logistics</span>
                 <span class="meta-tag">Transit Status</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
 
           <!-- Moto 3: Defective Status -->
           <a class="app-card" href="tools/Motorola_Defective_Tracking/index.html" data-tool-id="moto-defective-tracking" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Motorola.png" alt="Defective Tracking Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">Defective Status Tracker</h4>
+                <span class="card-pill-tag">Defective RMA</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Defective Tracker" onclick="event.preventDefault(); togglePin('moto-defective-tracking');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">Motorola Defective Status Tracker</h4>
+            <div class="card-popover">
               <p class="app-desc">Monitor defective spare parts through ageing analysis, variance tracking, and inventory reconciliation.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">Variance Analysis</span>
                 <span class="meta-tag">Reconciliation</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
 
           <!-- Moto 4: OTD Performance -->
           <a class="app-card" href="tools/Motorola_OTD_Performance_Dashboard/index.html" data-tool-id="moto-otd-dashboard" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Motorola.png" alt="OTD Dashboard Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">OTD Performance Dashboard</h4>
+                <span class="card-pill-tag">On-Time Delivery</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin OTD Dashboard" onclick="event.preventDefault(); togglePin('moto-otd-dashboard');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">Motorola OTD Performance Dashboard</h4>
+            <div class="card-popover">
               <p class="app-desc">Measure On-Time Delivery performance across service centres with KPI scorecards and SLA monitoring.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">KPI Scorecards</span>
                 <span class="meta-tag">SLA Performance</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
 
           <!-- Moto 5: Tech KPI -->
           <a class="app-card" href="tools/Motorola_TechKPI_Dashboard/index.html" data-tool-id="moto-techkpi" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Motorola.png" alt="Tech KPI Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">Technical KPI Dashboard</h4>
+                <span class="card-pill-tag">KPI Analytics</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Technical KPI" onclick="event.preventDefault(); togglePin('moto-techkpi');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">Motorola Technical KPI Dashboard</h4>
+            <div class="card-popover">
               <p class="app-desc">Analyse technical KPI performance across service centres with weekly scorecards and trend insights.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">Weekly Trends</span>
                 <span class="meta-tag">Benchmarking</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
 
           <!-- Moto 6: Parts Status -->
           <a class="app-card" href="tools/Motorola_Parts_Status/index.html" data-tool-id="moto-parts-status" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Motorola.png" alt="Parts Status Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">Parts Status Analysis</h4>
+                <span class="card-pill-tag">Parts Logistics</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Parts Status" onclick="event.preventDefault(); togglePin('moto-parts-status');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">Motorola Open Calls Parts Status Analysis</h4>
+            <div class="card-popover">
               <p class="app-desc">Analyse Open Calls parts status across service centres, with dedicated analytics on parts in other CCI.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">Inventory State</span>
                 <span class="meta-tag">Other CCI</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
 
           <!-- Moto 7: Parts Other CCI -->
           <a class="app-card" href="tools/Motorola_Parts_OtherCCI_Allocation/index.html" data-tool-id="moto-other-cci" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Motorola.png" alt="Other CCI Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">Other CCI Part Allocation</h4>
+                <span class="card-pill-tag">Inter-CCI Stock</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin CCI Allocation Tool" onclick="event.preventDefault(); togglePin('moto-other-cci');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">Motorola Other CCI Part Allocation Tool</h4>
+            <div class="card-popover">
               <p class="app-desc">Identify parts in Other CCI status and allocate available inventory stock excluding reserved items.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">Stock Allocation</span>
                 <span class="meta-tag">Optimization</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
 
           <!-- Moto 8: Dispatch Tracking -->
           <a class="app-card" href="tools/Motorola_CCI-Defective_DispatchTracking/index.html" data-tool-id="moto-dispatch-tracking" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Motorola.png" alt="Dispatch Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">Defective Dispatch Tracker</h4>
+                <span class="card-pill-tag">Dispatch TAT</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Dispatch Tracker" onclick="event.preventDefault(); togglePin('moto-dispatch-tracking');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">Motorola CCI Defective Dispatch Tracker</h4>
+            <div class="card-popover">
               <p class="app-desc">Track CCI defective dispatches with pre-formatted TAT columns and synchronized manual update records.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">TAT Tracking</span>
                 <span class="meta-tag">Manual Sync</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
 
           <!-- Moto 9: Manual DC Template -->
           <a class="app-card" href="tools/Motorola_CCI_to_CWH_Manual_DC/index.html" data-tool-id="moto-manual-dc" data-category="Data Summary / Analytics Tools" data-brand="Motorola">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Motorola.png" alt="Motorola Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">Manual DC Template</h4>
+                <span class="card-pill-tag">Delivery Challan</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Manual DC Template" onclick="event.preventDefault(); togglePin('moto-manual-dc');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">Motorola CCI to CWH Manual DC Template</h4>
+            <div class="card-popover">
               <p class="app-desc">Manual Delivery Challan (DC) generator for offline Motorola returns in specialized customer refund scenarios.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">Challan Formatter</span>
                 <span class="meta-tag">Offline DC</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
@@ -1888,52 +1976,60 @@
         <div class="apps-grid">
           <!-- Apple 1: WorkScan Open Calls -->
           <a class="app-card" href="tools/WorkScan_OpenCalls_Dashboard/index.html" data-tool-id="apple-workscan" data-category="Data Summary / Analytics Tools" data-brand="Apple">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Apple.jpeg" alt="Apple WorkScan Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">WorkScan Open Calls</h4>
+                <span class="card-pill-tag">WorkScan CRM</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin WorkScan Open Calls" onclick="event.preventDefault(); togglePin('apple-workscan');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">WorkScan Open Calls (Apple)</h4>
+            <div class="card-popover">
               <p class="app-desc">Analyze WorkScan CRM open calls in seconds. View ageing buckets, location distribution, and repair status breakdown.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">CRM WorkScan</span>
                 <span class="meta-tag">Ageing Buckets</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
 
           <!-- Apple 2: Pending Part Return -->
           <a class="app-card" href="tools/Apple_Pending_Part_Return_Tracker/index.html" data-tool-id="apple-ppr" data-category="Data Summary / Analytics Tools" data-brand="Apple">
-            <div class="card-top">
+            <div class="card-compact-view">
               <div class="icon-container">
                 <img src="Icon/Apple.jpeg" alt="Apple PPR Icon" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <svg class="fallback-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
               </div>
-              <div class="card-actions-top">
+              <div class="card-title-group">
+                <h4 class="app-name">Part Pending Return</h4>
+                <span class="card-pill-tag">Apple PPR SLA</span>
+              </div>
+              <div class="card-actions-compact">
                 <button class="pin-btn" title="Pin to Quick Access" aria-label="Pin Pending Part Return" onclick="event.preventDefault(); togglePin('apple-ppr');">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                 </button>
-                <div class="card-launch-arrow">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-                </div>
               </div>
             </div>
-            <div class="card-body">
-              <h4 class="app-name">Pending Part Return (Apple)</h4>
+            <div class="card-popover">
               <p class="app-desc">Track pending part returns location-wise, projected transit days to Apple DC, and strict SLA aging escalations.</p>
               <div class="card-footer-tags">
                 <span class="meta-tag">PPR Return</span>
                 <span class="meta-tag">Apple DC SLA</span>
+              </div>
+              <div class="popover-launch-action">
+                <span>Open Tool</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
               </div>
             </div>
           </a>
