@@ -536,6 +536,124 @@
       display: block;
     }
 
+    /* Segmented Sub-tabs for Tables */
+    .table-subtabs {
+      display: inline-flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 30px;
+      gap: 4px;
+      margin-bottom: 1rem;
+      border: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+    }
+
+    body.dark .table-subtabs {
+      background: #0f172a;
+      border-color: #334155;
+    }
+
+    .subtab-btn {
+      background: none;
+      border: none;
+      padding: 0.42rem 0.95rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .subtab-btn:hover {
+      color: #1e293b;
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    body.dark .subtab-btn:hover {
+      color: #f1f5f9;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .subtab-btn.active {
+      background: white;
+      color: #1e293b;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    body.dark .subtab-btn.active {
+      background: #1e293b;
+      color: #f8fafc;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    }
+
+    .subtab-btn.btn-missed.active {
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    body.dark .subtab-btn.btn-missed.active {
+      color: #f87171;
+      border: 1px solid #7f1d1d;
+    }
+
+    .subtab-btn.btn-achieved.active {
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+    }
+
+    body.dark .subtab-btn.btn-achieved.active {
+      color: #4ade80;
+      border: 1px solid #14532d;
+    }
+
+    .subtab-badge {
+      font-size: 0.72rem;
+      padding: 1px 7px;
+      border-radius: 12px;
+      font-weight: 700;
+      background: #e2e8f0;
+      color: #475569;
+      display: inline-block;
+      line-height: 1.4;
+    }
+
+    body.dark .subtab-badge {
+      background: #334155;
+      color: #94a3b8;
+    }
+
+    .subtab-badge.badge-missed {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    body.dark .subtab-badge.badge-missed {
+      background: #450a0a;
+      color: #fca5a5;
+    }
+
+    .subtab-badge.badge-achieved {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    body.dark .subtab-badge.badge-achieved {
+      background: #052e16;
+      color: #86efac;
+    }
+
+    .empty-state-row td {
+      text-align: center;
+      padding: 2.5rem 1rem !important;
+      color: #64748b;
+      font-size: 0.92rem;
+    }
+
     /* KPI Grid */
     .kpi-grid {
       display: grid;
@@ -1149,8 +1267,8 @@
           <h4><i class="fas fa-chart-pie"></i> 3. Analyze Across Tabs</h4>
           <ul>
             <li><strong>Dashboard &amp; Charts:</strong> Review operational KPIs (Total Orders, Avg OTD, ECT, ECT Repair - Part, OTD %, Achieved vs. Missed) and visual breakdowns by stage TAT, repair types, and model warranty volumes.</li>
-            <li><strong>Station OTD Table:</strong> View service center-level delivery compliance against the <strong>95% target</strong> with color-coded status bars (Green &ge; 95%, Amber 80–94%, Red &lt; 80%).</li>
-            <li><strong>Repair TAT - Pivot:</strong> Analyze hourly turnaround time buckets (&le;2hrs, 2–3hrs, 3–4hrs, 4–8hrs, &gt;8hrs) against the <strong>100% target (&le;2hrs)</strong>. Adjust table text size with the <strong>+ / -</strong> controls.</li>
+            <li><strong>Station OTD Table:</strong> View service center-level delivery compliance against the <strong>95% target</strong> with color-coded status bars (Green &ge; 95%, Amber 80–94%, Red &lt; 80%). Use the <strong>Target Not Achieved (&lt; 95%)</strong> sub-tab to instantly isolate stations missing compliance.</li>
+            <li><strong>Repair TAT - Pivot:</strong> Analyze hourly turnaround time buckets (&le;2hrs, 2–3hrs, 3–4hrs, 4–8hrs, &gt;8hrs) against the <strong>100% target (&le;2hrs)</strong>. Use the <strong>Target Not Achieved (&lt; 100%)</strong> sub-tab to view stations with delays, and adjust font size with the <strong>+ / -</strong> controls.</li>
             <li><strong>Data Preview:</strong> Explore the fully enriched raw dataset with multi-column sorting, pagination, and instant search.</li>
           </ul>
 
@@ -1389,6 +1507,11 @@
             <button class="export-btn-small png" id="exportStationPNG"><i class="fas fa-image"></i> Export PNG</button>
           </div>
         </div>
+        <div class="table-subtabs" id="stationSubTabs">
+          <button class="subtab-btn active" data-filter="all" type="button"><i class="fas fa-list"></i> All Stations <span class="subtab-badge" id="stationCountAll">0</span></button>
+          <button class="subtab-btn btn-missed" data-filter="missed" type="button"><i class="fas fa-exclamation-triangle"></i> Target Not Achieved (&lt; 95%) <span class="subtab-badge badge-missed" id="stationCountMissed">0</span></button>
+          <button class="subtab-btn btn-achieved" data-filter="achieved" type="button"><i class="fas fa-check-circle"></i> Target Achieved (&ge; 95%) <span class="subtab-badge badge-achieved" id="stationCountAchieved">0</span></button>
+        </div>
         <div class="station-table-wrapper" id="stationTableWrapper">
           <table id="stationTable">
             <thead>
@@ -1429,6 +1552,11 @@
             <button class="export-btn-small excel" id="exportPivotExcel"><i class="fas fa-file-excel"></i> Export Excel</button>
             <button class="export-btn-small png" id="exportPivotPNG"><i class="fas fa-image"></i> Export PNG</button>
           </div>
+        </div>
+        <div class="table-subtabs" id="pivotSubTabs">
+          <button class="subtab-btn active" data-filter="all" type="button"><i class="fas fa-list"></i> All Stations <span class="subtab-badge" id="pivotCountAll">0</span></button>
+          <button class="subtab-btn btn-missed" data-filter="missed" type="button"><i class="fas fa-exclamation-triangle"></i> Target Not Achieved (&lt; 100%) <span class="subtab-badge badge-missed" id="pivotCountMissed">0</span></button>
+          <button class="subtab-btn btn-achieved" data-filter="achieved" type="button"><i class="fas fa-check-circle"></i> Target Achieved (100%) <span class="subtab-badge badge-achieved" id="pivotCountAchieved">0</span></button>
         </div>
         <div class="station-table-wrapper" id="pivotTableWrapper">
           <table id="pivotTable">
@@ -1481,6 +1609,10 @@
       let currentFilters = { weeks: [], months: [], repairTypes: [], regions: [], warranties: [], models: [] };
       let currentStationData = [];
       let currentPivotData = [];
+      let stationViewFilter = 'all';
+      let pivotViewFilter = 'all';
+      let cachedStationRawArray = [];
+      let cachedPivotRawRows = [];
       let pivotFontSizeRem = 0.90;
 
       const requiredCols = [
@@ -1631,7 +1763,7 @@
         if (stageName.includes('Part Apply TAT')) return 'Part Apply';
         if (stageName.includes('CWH TAT')) return 'CWH';
         if (stageName.includes('Country TAT')) return 'Country';
-        if (stageName.includes('CCI Receive TAT')) return 'CCI Receive';
+        if (stageName.includes('Transit TAT') || stageName.includes('CCI Receive TAT')) return 'Transit';
         if (stageName.includes('ECT Repair - Part') || stageName.includes('Repair TAT')) return 'Repair';
         if (stageName.includes('Escalation')) return 'Escalation';
         if (stageName.includes('Total')) return 'Total';
@@ -1751,7 +1883,7 @@
               { name: 'Part Apply TAT', value: stageApply },
               { name: 'CWH TAT', value: stageAspHub },
               { name: 'Country TAT', value: stageAvailCountry },
-              { name: 'CCI Receive TAT', value: stageCci },
+              { name: 'Transit TAT', value: stageCci },
               { name: 'ECT Repair - Part', value: stageCciToFinish !== null ? stageCciToFinish : stageRepairOverall }
             ];
 
@@ -1799,7 +1931,7 @@
         if (stageApply !== null && !isNaN(stageApply) && stageApply >= 0) delayParts.push(`Part Apply TAT(${stageApply})`);
         if (stageAspHub !== null && !isNaN(stageAspHub) && stageAspHub >= 0) delayParts.push(`CWH TAT(${stageAspHub})`);
         if (stageAvailCountry !== null && !isNaN(stageAvailCountry) && stageAvailCountry >= 0) delayParts.push(`Country TAT(${stageAvailCountry})`);
-        if (stageCci !== null && !isNaN(stageCci) && stageCci >= 0) delayParts.push(`CCI Receive TAT(${stageCci})`);
+        if (stageCci !== null && !isNaN(stageCci) && stageCci >= 0) delayParts.push(`Transit TAT(${stageCci})`);
         if (stageCciToFinish !== null && !isNaN(stageCciToFinish) && stageCciToFinish >= 0) {
           delayParts.push(`ECT Repair - Part(${stageCciToFinish}d / ${formatHoursMinutes(stageCciToFinishHrs)})`);
         } else if (stageRepairOverall !== null && !isNaN(stageRepairOverall) && stageRepairOverall >= 0) {
@@ -2135,15 +2267,66 @@
           return bPct - aPct;
         });
 
-        currentStationData = stationArray;
+        cachedStationRawArray = stationArray;
+        renderStationTable();
+      }
+
+      function renderStationTable() {
+        const TARGET = 95.00;
+
+        let countAll = cachedStationRawArray.length;
+        let countMissed = 0;
+        let countAchieved = 0;
+
+        cachedStationRawArray.forEach(st => {
+          const totalWithOTD = st.achieved + st.missed;
+          const pct = totalWithOTD > 0 ? (st.achieved / totalWithOTD) * 100 : 0;
+          if (totalWithOTD > 0 && pct < TARGET) {
+            countMissed++;
+          } else if (totalWithOTD > 0 && pct >= TARGET) {
+            countAchieved++;
+          }
+        });
+
+        const elAll = document.getElementById('stationCountAll');
+        const elMissed = document.getElementById('stationCountMissed');
+        const elAchieved = document.getElementById('stationCountAchieved');
+        if (elAll) elAll.innerText = countAll;
+        if (elMissed) elMissed.innerText = countMissed;
+        if (elAchieved) elAchieved.innerText = countAchieved;
+
+        let displayStations = cachedStationRawArray;
+        if (stationViewFilter === 'missed') {
+          displayStations = cachedStationRawArray.filter(st => {
+            const totalWithOTD = st.achieved + st.missed;
+            const pct = totalWithOTD > 0 ? (st.achieved / totalWithOTD) * 100 : 0;
+            return totalWithOTD > 0 && pct < TARGET;
+          });
+        } else if (stationViewFilter === 'achieved') {
+          displayStations = cachedStationRawArray.filter(st => {
+            const totalWithOTD = st.achieved + st.missed;
+            const pct = totalWithOTD > 0 ? (st.achieved / totalWithOTD) * 100 : 0;
+            return totalWithOTD > 0 && pct >= TARGET;
+          });
+        }
+
+        currentStationData = displayStations;
 
         const tbody = document.getElementById('stationTableBody');
         tbody.innerHTML = '';
 
-        let currentRegion = '';
-        const TARGET = 95.00;
+        if (displayStations.length === 0) {
+          const label = stationViewFilter === 'missed' ? 'Target Not Achieved (< 95%)' : (stationViewFilter === 'achieved' ? 'Target Achieved (≥ 95%)' : 'All Stations');
+          const row = document.createElement('tr');
+          row.className = 'empty-state-row';
+          row.innerHTML = `<td colspan="11"><i class="fas fa-check-circle" style="color:#22c55e; margin-right:8px; font-size:1.1rem;"></i> No stations found under <strong>${label}</strong>.</td>`;
+          tbody.appendChild(row);
+          return;
+        }
 
-        stationArray.forEach(st => {
+        let currentRegion = '';
+
+        displayStations.forEach(st => {
           if (st.region !== currentRegion) {
             currentRegion = st.region;
             const headerRow = document.createElement('tr');
@@ -2181,24 +2364,24 @@
 
           const row = document.createElement('tr');
           row.innerHTML = `
-          <td>${st.region}</td>
-          <td><strong>${st.code}</strong></td>
-          <td>${st.name}</td>
-          <td>${st.city || '-'}</td>
-          <td>${st.state || '-'}</td>
-          <td>${st.total}</td>
-          <td style="color:#22c55e;">${st.achieved}</td>
-          <td style="color:#ef4444;">${st.missed}</td>
-          <td><strong>${pctDisplay}</strong></td>
-          <td>${avgEctPartDisplay}</td>
-          <td>
-            <div style="width:100%; background:#e9edf2; border-radius:10px; overflow:hidden;">
-              <div class="station-otd-bar ${barClass}" style="width:${Math.min(pct, 100)}%; background:${barColor};">
-                ${pct >= 30 ? pctDisplay : ''}
+            <td>${st.region}</td>
+            <td><strong>${st.code}</strong></td>
+            <td>${st.name}</td>
+            <td>${st.city || '-'}</td>
+            <td>${st.state || '-'}</td>
+            <td>${st.total}</td>
+            <td style="color:#22c55e;">${st.achieved}</td>
+            <td style="color:#ef4444;">${st.missed}</td>
+            <td><strong>${pctDisplay}</strong></td>
+            <td>${avgEctPartDisplay}</td>
+            <td>
+              <div style="width:100%; background:#e9edf2; border-radius:10px; overflow:hidden;">
+                <div class="station-otd-bar ${barClass}" style="width:${Math.min(pct, 100)}%; background:${barColor};">
+                  ${pct >= 30 ? pctDisplay : ''}
+                </div>
               </div>
-            </div>
-          </td>
-        `;
+            </td>
+          `;
           tbody.appendChild(row);
         });
       }
@@ -2248,14 +2431,53 @@
           return a.code.localeCompare(b.code);
         });
 
-        currentPivotData = rows;
+        cachedPivotRawRows = rows;
+        renderPivotTable();
+      }
+
+      function renderPivotTable() {
+        let countAll = cachedPivotRawRows.length;
+        let countMissed = 0;
+        let countAchieved = 0;
+
+        cachedPivotRawRows.forEach(r => {
+          const countUnder2hrs = r['<=2hrs'] !== undefined ? r['<=2hrs'] : (r['<2hrs'] || 0);
+          const pct2hrs = r.total > 0 ? (countUnder2hrs / r.total) * 100 : 0;
+          if (r.total > 0 && pct2hrs < 100.00) {
+            countMissed++;
+          } else if (r.total > 0 && pct2hrs >= 100.00) {
+            countAchieved++;
+          }
+        });
+
+        const elAll = document.getElementById('pivotCountAll');
+        const elMissed = document.getElementById('pivotCountMissed');
+        const elAchieved = document.getElementById('pivotCountAchieved');
+        if (elAll) elAll.innerText = countAll;
+        if (elMissed) elMissed.innerText = countMissed;
+        if (elAchieved) elAchieved.innerText = countAchieved;
+
+        let displayRows = cachedPivotRawRows;
+        if (pivotViewFilter === 'missed') {
+          displayRows = cachedPivotRawRows.filter(r => {
+            const countUnder2hrs = r['<=2hrs'] !== undefined ? r['<=2hrs'] : (r['<2hrs'] || 0);
+            const pct2hrs = r.total > 0 ? (countUnder2hrs / r.total) * 100 : 0;
+            return r.total > 0 && pct2hrs < 100.00;
+          });
+        } else if (pivotViewFilter === 'achieved') {
+          displayRows = cachedPivotRawRows.filter(r => {
+            const countUnder2hrs = r['<=2hrs'] !== undefined ? r['<=2hrs'] : (r['<2hrs'] || 0);
+            const pct2hrs = r.total > 0 ? (countUnder2hrs / r.total) * 100 : 0;
+            return r.total > 0 && pct2hrs >= 100.00;
+          });
+        }
+
+        currentPivotData = displayRows;
 
         const tbody = document.getElementById('pivotTableBody');
         const tfoot = document.getElementById('pivotTableFoot');
         tbody.innerHTML = '';
         tfoot.innerHTML = '';
-
-        const totals = { '<=2hrs': 0, '2-3hrs': 0, '3-4hrs': 0, '4-8hrs': 0, '>8hrs': 0, total: 0 };
 
         function makeBar(pct, target) {
           let barClass = '';
@@ -2280,9 +2502,19 @@
           `;
         }
 
+        if (displayRows.length === 0) {
+          const label = pivotViewFilter === 'missed' ? 'Target Not Achieved (< 100%)' : (pivotViewFilter === 'achieved' ? 'Target Achieved (100%)' : 'All Stations');
+          const row = document.createElement('tr');
+          row.className = 'empty-state-row';
+          row.innerHTML = `<td colspan="12"><i class="fas fa-check-circle" style="color:#22c55e; margin-right:8px; font-size:1.1rem;"></i> No stations found under <strong>${label}</strong>.</td>`;
+          tbody.appendChild(row);
+          return;
+        }
+
+        const totals = { '<=2hrs': 0, '2-3hrs': 0, '3-4hrs': 0, '4-8hrs': 0, '>8hrs': 0, total: 0 };
         let currentRegion = '';
 
-        rows.forEach(r => {
+        displayRows.forEach(r => {
           if (r.region !== currentRegion) {
             currentRegion = r.region;
             const headerRow = document.createElement('tr');
@@ -2323,7 +2555,7 @@
 
         tfoot.innerHTML = `
           <tr class="pivot-total-row">
-            <td colspan="5">Grand Total</td>
+            <td colspan="5">Grand Total (${displayRows.length} Stations)</td>
             <td class="num-col b-green">${totals['<=2hrs']}</td>
             <td class="num-col b-amber">${totals['2-3hrs']}</td>
             <td class="num-col b-amber">${totals['3-4hrs']}</td>
@@ -2373,7 +2605,8 @@
         XLSX.utils.book_append_sheet(wb, ws, 'Station_OTD');
         const now = new Date();
         const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '') + '_' + now.toTimeString().slice(0, 5).replace(':', '');
-        saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/octet-stream' }), `Station_OTD_Analysis_${dateStr}.xlsx`);
+        const filterSuffix = stationViewFilter === 'missed' ? '_TargetNotAchieved' : (stationViewFilter === 'achieved' ? '_TargetAchieved' : '');
+        saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/octet-stream' }), `Station_OTD_Analysis${filterSuffix}_${dateStr}.xlsx`);
       }
 
       function exportStationPNG() {
@@ -2385,8 +2618,9 @@
           backgroundColor: document.body.classList.contains('dark') ? '#1e293b' : '#ffffff'
         }).then(canvas => {
           wrapper.style.maxHeight = originalHeight;
+          const filterSuffix = stationViewFilter === 'missed' ? '_TargetNotAchieved' : (stationViewFilter === 'achieved' ? '_TargetAchieved' : '');
           const link = document.createElement('a');
-          link.download = `Station_OTD_Analysis_${new Date().toISOString().slice(0, 10)}.png`;
+          link.download = `Station_OTD_Analysis${filterSuffix}_${new Date().toISOString().slice(0, 10)}.png`;
           link.href = canvas.toDataURL('image/png');
           link.click();
         }).catch(err => {
@@ -2414,7 +2648,8 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'RepairTAT_Pivot');
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/octet-stream' }), `Repair_TAT_Pivot_${dateStr}.xlsx`);
+        const filterSuffix = pivotViewFilter === 'missed' ? '_TargetNotAchieved' : (pivotViewFilter === 'achieved' ? '_TargetAchieved' : '');
+        saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/octet-stream' }), `Repair_TAT_Pivot${filterSuffix}_${dateStr}.xlsx`);
       }
 
       function exportPivotPNG() {
@@ -2426,8 +2661,9 @@
           backgroundColor: document.body.classList.contains('dark') ? '#1e293b' : '#ffffff'
         }).then(canvas => {
           wrapper.style.maxHeight = originalHeight;
+          const filterSuffix = pivotViewFilter === 'missed' ? '_TargetNotAchieved' : (pivotViewFilter === 'achieved' ? '_TargetAchieved' : '');
           const link = document.createElement('a');
-          link.download = `Repair_TAT_Pivot_${new Date().toISOString().slice(0, 10)}.png`;
+          link.download = `Repair_TAT_Pivot${filterSuffix}_${new Date().toISOString().slice(0, 10)}.png`;
           link.href = canvas.toDataURL('image/png');
           link.click();
         }).catch(err => {
@@ -2453,7 +2689,7 @@
         chartInstances.otd = new Chart(ctx1, { type: 'bar', data: { labels: ranges, datasets: [{ label: 'Orders', data: bins, backgroundColor: '#3b82f6' }] }, options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function (context) { const pct = totalOrders > 0 ? ((context.parsed.y / totalOrders) * 100).toFixed(1) : 0; return `${context.parsed.y} orders (${pct}%)`; } } } }, scales: { y: { beginAtZero: true } } } });
 
         const stageKeys = ['_StageApply', '_StageAspHub', '_StageAvailCountry', '_StageCci', '_StageCciToFinish'];
-        const stageLabels = ['Part Apply TAT', 'CWH TAT', 'Country TAT', 'CCI Receive TAT', 'ECT Repair - Part'];
+        const stageLabels = ['Part Apply TAT', 'CWH TAT', 'Country TAT', 'Transit TAT', 'ECT Repair - Part'];
         const stageAvgs = stageKeys.map(k => {
           const vals = data.map(r => r[k]).filter(v => v !== null && !isNaN(v));
           return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
@@ -2628,7 +2864,7 @@
           'Escalation Create Time 2', 'Escalation Approval/Rejection Time 2',
           'Escalation Create Time 3', 'Escalation Approval/Rejection Time 3',
           'OTD (days)', 'OTD Flag', 'Most Impact Category', 'Most Impact for OTD', 'Delay Analysis',
-          'Part Apply TAT', 'CWH TAT', 'Country TAT', 'CCI Receive TAT',
+          'Part Apply TAT', 'CWH TAT', 'Country TAT', 'Transit TAT',
           'ECT Repair - Part TAT (days)', 'ECT Repair - Part TAT (time)',
           'Repair TAT (days)', 'Repair TAT (time)', 'Repair TAT Bucket',
           'Total Esc Days', 'Esc1 (d)', 'Esc2 (d)', 'Esc3 (d)'
@@ -2716,6 +2952,26 @@
         });
       });
 
+      // Station Table Sub-tabs Logic
+      document.querySelectorAll('#stationSubTabs .subtab-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('#stationSubTabs .subtab-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          stationViewFilter = this.getAttribute('data-filter');
+          renderStationTable();
+        });
+      });
+
+      // Pivot Table Sub-tabs Logic
+      document.querySelectorAll('#pivotSubTabs .subtab-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('#pivotSubTabs .subtab-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          pivotViewFilter = this.getAttribute('data-filter');
+          renderPivotTable();
+        });
+      });
+
       // ---------- Export main table ----------
       function exportFiltered() {
         const rows = dataTable ? dataTable.rows({ search: 'applied' }).data() : [];
@@ -2737,7 +2993,7 @@
           'Escalation Create Time 2', 'Escalation Approval/Rejection Time 2',
           'Escalation Create Time 3', 'Escalation Approval/Rejection Time 3',
           'OTD (days)', 'OTD Flag', 'Most Impact Category', 'Most Impact for OTD', 'Delay Analysis',
-          'Part Apply TAT', 'CWH TAT', 'Country TAT', 'CCI Receive TAT',
+          'Part Apply TAT', 'CWH TAT', 'Country TAT', 'Transit TAT',
           'ECT Repair - Part TAT (days)', 'ECT Repair - Part TAT (formatted time)',
           'Repair TAT (days)', 'Repair TAT (formatted time)', 'Repair TAT Bucket',
           'Total Escalation Days', 'Escalation 1 Days', 'Escalation 2 Days', 'Escalation 3 Days'
