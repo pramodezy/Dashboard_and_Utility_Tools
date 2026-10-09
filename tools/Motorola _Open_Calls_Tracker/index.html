@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ServiceOps CRM — Operations Telemetry Console</title>
+    <title>Service Operations Dashboard — Motorola Open Calls Tracker</title>
     <!-- Tailwind CSS v4 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- SheetJS for In-Browser File Ingestion & Multi-Sheet XLSX Export -->
@@ -176,25 +176,24 @@
 <body class="flex flex-col min-h-screen">
 
     <!-- Top Command Header -->
-    <header class="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-40">
+    <header class="bg-blue-900 border-b border-blue-950 text-white sticky top-0 z-40 shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-sm">
+                <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-sm shadow-xs">
                     ⚡
                 </div>
                 <div>
-                    <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-2">
-                        ServiceOps Telemetry
-                        <span class="text-[10px] font-mono-data bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">Client Engine</span>
+                    <h1 class="text-base font-bold tracking-wide text-white">
+                        Service Operations Dashboard
                     </h1>
                 </div>
             </div>
 
-            <!-- Ingestion Dock Meta -->
+            <!-- Status Meta -->
             <div class="flex items-center gap-4 text-xs">
-                <div id="statusBadge" class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
-                    <span class="w-2 h-2 rounded-full bg-amber-400" id="statusPulse"></span>
-                    <span class="text-slate-300 font-mono-data text-[11px]" id="statusText">Awaiting File Ingestion</span>
+                <div id="statusBadge" class="flex items-center gap-2 bg-blue-800/90 px-3.5 py-1.5 rounded-full border border-blue-700/80">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400" id="statusPulse"></span>
+                    <span class="text-blue-100 font-mono-data text-xs" id="statusText">Offline Processing Mode</span>
                 </div>
             </div>
         </div>
@@ -203,39 +202,28 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 flex-1 w-full">
 
         <!-- Stage 0: File Ingestion Station -->
-        <section class="crm-panel p-5 bg-white space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div>
-                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Workspace Ingestion Dock</h2>
-                    <p class="text-xs text-slate-500">Provide ticket exports and region mapping to build operational queues.</p>
-                </div>
-                <div class="flex items-center gap-2 text-xs text-slate-400 font-mono-data">
-                    <span>SheetJS Memory Engine</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1.5">
-                    <label class="block text-xs font-semibold text-slate-700 font-mono-data uppercase">
-                        1. Open Calls Report [.XLSX, .CSV]
+        <section class="crm-panel p-6 bg-white space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-700">
+                        1. Upload Open Calls Excel/CSV
                     </label>
                     <input type="file" id="openCallsFile" accept=".xlsx, .xls, .csv" 
                            class="block w-full text-xs text-slate-500 border border-slate-200 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600">
                 </div>
 
-                <div class="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1.5">
-                    <label class="block text-xs font-semibold text-slate-700 font-mono-data uppercase">
-                        2. Region Mapping [.XLSX, .CSV]
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-700">
+                        2. Upload Region Mapping Excel/CSV
                     </label>
                     <input type="file" id="regionMappingFile" accept=".xlsx, .xls, .csv" 
                            class="block w-full text-xs text-slate-500 border border-slate-200 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600">
                 </div>
             </div>
 
-            <div class="flex justify-end pt-1">
-                <button id="processBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 px-5 rounded-lg shadow-sm transition flex items-center gap-2 cursor-pointer">
-                    <span>Synchronize & Process Datasets</span>
-                    <span>→</span>
+            <div class="flex justify-end pt-2">
+                <button id="processBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 px-6 rounded-lg shadow-sm transition flex items-center gap-2 cursor-pointer">
+                    <span>⚡ Process Data & Generate Dashboards</span>
                 </button>
             </div>
         </section>
@@ -243,7 +231,95 @@
         <!-- Dynamic Operations Viewport (Revealed upon compilation) -->
         <div id="dashboardWrapper" class="hidden space-y-6">
 
-            <!-- Responsibility Filter Strip -->
+            <!-- 🔍 Multi-Select Filters Section -->
+            <section class="crm-panel p-5 bg-white space-y-3">
+                <h2 class="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <span>🔍 Multi-Select Filters</span>
+                </h2>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 items-end">
+                    <div id="filter-Region" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Region</label>
+                        <button type="button" class="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-left text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer shadow-xs">All Selected ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Service_Order_Status" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1 truncate" title="Service Order Status">Service Order Status</label>
+                        <button type="button" class="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-left text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer shadow-xs">All Selected ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Parts_Status" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Parts Status</label>
+                        <button type="button" class="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-left text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer shadow-xs">All Selected ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-DOA_Status" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">DOA Status</label>
+                        <button type="button" class="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-left text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer shadow-xs">All Selected ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Warranty_Status" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Warranty Status</label>
+                        <button type="button" class="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-left text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer shadow-xs">All Selected ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Open_Call_Ageing_Bucket" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1 truncate" title="Open Call Ageing Bucket">Open Call Ageing Bucket</label>
+                        <button type="button" class="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-left text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer shadow-xs">All Selected ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div id="filter-Service_Type" class="relative filter-dropdown">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Service Type</label>
+                        <button type="button" class="w-full bg-white border border-slate-300 rounded-md px-2.5 py-1.5 text-left text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer shadow-xs">All Selected ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                    </div>
+                    <div>
+                        <button id="resetFiltersBtn" type="button" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs px-3 py-2 rounded-md shadow-sm transition cursor-pointer flex items-center justify-center">
+                            Reset Filters
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7 Core CRM KPI Micro-Cards Strip -->
+            <section class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                <div class="crm-panel p-3.5 bg-blue-50/70 border-blue-200/80">
+                    <span class="text-[10px] font-mono-data uppercase text-blue-700 font-bold tracking-wider">TOTAL OPEN CALLS</span>
+                    <p id="kpi-total-open" class="text-2xl font-black font-mono-data text-blue-900 mt-1">0</p>
+                </div>
+
+                <div class="crm-panel p-3.5 bg-amber-50/70 border-amber-200/80">
+                    <span class="text-[10px] font-mono-data uppercase text-amber-700 font-bold tracking-wider">WAITING FOR PICKUP</span>
+                    <p id="kpi-waiting-pickup" class="text-2xl font-black font-mono-data text-amber-900 mt-1">0</p>
+                </div>
+
+                <div class="crm-panel p-3.5 bg-emerald-50/70 border-emerald-200/80">
+                    <span class="text-[10px] font-mono-data uppercase text-emerald-700 font-bold tracking-wider">ACTIONABLE FOR CCI</span>
+                    <p id="kpi-actionable-cci" class="text-2xl font-black font-mono-data text-emerald-900 mt-1">0</p>
+                </div>
+
+                <div class="crm-panel p-3.5 bg-purple-50/70 border-purple-200/80">
+                    <span class="text-[10px] font-mono-data uppercase text-purple-700 font-bold tracking-wider">ASP CWH ACTIONABLE</span>
+                    <p id="kpi-asp-cwh" class="text-2xl font-black font-mono-data text-purple-900 mt-1">0</p>
+                </div>
+
+                <div class="crm-panel p-3.5 bg-indigo-50/70 border-indigo-200/80">
+                    <span class="text-[10px] font-mono-data uppercase text-indigo-700 font-bold tracking-wider">IN TRANSIT TO CCI</span>
+                    <p id="kpi-transit-cci" class="text-2xl font-black font-mono-data text-indigo-900 mt-1">0</p>
+                </div>
+
+                <div class="crm-panel p-3.5 bg-rose-50/70 border-rose-200/80">
+                    <span class="text-[10px] font-mono-data uppercase text-rose-700 font-bold tracking-wider">PARTS IN SERV CENTER</span>
+                    <p id="kpi-parts-sc" class="text-2xl font-black font-mono-data text-rose-900 mt-1">0</p>
+                </div>
+
+                <div class="crm-panel p-3.5 bg-teal-50/70 border-teal-200/80">
+                    <span class="text-[10px] font-mono-data uppercase text-teal-700 font-bold tracking-wider">MOTOROLA ACTIONABLE</span>
+                    <p id="kpi-motorola" class="text-2xl font-black font-mono-data text-teal-900 mt-1">0</p>
+                </div>
+            </section>
+
+            <!-- Quick Queue Responsibility Filter & Workbook Export Strip -->
             <section class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-bold text-slate-500 font-mono-data uppercase">Quick Queue:</span>
@@ -251,69 +327,21 @@
                         All Channels (<span id="queue-all-count">0</span>)
                     </button>
                     <button class="queue-btn px-3 py-1 rounded-md text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer" data-actionable="CCI">
-                        CCI Centers (<span id="queue-cci-count">0</span>)
+                        Actionable for CCI (<span id="queue-cci-count">0</span>)
                     </button>
                     <button class="queue-btn px-3 py-1 rounded-md text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer" data-actionable="CWH">
-                        CWH Hubs (<span id="queue-cwh-count">0</span>)
+                        ASP CWH Actionable (<span id="queue-cwh-count">0</span>)
                     </button>
                     <button class="queue-btn px-3 py-1 rounded-md text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer" data-actionable="Motorola">
-                        Motorola Queue (<span id="queue-moto-count">0</span>)
+                        Motorola Actionable (<span id="queue-moto-count">0</span>)
                     </button>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button id="resetFiltersBtn" class="text-xs font-mono-data text-slate-500 hover:text-blue-600 cursor-pointer">
-                        Reset Slicers ↺
-                    </button>
                     <button id="exportCsvBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-xs transition flex items-center gap-1.5 cursor-pointer">
-                        <span>Export 4-Sheet Workbook</span>
+                        <span>📦 Export 4-Sheet Workbook</span>
                         <span>↓</span>
                     </button>
-                </div>
-            </section>
-
-            <!-- 7 Core CRM KPI Micro-Cards Strip -->
-            <section class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-                <div class="crm-panel p-3.5 bg-blue-50/50 border-blue-200/60">
-                    <span class="text-[10px] font-mono-data uppercase text-blue-700 font-bold tracking-wider">Total Volume</span>
-                    <p id="kpi-total-open" class="text-xl font-bold font-mono-data text-blue-950 mt-1">0</p>
-                    <span class="text-[10px] text-blue-600">Active tickets</span>
-                </div>
-
-                <div class="crm-panel p-3.5">
-                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">RFPU Pickup</span>
-                    <p id="kpi-waiting-pickup" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
-                    <span class="text-[10px] text-amber-600 font-medium">Customer alert</span>
-                </div>
-
-                <div class="crm-panel p-3.5">
-                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">CCI Bench</span>
-                    <p id="kpi-actionable-cci" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
-                    <span class="text-[10px] text-emerald-600 font-medium">In diagnosis</span>
-                </div>
-
-                <div class="crm-panel p-3.5">
-                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">ASP CWH Pool</span>
-                    <p id="kpi-asp-cwh" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
-                    <span class="text-[10px] text-purple-600 font-medium">Hub dispatch</span>
-                </div>
-
-                <div class="crm-panel p-3.5">
-                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">In Transit</span>
-                    <p id="kpi-transit-cci" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
-                    <span class="text-[10px] text-indigo-600 font-medium">En route to CCI</span>
-                </div>
-
-                <div class="crm-panel p-3.5">
-                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">Parts in Center</span>
-                    <p id="kpi-parts-sc" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
-                    <span class="text-[10px] text-rose-600 font-medium">Ready for repair</span>
-                </div>
-
-                <div class="crm-panel p-3.5">
-                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">Motorola Esc</span>
-                    <p id="kpi-motorola" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
-                    <span class="text-[10px] text-teal-600 font-medium">OEM hold</span>
                 </div>
             </section>
 
@@ -357,52 +385,6 @@
                     </div>
                     <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                         <div id="slaComplianceBar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Global Parameter Slicers Drawer -->
-            <section class="crm-panel p-4 space-y-3">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 font-mono-data">Facet Slicers</h3>
-                    <span class="text-[11px] text-slate-400 font-mono-data">Multi-select dimension filters</span>
-                </div>
-
-                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-                    <div id="filter-Region" class="relative filter-dropdown">
-                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Region</label>
-                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
-                    </div>
-                    <div id="filter-Actionable_To" class="relative filter-dropdown">
-                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Actionable</label>
-                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
-                    </div>
-                    <div id="filter-Current_Status_-_Open_Call" class="relative filter-dropdown">
-                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Current Status</label>
-                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
-                    </div>
-                    <div id="filter-Service_Order_Status" class="relative filter-dropdown">
-                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">SO Status</label>
-                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
-                    </div>
-                    <div id="filter-Parts_Status" class="relative filter-dropdown">
-                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Parts Status</label>
-                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
-                    </div>
-                    <div id="filter-Open_Call_Ageing_Bucket" class="relative filter-dropdown">
-                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Ageing Bucket</label>
-                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
-                    </div>
-                    <div id="filter-Service_Type" class="relative filter-dropdown">
-                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Service Type</label>
-                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
                     </div>
                 </div>
             </section>
