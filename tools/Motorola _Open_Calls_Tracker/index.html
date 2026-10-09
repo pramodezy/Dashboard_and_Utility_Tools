@@ -3,282 +3,465 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServiceOps CRM — Operations Telemetry Console</title>
+    <!-- Tailwind CSS v4 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- SheetJS for In-Browser File Ingestion & Multi-Sheet XLSX Export -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Modern Typography -->
+
+    <!-- Google Fonts Stack: Inter for clean UI, JetBrains Mono for coordinates & IDs -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        :root {
+            --app-bg: #F8FAFC;
+            --surface: #FFFFFF;
+            --border: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
+            --accent: #2563EB;
+        }
+
+        body {
+            background-color: var(--app-bg);
+            color: var(--text-primary);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .font-mono-data {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* CRM Elevation Styles */
+        .crm-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Pivot Viewport & Sticky Controls */
+        .pivot-viewport {
+            position: relative;
+            overflow: auto;
+            max-height: 600px;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: #FFFFFF;
+        }
+        
+        .pivot-viewport table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+
+        .pivot-viewport th, 
+        .pivot-viewport td,
+        #masterTable th,
+        #masterTable td {
+            font-size: 0.8125rem;
+            padding: 8px 12px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        
+        .pivot-viewport thead th,
+        #masterTable thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #F8FAFC;
+            color: #475569;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.7rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .pivot-viewport .sticky-col-1 {
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            background-color: #FFFFFF;
+            min-width: 220px;
+            max-width: 320px;
+            border-right: 2px solid #E2E8F0;
+        }
+        
+        .pivot-viewport .sticky-col-1-header {
+            position: sticky;
+            left: 0;
+            z-index: 15;
+            background-color: #F8FAFC;
+            color: #0F172A;
+            min-width: 220px;
+            max-width: 320px;
+            border-right: 2px solid #CBD5E1;
+        }
+        
+        .pivot-viewport .grand-total-col {
+            background-color: #F8FAFC !important;
+            font-weight: 700;
+            color: #2563EB !important;
+            font-family: 'JetBrains Mono', monospace;
+            border-left: 2px solid #E2E8F0;
+        }
+        
+        .pivot-viewport .grand-total-row {
+            background-color: #F1F5F9 !important;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pivot-viewport .grand-total-row td {
+            border-top: 2px solid #CBD5E1;
+            color: #0F172A !important;
+        }
+        
+        .pivot-viewport .parent-row {
+            background-color: #F8FAFC !important;
+            font-weight: 600;
+            color: #0F172A;
+            cursor: pointer;
+        }
+
+        .pivot-viewport .sub-parent-row {
+            background-color: #FFFFFF !important;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
+        }
+        
+        .pivot-viewport .child-row {
+            padding-left: 24px !important;
+        }
+
+        .pivot-viewport .deep-child-row {
+            padding-left: 40px !important;
+            color: #64748B;
+        }
+
+        /* Dropdown popups */
         .custom-dropdown-content {
             display: none;
         }
         .custom-dropdown-content.show {
             display: block;
         }
-        th, td {
-            font-size: 0.85rem;
-            padding: 6px 12px;
-        }
-        
-        /* Sticky header and columns for pivot tables */
-        .pivot-table-wrapper {
-            position: relative;
-            overflow: auto;
-            max-height: 600px;
-        }
-        
-        .pivot-table-wrapper table {
-            border-collapse: separate;
-            border-spacing: 0;
-            width: 100%;
-        }
-        
-        .pivot-table-wrapper thead th {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background-color: #f3f4f6;
-        }
-        
-        .pivot-table-wrapper .sticky-col-1 {
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            background-color: white;
-            min-width: 160px;
-            max-width: 250px;
-        }
-        
-        .pivot-table-wrapper .sticky-col-1-header {
-            position: sticky;
-            left: 0;
-            z-index: 15;
-            background-color: #f3f4f6;
-            min-width: 160px;
-            max-width: 250px;
-        }
-        
-        .pivot-table-wrapper .grand-total-col {
-            background-color: #dbeafe !important;
-            font-weight: 900;
-        }
-        
-        .pivot-table-wrapper .grand-total-row {
-            background-color: #e5e7eb !important;
-            font-weight: 900;
-        }
-        
-        .pivot-table-wrapper .parent-row {
-            background-color: #f3f4f6 !important;
-            font-weight: 700;
-            cursor: pointer;
-        }
 
-        .pivot-table-wrapper .sub-parent-row {
-            background-color: #f9fafb !important;
+        /* File Upload input button styling */
+        input[type="file"]::file-selector-button {
+            border-radius: 0.375rem !important;
+            border: 1px solid #CBD5E1 !important;
+            background: #FFFFFF !important;
+            color: #0F172A !important;
             font-weight: 600;
+            font-size: 0.75rem;
+            padding: 6px 12px;
             cursor: pointer;
+            transition: all 0.15s ease;
         }
-        
-        .pivot-table-wrapper .child-row {
-            padding-left: 24px !important;
-            font-weight: 400;
-        }
-
-        .pivot-table-wrapper .deep-child-row {
-            padding-left: 36px !important;
-            font-weight: 400;
-        }
-        
-        .pivot-table-wrapper .alternate-row {
-            background-color: #fafafa;
-        }
-        
-        .pivot-table-wrapper .alternate-row-even {
-            background-color: #ffffff;
-        }
-        
-        .pivot-table-wrapper .zero-value {
-            color: #d1d5db;
-        }
-        
-        .pivot-table-wrapper .parent-total {
-            font-weight: 700;
+        input[type="file"]::file-selector-button:hover {
+            border-color: #2563EB !important;
+            color: #2563EB !important;
+            background-color: #EFF6FF !important;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body class="flex flex-col min-h-screen">
 
-    <!-- Unified Enterprise Top Navigation -->
-    <div class="bg-slate-950 text-slate-400 px-6 h-12 flex items-center justify-between border-b border-white/10 sticky top-0 z-50 text-xs">
-        <div class="flex items-center gap-3">
-            <a href="../../index.html" class="inline-flex items-center gap-1.5 text-slate-200 hover:text-white px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 transition font-semibold">
-                <span>&larr;</span>
-                <span>Workspace Hub</span>
-            </a>
-            <span class="text-white/20">/</span>
-            <div class="flex items-center gap-2">
-                <span class="text-white font-bold">Motorola Open Calls Tracker</span>
-                <span class="font-mono text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">PRO MAX</span>
+    <!-- Top Command Header -->
+    <header class="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-sm">
+                    ⚡
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-2">
+                        ServiceOps Telemetry
+                        <span class="text-[10px] font-mono-data bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">Client Engine</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Ingestion Dock Meta -->
+            <div class="flex items-center gap-4 text-xs">
+                <div id="statusBadge" class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700">
+                    <span class="w-2 h-2 rounded-full bg-amber-400" id="statusPulse"></span>
+                    <span class="text-slate-300 font-mono-data text-[11px]" id="statusText">Awaiting File Ingestion</span>
+                </div>
             </div>
         </div>
-        <div class="hidden sm:flex items-center gap-3">
-            <span class="font-mono text-[11px] bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                100% Client-Side Engine
-            </span>
-        </div>
-    </div>
-
-    <header class="bg-blue-900 text-white px-6 py-4 shadow-md flex justify-between items-center">
-        <h1 class="text-xl font-bold tracking-wide">Service Operations Dashboard</h1>
-        <span class="text-sm bg-blue-800 px-3 py-1 rounded-full border border-blue-700">Offline Processing Mode</span>
     </header>
 
-    <main class="p-6 max-w-[1600px] mx-auto space-y-6">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 flex-1 w-full">
 
-        <section class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">1. Upload Open Calls Excel/CSV</label>
-                <input type="file" id="openCallsFile" accept=".xlsx, .xls, .csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md p-1 bg-gray-50">
+        <!-- Stage 0: File Ingestion Station -->
+        <section class="crm-panel p-5 bg-white space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Workspace Ingestion Dock</h2>
+                    <p class="text-xs text-slate-500">Provide ticket exports and region mapping to build operational queues.</p>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-slate-400 font-mono-data">
+                    <span>SheetJS Memory Engine</span>
+                </div>
             </div>
-            <div class="space-y-2">
-                <label class="block text-sm font-semibold text-gray-700">2. Upload Region Mapping Excel/CSV</label>
-                <input type="file" id="regionMappingFile" accept=".xlsx, .xls, .csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 border border-gray-300 rounded-md p-1 bg-gray-50">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1.5">
+                    <label class="block text-xs font-semibold text-slate-700 font-mono-data uppercase">
+                        1. Open Calls Report [.XLSX, .CSV]
+                    </label>
+                    <input type="file" id="openCallsFile" accept=".xlsx, .xls, .csv" 
+                           class="block w-full text-xs text-slate-500 border border-slate-200 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600">
+                </div>
+
+                <div class="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1.5">
+                    <label class="block text-xs font-semibold text-slate-700 font-mono-data uppercase">
+                        2. Region Mapping [.XLSX, .CSV]
+                    </label>
+                    <input type="file" id="regionMappingFile" accept=".xlsx, .xls, .csv" 
+                           class="block w-full text-xs text-slate-500 border border-slate-200 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600">
+                </div>
             </div>
-            <div class="md:col-span-2 flex justify-end">
-                <button id="processBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2.5 rounded-lg transition duration-200 shadow-sm flex items-center gap-2 cursor-pointer">
-                    <span>⚡ Process Data & Generate Dashboards</span>
+
+            <div class="flex justify-end pt-1">
+                <button id="processBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 px-5 rounded-lg shadow-sm transition flex items-center gap-2 cursor-pointer">
+                    <span>Synchronize & Process Datasets</span>
+                    <span>→</span>
                 </button>
             </div>
         </section>
 
+        <!-- Dynamic Operations Viewport (Revealed upon compilation) -->
         <div id="dashboardWrapper" class="hidden space-y-6">
 
-            <section class="bg-white p-6 rounded-xl shadow-xs border border-gray-200">
-                <h2 class="text-md font-bold text-gray-700 mb-4 flex items-center gap-2">
-                    <span>🔍 Multi-Select Filters</span>
-                </h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            <!-- Responsibility Filter Strip -->
+            <section class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-500 font-mono-data uppercase">Quick Queue:</span>
+                    <button class="queue-btn active px-3 py-1 rounded-md text-xs font-semibold bg-slate-900 text-white cursor-pointer" data-actionable="ALL">
+                        All Channels (<span id="queue-all-count">0</span>)
+                    </button>
+                    <button class="queue-btn px-3 py-1 rounded-md text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer" data-actionable="CCI">
+                        CCI Centers (<span id="queue-cci-count">0</span>)
+                    </button>
+                    <button class="queue-btn px-3 py-1 rounded-md text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer" data-actionable="CWH">
+                        CWH Hubs (<span id="queue-cwh-count">0</span>)
+                    </button>
+                    <button class="queue-btn px-3 py-1 rounded-md text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer" data-actionable="Motorola">
+                        Motorola Queue (<span id="queue-moto-count">0</span>)
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="resetFiltersBtn" class="text-xs font-mono-data text-slate-500 hover:text-blue-600 cursor-pointer">
+                        Reset Slicers ↺
+                    </button>
+                    <button id="exportCsvBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                        <span>Export 4-Sheet Workbook</span>
+                        <span>↓</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 7 Core CRM KPI Micro-Cards Strip -->
+            <section class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                <div class="crm-panel p-3.5 bg-blue-50/50 border-blue-200/60">
+                    <span class="text-[10px] font-mono-data uppercase text-blue-700 font-bold tracking-wider">Total Volume</span>
+                    <p id="kpi-total-open" class="text-xl font-bold font-mono-data text-blue-950 mt-1">0</p>
+                    <span class="text-[10px] text-blue-600">Active tickets</span>
+                </div>
+
+                <div class="crm-panel p-3.5">
+                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">RFPU Pickup</span>
+                    <p id="kpi-waiting-pickup" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
+                    <span class="text-[10px] text-amber-600 font-medium">Customer alert</span>
+                </div>
+
+                <div class="crm-panel p-3.5">
+                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">CCI Bench</span>
+                    <p id="kpi-actionable-cci" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
+                    <span class="text-[10px] text-emerald-600 font-medium">In diagnosis</span>
+                </div>
+
+                <div class="crm-panel p-3.5">
+                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">ASP CWH Pool</span>
+                    <p id="kpi-asp-cwh" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
+                    <span class="text-[10px] text-purple-600 font-medium">Hub dispatch</span>
+                </div>
+
+                <div class="crm-panel p-3.5">
+                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">In Transit</span>
+                    <p id="kpi-transit-cci" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
+                    <span class="text-[10px] text-indigo-600 font-medium">En route to CCI</span>
+                </div>
+
+                <div class="crm-panel p-3.5">
+                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">Parts in Center</span>
+                    <p id="kpi-parts-sc" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
+                    <span class="text-[10px] text-rose-600 font-medium">Ready for repair</span>
+                </div>
+
+                <div class="crm-panel p-3.5">
+                    <span class="text-[10px] font-mono-data uppercase text-slate-500 font-bold tracking-wider">Motorola Esc</span>
+                    <p id="kpi-motorola" class="text-xl font-bold font-mono-data text-slate-900 mt-1">0</p>
+                    <span class="text-[10px] text-teal-600 font-medium">OEM hold</span>
+                </div>
+            </section>
+
+            <!-- SLA Ageing & Compliance Section -->
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <!-- Visual SLA Spread -->
+                <div class="lg:col-span-2 crm-panel p-4 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 font-mono-data">SLA Ageing Spread</h3>
+                        <span class="text-[11px] font-mono-data text-slate-400">Aging calculated from file reference anchor</span>
+                    </div>
+                    <div id="ageingChartContainer" class="space-y-2 pt-1"></div>
+                </div>
+
+                <!-- Governance Compliance Target -->
+                <div class="crm-panel p-4 flex flex-col justify-between space-y-3">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 font-mono-data">SLA Target</h3>
+                            <span id="slaScoreDisplay" class="text-xs font-bold font-mono-data text-emerald-600">0%</span>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[11px] text-slate-500 font-semibold uppercase font-mono-data">Target SLA Cutoff</label>
+                            <select id="slaTargetSelect" class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-xs font-mono-data text-slate-800">
+                                <option value="1">≤ 1 Day (Critical Rapid Repair)</option>
+                                <option value="4" selected>≤ 4 Days (Standard Target SLA)</option>
+                                <option value="7">≤ 7 Days (Escalated Tolerance)</option>
+                                <option value="15">≤ 15 Days (Aging Backlog Ceiling)</option>
+                            </select>
+                        </div>
+                        <div class="p-2.5 bg-slate-50 rounded border border-slate-200/80 space-y-1.5 text-xs font-mono-data">
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Within Target:</span>
+                                <span id="slaWithinCount" class="font-bold text-emerald-600">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Breached Queue:</span>
+                                <span id="slaBreachedCount" class="font-bold text-rose-600">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div id="slaComplianceBar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Global Parameter Slicers Drawer -->
+            <section class="crm-panel p-4 space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 font-mono-data">Facet Slicers</h3>
+                    <span class="text-[11px] text-slate-400 font-mono-data">Multi-select dimension filters</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
                     <div id="filter-Region" class="relative filter-dropdown">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Region</label>
-                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Region ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Region</label>
+                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
                     </div>
                     <div id="filter-Actionable_To" class="relative filter-dropdown">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Actionable To</label>
-                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Actionable ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Actionable</label>
+                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
                     </div>
                     <div id="filter-Current_Status_-_Open_Call" class="relative filter-dropdown">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Current Status</label>
-                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Status ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Current Status</label>
+                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
                     </div>
                     <div id="filter-Service_Order_Status" class="relative filter-dropdown">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Service Order Status</label>
-                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Status ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">SO Status</label>
+                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
                     </div>
                     <div id="filter-Parts_Status" class="relative filter-dropdown">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Parts Status</label>
-                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Parts Status ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Parts Status</label>
+                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
                     </div>
                     <div id="filter-Open_Call_Ageing_Bucket" class="relative filter-dropdown">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Open Call Ageing Bucket</label>
-                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Ageing Bucket ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Ageing Bucket</label>
+                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
                     </div>
                     <div id="filter-Service_Type" class="relative filter-dropdown">
-                        <label class="block text-xs font-semibold text-gray-600 mb-1">Service Type</label>
-                        <button type="button" class="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-left text-xs flex justify-between items-center shadow-xs cursor-pointer select-box">Select Service Type ⬇</button>
-                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-gray-300 mt-1 max-h-60 overflow-y-auto rounded-md shadow-lg p-2"></div>
+                        <label class="block font-mono-data text-[10px] font-semibold text-slate-500 uppercase mb-1">Service Type</label>
+                        <button type="button" class="w-full bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 text-left font-mono-data text-xs flex justify-between items-center text-slate-700 select-box cursor-pointer">All ⬇</button>
+                        <div class="custom-dropdown-content absolute left-0 right-0 z-50 bg-white border border-slate-200 mt-1 max-h-60 overflow-y-auto rounded shadow-lg p-2"></div>
                     </div>
-                    <div class="flex items-end">
-                        <button id="resetFiltersBtn" type="button" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-medium text-xs px-3 py-1.5 rounded-md shadow-sm transition cursor-pointer">
-                            Reset Filters
+                </div>
+            </section>
+
+            <!-- Tabbed Viewport: Pivot Matrix & Master Registry Views -->
+            <section class="crm-panel overflow-hidden">
+                <!-- Navigation Tabs Strip -->
+                <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50/70 px-4 pt-2">
+                    <div class="flex gap-2">
+                        <button class="view-tab active px-3.5 py-2 text-xs font-semibold rounded-t-lg bg-white border-t border-x border-slate-200 text-blue-600 cursor-pointer" data-target="tab-consolidated">
+                            Consolidated Pivot
+                        </button>
+                        <button class="view-tab px-3.5 py-2 text-xs font-semibold rounded-t-lg text-slate-600 hover:text-slate-900 cursor-pointer" data-target="tab-hierarchy">
+                            Regional Tree Pivot
+                        </button>
+                        <button class="view-tab px-3.5 py-2 text-xs font-semibold rounded-t-lg text-slate-600 hover:text-slate-900 cursor-pointer" data-target="tab-station">
+                            Station Matrix Pivot
+                        </button>
+                        <button class="view-tab px-3.5 py-2 text-xs font-semibold rounded-t-lg text-slate-600 hover:text-slate-900 cursor-pointer" data-target="tab-raw">
+                            Master Ticket Registry
                         </button>
                     </div>
-                </div>
-            </section>
 
-            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 shadow-xs">
-                    <p class="text-xs font-bold text-blue-700 uppercase tracking-wider">Total Open Calls</p>
-                    <p id="kpi-total-open" class="text-2xl font-black text-blue-900 mt-1">0</p>
+                    <div id="tabActionContainer" class="pb-2">
+                        <!-- Populated based on active tab -->
+                    </div>
                 </div>
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-xs">
-                    <p class="text-xs font-bold text-amber-700 uppercase tracking-wider">Waiting For Pickup</p>
-                    <p id="kpi-waiting-pickup" class="text-2xl font-black text-amber-900 mt-1">0</p>
-                </div>
-                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 shadow-xs">
-                    <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Actionable For CCI</p>
-                    <p id="kpi-actionable-cci" class="text-2xl font-black text-emerald-900 mt-1">0</p>
-                </div>
-                <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 shadow-xs">
-                    <p class="text-xs font-bold text-purple-700 uppercase tracking-wider">ASP CWH Actionable</p>
-                    <p id="kpi-asp-cwh" class="text-2xl font-black text-purple-900 mt-1">0</p>
-                </div>
-                <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 shadow-xs">
-                    <p class="text-xs font-bold text-indigo-700 uppercase tracking-wider">In Transit To CCI</p>
-                    <p id="kpi-transit-cci" class="text-2xl font-black text-indigo-900 mt-1">0</p>
-                </div>
-                <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 shadow-xs">
-                    <p class="text-xs font-bold text-rose-700 uppercase tracking-wider">Parts In Serv Center</p>
-                    <p id="kpi-parts-sc" class="text-2xl font-black text-rose-900 mt-1">0</p>
-                </div>
-                <div class="bg-teal-50 border border-teal-200 rounded-xl p-4 shadow-xs">
-                    <p class="text-xs font-bold text-teal-700 uppercase tracking-wider">Motorola Actionable</p>
-                    <p id="kpi-motorola" class="text-2xl font-black text-teal-900 mt-1">0</p>
-                </div>
-            </section>
 
-            <!-- Consolidated Pivot: Actionable To x Current Status x Ageing Bucket -->
-            <section class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
-                <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wide border-b pb-2 text-emerald-800">Consolidated Pivot: Actionable To × Current Status × Ageing Bucket</h3>
-                <div class="pivot-table-wrapper" id="pivotAgeingContainer"></div>
-            </section>
+                <div class="p-4 bg-white">
+                    <!-- Tab 1: Consolidated Pivot -->
+                    <div id="tab-consolidated" class="tab-pane">
+                        <div class="pivot-viewport" id="pivotAgeingContainer"></div>
+                    </div>
 
-            <!-- Hierarchical Pivot 1: Region x Actionable To x Current Status x Ageing Bucket -->
-            <section class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
-                <div class="flex justify-between items-center border-b pb-2">
-                    <h3 class="text-sm font-bold text-purple-800 uppercase tracking-wide">Detailed Hierarchical Pivot: Region × Actionable To × Current Status × Ageing Bucket</h3>
-                    <button id="toggleExpandPivotBtn" class="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-300 font-semibold text-xs px-3 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1">
-                        <span id="expandToggleIcon">➕ Expand All</span>
-                    </button>
-                </div>
-                <div class="pivot-table-wrapper" id="pivotHierarchicalContainer"></div>
-            </section>
+                    <!-- Tab 2: Regional Hierarchy Pivot -->
+                    <div id="tab-hierarchy" class="tab-pane hidden">
+                        <div class="pivot-viewport" id="pivotHierarchicalContainer"></div>
+                    </div>
 
-            <!-- Hierarchical Pivot 2 (3rd Pivot): Separate Columns for Region | Station Code | Station Name x Current Status -->
-            <section class="bg-white p-5 rounded-xl border border-gray-200 shadow-xs space-y-3">
-                <div class="flex justify-between items-center border-b pb-2">
-                    <h3 class="text-sm font-bold text-teal-800 uppercase tracking-wide">Station Pivot: Region × Station Code × Station Name × Current Status</h3>
-                    <button id="toggleExpandPivotStationBtn" class="bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-300 font-semibold text-xs px-3 py-1.5 rounded-md transition cursor-pointer flex items-center gap-1">
-                        <span id="expandStationToggleIcon">➕ Expand All</span>
-                    </button>
-                </div>
-                <div class="pivot-table-wrapper" id="pivotStationContainer"></div>
-            </section>
+                    <!-- Tab 3: Station Matrix Pivot -->
+                    <div id="tab-station" class="tab-pane hidden">
+                        <div class="pivot-viewport" id="pivotStationContainer"></div>
+                    </div>
 
-            <!-- Detailed Report -->
-            <section class="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
-                <div class="bg-gray-100 px-6 py-4 flex flex-wrap justify-between items-center gap-4 border-b border-gray-200">
-                    <h2 class="text-md font-bold text-gray-800" id="tableHeaderTitle">Open_Calls_Report</h2>
-                    <button id="exportCsvBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-2 rounded shadow-sm transition cursor-pointer flex items-center gap-1.5">
-                        📦 Export Report to Excel
-                    </button>
-                </div>
-                <div class="overflow-x-auto max-h-[500px]">
-                    <table class="min-w-full text-left whitespace-nowrap" id="masterTable">
-                        <thead class="bg-gray-50 sticky top-0 shadow-xs z-10">
-                            <tr id="masterTableHead"></tr>
-                        </thead>
-                        <tbody class="bg-white" id="masterTableBody"></tbody>
-                    </table>
+                    <!-- Tab 4: Master Raw Record Table -->
+                    <div id="tab-raw" class="tab-pane hidden space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-mono-data text-slate-500" id="tableRecordCount">Displaying records</span>
+                            <span class="text-xs text-slate-400">Raw Service Order Ledger[cite: 1]</span>
+                        </div>
+                        <div class="pivot-viewport max-h-[520px]">
+                            <table class="min-w-full text-left whitespace-nowrap" id="masterTable">
+                                <thead>
+                                    <tr id="masterTableHead"></tr>
+                                </thead>
+                                <tbody id="masterTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -369,12 +552,69 @@
             return { currentStatus: serviceStatus || "Unknown", actionableTo: "Others" };
         }
 
-        // Initialization & event binding hooks
+        // View Tabs switching logic
+        document.querySelectorAll('.view-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.view-tab').forEach(t => {
+                    t.classList.remove('active', 'bg-white', 'border-t', 'border-x', 'border-slate-200', 'text-blue-600');
+                    t.classList.add('text-slate-600');
+                });
+                this.classList.add('active', 'bg-white', 'border-t', 'border-x', 'border-slate-200', 'text-blue-600');
+                this.classList.remove('text-slate-600');
+
+                const targetId = this.getAttribute('data-target');
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+                document.getElementById(targetId).classList.remove('hidden');
+
+                renderTabActions(targetId);
+            });
+        });
+
+        function renderTabActions(targetId) {
+            const container = document.getElementById('tabActionContainer');
+            if (targetId === 'tab-hierarchy') {
+                container.innerHTML = `
+                    <button onclick="togglePivotExpand()" class="border border-slate-200 bg-white hover:border-blue-600 text-slate-700 font-mono-data text-xs px-3 py-1 rounded transition cursor-pointer">
+                        <span id="expandToggleIcon">${isPivotExpanded ? "– Collapse All" : "+ Expand All"}</span>
+                    </button>
+                `;
+            } else if (targetId === 'tab-station') {
+                container.innerHTML = `
+                    <button onclick="togglePivotStationExpand()" class="border border-slate-200 bg-white hover:border-blue-600 text-slate-700 font-mono-data text-xs px-3 py-1 rounded transition cursor-pointer">
+                        <span id="expandStationToggleIcon">${isPivotStationExpanded ? "– Collapse All" : "+ Expand All"}</span>
+                    </button>
+                `;
+            } else {
+                container.innerHTML = ``;
+            }
+        }
+
+        // Actionable Quick Queue Filter Chips
+        document.querySelectorAll('.queue-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.queue-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-slate-900', 'text-white');
+                    b.classList.add('bg-white', 'border', 'border-slate-200', 'text-slate-700');
+                });
+                this.classList.add('active', 'bg-slate-900', 'text-white');
+                this.classList.remove('bg-white', 'border', 'border-slate-200', 'text-slate-700');
+
+                const selectedChannel = this.getAttribute('data-actionable');
+                if (selectedChannel === "ALL") {
+                    selectedFilters["Actionable To"] = [...uniqueFilterValues["Actionable To"]];
+                } else {
+                    selectedFilters["Actionable To"] = [selectedChannel];
+                }
+                renderFilterDropdownUI("Actionable To");
+                applyGlobalFiltersAndRender();
+            });
+        });
+
+        // Event hooks
         document.getElementById('processBtn').addEventListener('click', startDataPipeline);
         document.getElementById('exportCsvBtn').addEventListener('click', exportToExcel);
         document.getElementById('resetFiltersBtn').addEventListener('click', resetAllFilters);
-        document.getElementById('toggleExpandPivotBtn').addEventListener('click', togglePivotExpand);
-        document.getElementById('toggleExpandPivotStationBtn').addEventListener('click', togglePivotStationExpand);
+        document.getElementById('slaTargetSelect').addEventListener('change', applyGlobalFiltersAndRender);
 
         document.addEventListener('click', function (e) {
             if (!e.target.closest('.filter-dropdown')) {
@@ -387,7 +627,7 @@
             const mappingInput = document.getElementById('regionMappingFile').files[0];
 
             if (!openCallsInput) {
-                alert("Please upload the Open Calls report excel file before continuing.");
+                alert("Please attach the Open Calls report excel file before continuing.");
                 return;
             }
 
@@ -401,7 +641,7 @@
 
                 rawOpenCalls = await parseFile(openCallsInput);
                 if (rawOpenCalls.length === 0) {
-                    alert("The uploaded Open Calls spreadsheet contains no data rows.");
+                    alert("The uploaded Open Calls file contains no readable rows.");
                     return;
                 }
 
@@ -410,10 +650,12 @@
                 applyGlobalFiltersAndRender();
 
                 document.getElementById('dashboardWrapper').classList.remove('hidden');
-                document.getElementById('tableHeaderTitle').innerText = `Open_Calls_Report_${latestCallDateString}`;
+                document.getElementById('statusPulse').classList.remove('bg-amber-400');
+                document.getElementById('statusPulse').classList.add('bg-emerald-400');
+                document.getElementById('statusText').innerText = `Synced: ${rawOpenCalls.length.toLocaleString()} Records`;
             } catch (err) {
                 console.error(err);
-                alert("Error compiling data files. Check spreadsheet formatting structures.");
+                alert("Error parsing spreadsheets. Verify workbook data format.");
             }
         }
 
@@ -715,6 +957,7 @@
                     "Repair Type": row["Repair Type"] || "",
                     "Service Type": String(row["Service Type"] || "").trim(),
                     
+                    "Ageing Days": ageingResult.days,
                     "Open Call Ageing Bucket": ageingResult.bucket,
                     "Ageing Source": ageingResult.source,
                     "Waiting for pickup Ageing Bucket": pickupAgeing.bucket,
@@ -768,18 +1011,18 @@
             const selectBtn = dropdownContainer.querySelector('.select-box');
 
             let html = `
-                <div class="flex items-center justify-between border-b border-gray-200 pb-1.5 mb-1.5 text-xs">
-                    <button class="text-blue-600 hover:underline font-bold select-all-btn" type="button">All</button>
-                    <button class="text-gray-500 hover:underline font-bold clear-all-btn" type="button">Clear</button>
+                <div class="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-1.5 font-mono-data text-[10px]">
+                    <button class="text-blue-600 hover:underline font-bold uppercase cursor-pointer select-all-btn" type="button">All</button>
+                    <button class="text-slate-400 hover:underline font-bold uppercase cursor-pointer clear-all-btn" type="button">Clear</button>
                 </div>
-                <div class="space-y-1 max-h-44 overflow-y-auto pr-1">
+                <div class="space-y-1 max-h-48 overflow-y-auto pr-1">
             `;
 
             uniqueFilterValues[key].forEach(val => {
                 const isChecked = selectedFilters[key].includes(val) ? "checked" : "";
                 html += `
-                    <label class="flex items-center gap-2 text-xs text-gray-700 hover:bg-gray-100 p-1 rounded cursor-pointer">
-                        <input type="checkbox" value="${val}" ${isChecked} class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 item-checkbox">
+                    <label class="flex items-center gap-2 font-mono-data text-xs text-slate-700 hover:bg-slate-50 p-1 rounded cursor-pointer transition">
+                        <input type="checkbox" value="${val}" ${isChecked} class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 item-checkbox">
                         <span class="truncate">${val === "" ? "(Blank)" : val}</span>
                     </label>
                 `;
@@ -830,7 +1073,7 @@
             if (selectedCount === totalCount) {
                 buttonEl.innerText = "All Selected ⬇";
             } else if (selectedCount === 0) {
-                buttonEl.innerText = "None Selected ⬇";
+                buttonEl.innerText = "None (0) ⬇";
             } else {
                 buttonEl.innerText = `Selected (${selectedCount}) ⬇`;
             }
@@ -841,6 +1084,11 @@
                 selectedFilters[key] = [...uniqueFilterValues[key]];
                 renderFilterDropdownUI(key);
             });
+            document.querySelectorAll('.queue-btn').forEach(b => {
+                b.classList.remove('active', 'bg-slate-900', 'text-white');
+                b.classList.add('bg-white', 'border', 'border-slate-200', 'text-slate-700');
+            });
+            document.querySelector('.queue-btn[data-actionable="ALL"]').classList.add('active', 'bg-slate-900', 'text-white');
             document.querySelectorAll('.custom-dropdown-content').forEach(d => d.classList.remove('show'));
             applyGlobalFiltersAndRender();
         }
@@ -861,6 +1109,8 @@
             const filteredData = getFilteredReportData();
 
             calculateKPIMetrics(filteredData);
+            renderAgeingChart(filteredData);
+            calculateSLACompliance(filteredData);
             renderAgeingPivot(filteredData);
             renderHierarchicalPivot(filteredData);
             renderStationPivot(filteredData);
@@ -895,6 +1145,89 @@
             document.getElementById('kpi-transit-cci').innerText = transitCCI.toLocaleString();
             document.getElementById('kpi-parts-sc').innerText = partsServiceCenter.toLocaleString();
             document.getElementById('kpi-motorola').innerText = motorolaActionable.toLocaleString();
+
+            document.getElementById('queue-all-count').innerText = totalOpen.toLocaleString();
+            document.getElementById('queue-cci-count').innerText = actionableCCI.toLocaleString();
+            document.getElementById('queue-cwh-count').innerText = aspCwh.toLocaleString();
+            document.getElementById('queue-moto-count').innerText = motorolaActionable.toLocaleString();
+        }
+
+        function renderAgeingChart(data) {
+            const container = document.getElementById('ageingChartContainer');
+            if (data.length === 0) {
+                container.innerHTML = `<p class="font-mono-data text-xs text-slate-400 py-4 text-center italic">No records to plot.</p>`;
+                return;
+            }
+
+            const bucketCounts = {};
+            AGEING_BUCKETS.forEach(b => bucketCounts[b] = 0);
+            data.forEach(r => {
+                const b = r["Open Call Ageing Bucket"];
+                if (bucketCounts[b] !== undefined) bucketCounts[b]++;
+            });
+
+            const maxVal = Math.max(...Object.values(bucketCounts), 1);
+            const total = data.length;
+
+            let html = "";
+            AGEING_BUCKETS.forEach(bucket => {
+                const count = bucketCounts[bucket];
+                const pct = ((count / total) * 100).toFixed(1);
+                const barWidth = Math.max((count / maxVal) * 100, count > 0 ? 3 : 0);
+
+                let barColor = "bg-blue-600";
+                if (bucket === "8-15Days") barColor = "bg-amber-500";
+                if (bucket === "16-30Days" || bucket === ">30days") barColor = "bg-rose-600";
+
+                html += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-xs font-mono-data">
+                            <span class="font-semibold text-slate-700">${bucket}</span>
+                            <span class="text-slate-500">${count.toLocaleString()} calls <span class="text-slate-400">(${pct}%)</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div class="${barColor} h-full transition-all duration-300" style="width: ${barWidth}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function calculateSLACompliance(data) {
+            const targetDays = parseInt(document.getElementById('slaTargetSelect').value, 10);
+            if (data.length === 0) {
+                document.getElementById('slaWithinCount').innerText = "0";
+                document.getElementById('slaBreachedCount').innerText = "0";
+                document.getElementById('slaScoreDisplay').innerText = "0%";
+                document.getElementById('slaComplianceBar').style.width = "0%";
+                return;
+            }
+
+            let withinSLA = 0;
+            let breachedSLA = 0;
+
+            data.forEach(r => {
+                const days = r["Ageing Days"];
+                if (days !== null && days !== undefined) {
+                    if (days <= targetDays) {
+                        withinSLA++;
+                    } else {
+                        breachedSLA++;
+                    }
+                } else {
+                    withinSLA++;
+                }
+            });
+
+            const total = data.length;
+            const rate = ((withinSLA / total) * 100).toFixed(1);
+
+            document.getElementById('slaWithinCount').innerText = withinSLA.toLocaleString();
+            document.getElementById('slaBreachedCount').innerText = breachedSLA.toLocaleString();
+            document.getElementById('slaScoreDisplay').innerText = `${rate}%`;
+            document.getElementById('slaComplianceBar').style.width = `${rate}%`;
         }
 
         // Consolidated Pivot: Actionable To x Current Status x Ageing Bucket
@@ -902,13 +1235,13 @@
             const container = document.getElementById('pivotAgeingContainer');
             
             if (data.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-400 italic py-4 text-center">No matching data found.</p>`;
+                container.innerHTML = `<p class="font-mono-data text-xs text-slate-400 uppercase py-8 text-center bg-slate-50">No matching records found.</p>`;
                 return;
             }
 
             const ageingBuckets = AGEING_BUCKETS;
-            
             const pivotData = {};
+
             data.forEach(row => {
                 const actionableTo = row["Actionable To"] || "Unknown";
                 const currentStatus = row["Current Status - Open Call"] || "Unknown";
@@ -931,9 +1264,7 @@
 
             const groupedData = {};
             Object.values(pivotData).forEach(item => {
-                if (!groupedData[item.actionableTo]) {
-                    groupedData[item.actionableTo] = [];
-                }
+                if (!groupedData[item.actionableTo]) groupedData[item.actionableTo] = [];
                 groupedData[item.actionableTo].push(item);
             });
 
@@ -942,7 +1273,6 @@
             });
 
             const sortedActionableKeys = Object.keys(groupedData).sort();
-
             const grandTotals = {};
             ageingBuckets.forEach(b => grandTotals[b] = 0);
             let overallTotal = 0;
@@ -955,24 +1285,23 @@
             });
 
             let html = `
-                <table class="min-w-full text-left border border-gray-200">
-                    <thead class="bg-gray-50">
+                <table>
+                    <thead>
                         <tr>
-                            <th class="sticky-col-1-header text-xs font-bold text-gray-700 uppercase bg-gray-100 px-3 py-2 border-b border-gray-300">Current Status - Open Call</th>
+                            <th class="sticky-col-1-header">Actionable Channel / Status</th>
             `;
             
             ageingBuckets.forEach(bucket => {
-                html += `<th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300">${bucket}</th>`;
+                html += `<th class="text-center font-mono-data">${bucket}</th>`;
             });
             
             html += `
-                            <th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300 grand-total-col">Total</th>
+                            <th class="text-center font-mono-data grand-total-col">Subtotal</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white">
+                    <tbody>
             `;
 
-            let rowIndex = 0;
             sortedActionableKeys.forEach(actionableTo => {
                 const statuses = groupedData[actionableTo];
                 let actionableTotal = 0;
@@ -987,42 +1316,37 @@
                 });
 
                 if (actionableTotal > 0) {
-                    const isEven = rowIndex % 2 === 0;
-                    html += `<tr class="parent-row ${isEven ? 'alternate-row-even' : 'alternate-row'}">`;
-                    html += `<td class="sticky-col-1 text-xs font-bold text-gray-900 px-3 py-1.5 border-b border-gray-200">${actionableTo}</td>`;
+                    html += `<tr class="parent-row">`;
+                    html += `<td class="sticky-col-1 font-mono-data font-bold text-slate-900">${actionableTo}</td>`;
                     ageingBuckets.forEach(bucket => {
                         const val = actionableTotals[bucket] || 0;
-                        html += `<td class="text-xs text-center font-bold text-gray-800 px-3 py-1.5 border-b border-gray-200 parent-total">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                        html += `<td class="text-center font-mono-data font-bold text-slate-800">${val > 0 ? val.toLocaleString() : '—'}</td>`;
                     });
-                    html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col parent-total">${actionableTotal.toLocaleString()}</td>`;
+                    html += `<td class="text-center font-mono-data font-black grand-total-col">${actionableTotal.toLocaleString()}</td>`;
                     html += `</tr>`;
-                    rowIndex++;
 
                     statuses.forEach(item => {
                         const itemTotal = ageingBuckets.reduce((sum, b) => sum + (item.buckets[b] || 0), 0);
-                        
                         if (itemTotal === 0) return;
 
-                        const isEvenChild = rowIndex % 2 === 0;
-                        html += `<tr class="${isEvenChild ? 'alternate-row-even' : 'alternate-row'}">`;
-                        html += `<td class="sticky-col-1 text-xs text-gray-700 px-3 py-1.5 border-b border-gray-200 child-row">${item.currentStatus}</td>`;
+                        html += `<tr class="hover:bg-slate-50/70 transition-colors">`;
+                        html += `<td class="sticky-col-1 child-row text-slate-700">${item.currentStatus}</td>`;
                         ageingBuckets.forEach(bucket => {
                             const val = item.buckets[bucket] || 0;
-                            html += `<td class="text-xs text-center text-gray-600 px-3 py-1.5 border-b border-gray-200 ${val > 0 ? '' : 'zero-value'}">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                            html += `<td class="text-center font-mono-data ${val > 0 ? 'text-slate-800' : 'text-slate-300'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
                         });
-                        html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col">${itemTotal.toLocaleString()}</td>`;
+                        html += `<td class="text-center font-mono-data font-semibold grand-total-col">${itemTotal.toLocaleString()}</td>`;
                         html += `</tr>`;
-                        rowIndex++;
                     });
                 }
             });
 
             html += `<tr class="grand-total-row">`;
-            html += `<td class="sticky-col-1 text-xs font-bold text-gray-800 uppercase tracking-wide px-3 py-1.5 border-t-2 border-gray-300">Grand Total</td>`;
+            html += `<td class="sticky-col-1 font-mono-data font-bold uppercase tracking-wider text-slate-900">Grand Total</td>`;
             ageingBuckets.forEach(bucket => {
-                html += `<td class="text-xs text-center text-gray-900 font-black px-3 py-1.5 border-t-2 border-gray-300 grand-total-col">${grandTotals[bucket].toLocaleString()}</td>`;
+                html += `<td class="text-center font-mono-data font-black text-slate-900">${grandTotals[bucket].toLocaleString()}</td>`;
             });
-            html += `<td class="text-xs text-center text-blue-900 font-black bg-blue-100 px-3 py-1.5 border-t-2 border-gray-300 grand-total-col">${overallTotal.toLocaleString()}</td>`;
+            html += `<td class="text-center font-mono-data font-black text-blue-600 grand-total-col bg-blue-50/50">${overallTotal.toLocaleString()}</td>`;
             html += `</tr></tbody></table>`;
 
             container.innerHTML = html;
@@ -1033,7 +1357,7 @@
             const container = document.getElementById('pivotHierarchicalContainer');
             
             if (data.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-400 italic py-4 text-center">No matching data found.</p>`;
+                container.innerHTML = `<p class="font-mono-data text-xs text-slate-400 uppercase py-8 text-center bg-slate-50">No matching records found.</p>`;
                 return;
             }
 
@@ -1059,21 +1383,21 @@
             });
 
             let html = `
-                <table class="min-w-full divide-y divide-gray-200 text-left border border-gray-200">
-                    <thead class="bg-gray-50">
+                <table>
+                    <thead>
                         <tr>
-                            <th class="sticky-col-1-header text-xs font-bold text-purple-900 uppercase bg-purple-50 px-3 py-2 border-b border-gray-300">Hierarchy (Region / Actionable / Status)</th>
+                            <th class="sticky-col-1-header">Territory Hierarchy Tree</th>
             `;
             
             ageingBuckets.forEach(bucket => {
-                html += `<th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300">${bucket}</th>`;
+                html += `<th class="text-center font-mono-data">${bucket}</th>`;
             });
             
             html += `
-                            <th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300 grand-total-col">Total</th>
+                            <th class="text-center font-mono-data grand-total-col">Subtotal</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody>
             `;
 
             const sortedRegions = Object.keys(tree).sort();
@@ -1082,7 +1406,7 @@
             let overallTotal = 0;
 
             const hiddenClass = isPivotExpanded ? "" : "hidden";
-            const symbol = isPivotExpanded ? "➖" : "➕";
+            const symbol = isPivotExpanded ? "–" : "+";
 
             sortedRegions.forEach((region, rIdx) => {
                 const regData = tree[region];
@@ -1106,14 +1430,13 @@
 
                 const regRowId = `p-reg-${rIdx}`;
 
-                // Level 1: Region Row
-                html += `<tr class="parent-row bg-purple-100/60 hover:bg-purple-100 transition cursor-pointer" onclick="togglePivotRow('${regRowId}')">`;
-                html += `<td class="sticky-col-1 text-xs font-bold text-purple-950 px-3 py-2 border-b border-gray-200"><span id="icon-${regRowId}" class="mr-1.5 text-[10px]">${symbol}</span>${region}</td>`;
+                html += `<tr class="parent-row bg-slate-100/70 hover:bg-slate-100 transition-colors" onclick="togglePivotRow('${regRowId}')">`;
+                html += `<td class="sticky-col-1 font-mono-data font-bold text-slate-900"><span id="icon-${regRowId}" class="mr-2 text-blue-600 font-bold">${symbol}</span>${region}</td>`;
                 ageingBuckets.forEach(bucket => {
                     const val = regionTotals[bucket];
-                    html += `<td class="text-xs text-center font-bold text-purple-900 px-3 py-2 border-b border-gray-200">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                    html += `<td class="text-center font-mono-data font-bold text-slate-800">${val > 0 ? val.toLocaleString() : '—'}</td>`;
                 });
-                html += `<td class="text-xs text-center font-black text-purple-950 bg-purple-200/50 px-3 py-2 border-b border-gray-200 grand-total-col">${regionTotal.toLocaleString()}</td>`;
+                html += `<td class="text-center font-mono-data font-black grand-total-col">${regionTotal.toLocaleString()}</td>`;
                 html += `</tr>`;
 
                 const sortedActionables = Object.keys(regData).sort();
@@ -1135,14 +1458,13 @@
 
                     const actRowId = `p-act-${rIdx}-${aIdx}`;
 
-                    // Level 2: Actionable To Row
-                    html += `<tr class="sub-parent-row ${regRowId} ${hiddenClass} bg-gray-100/70 hover:bg-gray-200/60 transition cursor-pointer" onclick="togglePivotRow('${actRowId}')">`;
-                    html += `<td class="sticky-col-1 text-xs font-bold text-gray-800 px-3 py-1.5 border-b border-gray-200 child-row"><span id="icon-${actRowId}" class="mr-1.5 text-[10px]">${symbol}</span>${actionableTo}</td>`;
+                    html += `<tr class="sub-parent-row ${regRowId} ${hiddenClass} hover:bg-slate-50 transition-colors" onclick="togglePivotRow('${actRowId}')">`;
+                    html += `<td class="sticky-col-1 font-mono-data text-xs text-slate-800 child-row"><span id="icon-${actRowId}" class="mr-2 text-slate-400 font-bold">${symbol}</span><span class="font-semibold">${actionableTo}</span></td>`;
                     ageingBuckets.forEach(bucket => {
                         const val = actTotals[bucket];
-                        html += `<td class="text-xs text-center font-semibold text-gray-800 px-3 py-1.5 border-b border-gray-200">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                        html += `<td class="text-center font-mono-data font-semibold text-slate-700">${val > 0 ? val.toLocaleString() : '—'}</td>`;
                     });
-                    html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-100 px-3 py-1.5 border-b border-gray-200 grand-total-col">${actTotal.toLocaleString()}</td>`;
+                    html += `<td class="text-center font-mono-data font-bold grand-total-col">${actTotal.toLocaleString()}</td>`;
                     html += `</tr>`;
 
                     const sortedStatuses = Object.keys(actData).sort();
@@ -1152,44 +1474,39 @@
 
                         if (statusTotal === 0) return;
 
-                        // Level 3: Current Status Row
-                        html += `<tr class="${regRowId} ${actRowId} ${hiddenClass} hover:bg-gray-50 transition">`;
-                        html += `<td class="sticky-col-1 text-xs text-gray-600 px-3 py-1.5 border-b border-gray-200 deep-child-row">${status}</td>`;
+                        html += `<tr class="${regRowId} ${actRowId} ${hiddenClass} hover:bg-slate-50/70 transition-colors">`;
+                        html += `<td class="sticky-col-1 text-xs text-slate-600 deep-child-row">${status}</td>`;
                         ageingBuckets.forEach(bucket => {
                             const val = statusData[bucket] || 0;
-                            html += `<td class="text-xs text-center text-gray-600 px-3 py-1.5 border-b border-gray-200 ${val > 0 ? '' : 'zero-value'}">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                            html += `<td class="text-center font-mono-data text-xs ${val > 0 ? 'text-slate-800' : 'text-slate-300'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
                         });
-                        html += `<td class="text-xs text-center font-medium text-gray-800 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col">${statusTotal.toLocaleString()}</td>`;
+                        html += `<td class="text-center font-mono-data text-xs font-medium grand-total-col">${statusTotal.toLocaleString()}</td>`;
                         html += `</tr>`;
                     });
                 });
             });
 
-            // Grand Total Row
             html += `<tr class="grand-total-row">`;
-            html += `<td class="sticky-col-1 text-xs font-bold text-purple-950 uppercase tracking-wide px-3 py-2 border-t-2 border-gray-300">Grand Total</td>`;
+            html += `<td class="sticky-col-1 font-mono-data font-bold uppercase tracking-wider text-slate-900">Grand Total</td>`;
             ageingBuckets.forEach(bucket => {
-                html += `<td class="text-xs text-center text-purple-950 font-black px-3 py-2 border-t-2 border-gray-300 grand-total-col">${grandTotals[bucket].toLocaleString()}</td>`;
+                html += `<td class="text-center font-mono-data font-black text-slate-900">${grandTotals[bucket].toLocaleString()}</td>`;
             });
-            html += `<td class="text-xs text-center text-blue-900 font-black bg-blue-100 px-3 py-2 border-t-2 border-gray-300 grand-total-col">${overallTotal.toLocaleString()}</td>`;
+            html += `<td class="text-center font-mono-data font-black text-blue-600 grand-total-col bg-blue-50/50">${overallTotal.toLocaleString()}</td>`;
             html += `</tr></tbody></table>`;
 
             container.innerHTML = html;
         }
 
-        // Hierarchical Pivot 2 (3rd Pivot): 3 Separate Columns [Region | Station Code | Station Name] x Current Status Columns
+        // Hierarchical Pivot 2: Separate Columns [Region | Station Code | Station Name] x Current Status
         function renderStationPivot(data) {
             const container = document.getElementById('pivotStationContainer');
             
             if (data.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-400 italic py-4 text-center">No matching data found.</p>`;
+                container.innerHTML = `<p class="font-mono-data text-xs text-slate-400 uppercase py-8 text-center bg-slate-50">No matching records found.</p>`;
                 return;
             }
 
-            // Columns are unique values of Current Status - Open Call
             const statusColumns = [...new Set(data.map(r => r["Current Status - Open Call"] || "Unknown"))].sort();
-
-            // Tree structure: Region -> Station Code -> Station Name -> Status Counts
             const tree = {};
 
             data.forEach(row => {
@@ -1211,23 +1528,23 @@
             });
 
             let html = `
-                <table class="min-w-full divide-y divide-gray-200 text-left border border-gray-200">
-                    <thead class="bg-gray-50">
+                <table>
+                    <thead>
                         <tr>
-                            <th class="sticky-col-1-header text-xs font-bold text-teal-900 uppercase bg-teal-50 px-3 py-2 border-b border-gray-300">Region</th>
-                            <th class="text-xs font-bold text-teal-900 uppercase bg-teal-50 px-3 py-2 border-b border-gray-300">Station Code</th>
-                            <th class="text-xs font-bold text-teal-900 uppercase bg-teal-50 px-3 py-2 border-b border-gray-300">Station Name</th>
+                            <th class="sticky-col-1-header">Region</th>
+                            <th class="font-mono-data text-center">Code</th>
+                            <th class="font-mono-data text-left">Facility Name</th>
             `;
             
             statusColumns.forEach(status => {
-                html += `<th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300">${status}</th>`;
+                html += `<th class="text-center font-mono-data">${status}</th>`;
             });
             
             html += `
-                            <th class="text-xs font-bold text-gray-700 uppercase text-center bg-gray-100 px-3 py-2 border-b border-gray-300 grand-total-col">Total</th>
+                            <th class="text-center font-mono-data grand-total-col">Subtotal</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody>
             `;
 
             const sortedRegions = Object.keys(tree).sort();
@@ -1236,7 +1553,7 @@
             let overallTotal = 0;
 
             const hiddenClass = isPivotStationExpanded ? "" : "hidden";
-            const symbol = isPivotStationExpanded ? "➖" : "➕";
+            const symbol = isPivotStationExpanded ? "–" : "+";
 
             sortedRegions.forEach((region, rIdx) => {
                 const regData = tree[region];
@@ -1260,17 +1577,15 @@
 
                 const regRowId = `st-reg-${rIdx}`;
 
-                // Level 1: Region Header Row (Spans across Region, Station Code, and Station Name columns)
-                html += `<tr class="parent-row bg-teal-100/60 hover:bg-teal-100 transition cursor-pointer" onclick="togglePivotRow('${regRowId}')">`;
-                html += `<td colspan="3" class="sticky-col-1 text-xs font-bold text-teal-950 px-3 py-2 border-b border-gray-200"><span id="icon-${regRowId}" class="mr-1.5 text-[10px]">${symbol}</span>${region}</td>`;
+                html += `<tr class="parent-row bg-slate-100/70 hover:bg-slate-100 transition-colors" onclick="togglePivotRow('${regRowId}')">`;
+                html += `<td colspan="3" class="sticky-col-1 font-mono-data font-bold text-slate-900"><span id="icon-${regRowId}" class="mr-2 text-blue-600 font-bold">${symbol}</span>${region}</td>`;
                 statusColumns.forEach(status => {
                     const val = regionTotals[status];
-                    html += `<td class="text-xs text-center font-bold text-teal-900 px-3 py-2 border-b border-gray-200">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                    html += `<td class="text-center font-mono-data font-bold text-slate-800">${val > 0 ? val.toLocaleString() : '—'}</td>`;
                 });
-                html += `<td class="text-xs text-center font-black text-teal-950 bg-teal-200/50 px-3 py-2 border-b border-gray-200 grand-total-col">${regionTotal.toLocaleString()}</td>`;
+                html += `<td class="text-center font-mono-data font-black grand-total-col">${regionTotal.toLocaleString()}</td>`;
                 html += `</tr>`;
 
-                // Level 2: Detailed Station Rows with 3 explicit columns [Region | Station Code | Station Name]
                 const sortedCodes = Object.keys(regData).sort();
                 sortedCodes.forEach(stationCode => {
                     const codeObj = regData[stationCode];
@@ -1282,28 +1597,27 @@
 
                         if (stationTotal === 0) return;
 
-                        html += `<tr class="${regRowId} ${hiddenClass} hover:bg-gray-50 transition">`;
-                        html += `<td class="sticky-col-1 text-xs text-gray-500 italic px-3 py-1.5 border-b border-gray-200">${region}</td>`;
-                        html += `<td class="text-xs font-medium text-gray-800 px-3 py-1.5 border-b border-gray-200">${stationCode}</td>`;
-                        html += `<td class="text-xs text-gray-700 px-3 py-1.5 border-b border-gray-200">${stationName}</td>`;
+                        html += `<tr class="${regRowId} ${hiddenClass} hover:bg-slate-50 transition-colors">`;
+                        html += `<td class="sticky-col-1 font-mono-data text-xs text-slate-400 italic">${region}</td>`;
+                        html += `<td class="font-mono-data text-xs text-center font-semibold text-slate-800">${stationCode}</td>`;
+                        html += `<td class="text-xs text-slate-700">${stationName}</td>`;
                         
                         statusColumns.forEach(status => {
                             const val = statusCounts[status] || 0;
-                            html += `<td class="text-xs text-center text-gray-600 px-3 py-1.5 border-b border-gray-200 ${val > 0 ? '' : 'zero-value'}">${val > 0 ? val.toLocaleString() : ''}</td>`;
+                            html += `<td class="text-center font-mono-data text-xs ${val > 0 ? 'text-slate-800' : 'text-slate-300'}">${val > 0 ? val.toLocaleString() : '0'}</td>`;
                         });
-                        html += `<td class="text-xs text-center font-bold text-gray-900 bg-gray-50 px-3 py-1.5 border-b border-gray-200 grand-total-col">${stationTotal.toLocaleString()}</td>`;
+                        html += `<td class="text-center font-mono-data text-xs font-bold grand-total-col">${stationTotal.toLocaleString()}</td>`;
                         html += `</tr>`;
                     });
                 });
             });
 
-            // Grand Total Row
             html += `<tr class="grand-total-row">`;
-            html += `<td colspan="3" class="sticky-col-1 text-xs font-bold text-teal-950 uppercase tracking-wide px-3 py-2 border-t-2 border-gray-300">Grand Total</td>`;
+            html += `<td colspan="3" class="sticky-col-1 font-mono-data font-bold uppercase tracking-wider text-slate-900">Grand Total</td>`;
             statusColumns.forEach(status => {
-                html += `<td class="text-xs text-center text-teal-950 font-black px-3 py-2 border-t-2 border-gray-300 grand-total-col">${grandTotals[status].toLocaleString()}</td>`;
+                html += `<td class="text-center font-mono-data font-black text-slate-900">${grandTotals[status].toLocaleString()}</td>`;
             });
-            html += `<td class="text-xs text-center text-blue-900 font-black bg-blue-100 px-3 py-2 border-t-2 border-gray-300 grand-total-col">${overallTotal.toLocaleString()}</td>`;
+            html += `<td class="text-center font-mono-data font-black text-blue-600 grand-total-col bg-blue-50/50">${overallTotal.toLocaleString()}</td>`;
             html += `</tr></tbody></table>`;
 
             container.innerHTML = html;
@@ -1324,7 +1638,7 @@
             });
 
             if (icon) {
-                icon.innerText = isHiding ? "➕" : "➖";
+                icon.innerText = isHiding ? "+" : "–";
             }
         }
 
@@ -1332,9 +1646,9 @@
             isPivotExpanded = !isPivotExpanded;
             const btnIcon = document.getElementById('expandToggleIcon');
             if (isPivotExpanded) {
-                btnIcon.innerText = "➖ Collapse All";
+                btnIcon.innerText = "– Collapse All";
             } else {
-                btnIcon.innerText = "➕ Expand All";
+                btnIcon.innerText = "+ Expand All";
             }
             const filteredData = getFilteredReportData();
             renderHierarchicalPivot(filteredData);
@@ -1344,9 +1658,9 @@
             isPivotStationExpanded = !isPivotStationExpanded;
             const btnIcon = document.getElementById('expandStationToggleIcon');
             if (isPivotStationExpanded) {
-                btnIcon.innerText = "➖ Collapse All";
+                btnIcon.innerText = "– Collapse All";
             } else {
-                btnIcon.innerText = "➕ Expand All";
+                btnIcon.innerText = "+ Expand All";
             }
             const filteredData = getFilteredReportData();
             renderStationPivot(filteredData);
@@ -1367,35 +1681,34 @@
             const bodyRow = document.getElementById('masterTableBody');
 
             headerRow.innerHTML = columnsToLoad.map(col => `
-                <th class="px-4 py-2 text-left text-xs font-bold text-gray-700 bg-gray-100 border-b border-gray-200 uppercase tracking-wider">${col}</th>
+                <th class="px-3.5 py-2.5 text-left font-mono-data text-[11px] font-semibold text-slate-500 bg-slate-50 border-b border-slate-200 uppercase tracking-wider">${col}</th>
             `).join('');
 
+            document.getElementById('tableRecordCount').innerText = `${data.length.toLocaleString()} Operational Records`;
+
             if (data.length === 0) {
-                bodyRow.innerHTML = `<tr><td colspan="${columnsToLoad.length}" class="text-center p-8 text-sm text-gray-400 italic">No records found matching target selection criteria definitions.</td></tr>`;
+                bodyRow.innerHTML = `<tr><td colspan="${columnsToLoad.length}" class="text-center py-12 font-mono-data text-xs text-slate-400 italic">No operational records match selected filters.</td></tr>`;
                 return;
             }
 
             bodyRow.innerHTML = data.map(row => {
-                return `<tr class="hover:bg-gray-50 transition">` + 
+                return `<tr class="hover:bg-slate-50/70 transition-colors">` + 
                     columnsToLoad.map(col => {
                         let cellVal = row[col];
                         if (DATE_COLUMNS.has(col)) {
                             cellVal = formatDashboardDate(cellVal);
                         }
-                        return `<td class="px-4 py-2 text-xs text-gray-600 border-b border-gray-200 max-w-xs truncate">${cellVal === "" ? "-" : cellVal}</td>`;
+                        return `<td class="px-3.5 py-2 text-xs font-mono-data text-slate-600 border-b border-slate-100 max-w-xs truncate">${cellVal === "" ? "—" : cellVal}</td>`;
                     }).join('') + 
                 `</tr>`;
             }).join('');
         }
 
-        // Export Builder for Consolidated Pivot: Actionable To x Current Status x Ageing Bucket
+        // Export Builder for Consolidated Pivot
         function buildAgeingPivotSheet(data) {
-            if (data.length === 0) {
-                return [["No matching data"]];
-            }
+            if (data.length === 0) return [["No matching data"]];
 
             const ageingBuckets = AGEING_BUCKETS;
-            
             const pivotData = {};
             data.forEach(row => {
                 const actionableTo = row["Actionable To"] || "Unknown";
@@ -1419,14 +1732,11 @@
 
             const groupedData = {};
             Object.values(pivotData).forEach(item => {
-                if (!groupedData[item.actionableTo]) {
-                    groupedData[item.actionableTo] = [];
-                }
+                if (!groupedData[item.actionableTo]) groupedData[item.actionableTo] = [];
                 groupedData[item.actionableTo].push(item);
             });
 
             const sortedActionableKeys = Object.keys(groupedData).sort();
-
             const aoa = [["Current Status - Open Call", ...ageingBuckets, "Total"]];
             const grandTotals = {};
             ageingBuckets.forEach(b => grandTotals[b] = 0);
@@ -1471,20 +1781,16 @@
             });
 
             const grandTotalRow = ["Grand Total"];
-            ageingBuckets.forEach(bucket => {
-                grandTotalRow.push(grandTotals[bucket]);
-            });
+            ageingBuckets.forEach(bucket => grandTotalRow.push(grandTotals[bucket]));
             grandTotalRow.push(overallTotal);
             aoa.push(grandTotalRow);
 
             return aoa;
         }
 
-        // Export Builder for Hierarchical Pivot 1: Region x Actionable To x Current Status x Ageing Bucket
+        // Export Builder for Hierarchical Pivot 1
         function buildHierarchicalPivotSheet(data) {
-            if (data.length === 0) {
-                return [["No matching data"]];
-            }
+            if (data.length === 0) return [["No matching data"]];
 
             const ageingBuckets = AGEING_BUCKETS;
             const tree = {};
@@ -1559,9 +1865,7 @@
                     if (actTotal === 0) return;
 
                     const actRow = [`  ${actionableTo}`];
-                    ageingBuckets.forEach(bucket => {
-                        actRow.push(actTotals[bucket] || 0);
-                    });
+                    ageingBuckets.forEach(bucket => actRow.push(actTotals[bucket] || 0));
                     actRow.push(actTotal);
                     aoa.push(actRow);
 
@@ -1573,9 +1877,7 @@
                         if (statusTotal === 0) return;
 
                         const statusRow = [`    ${status}`];
-                        ageingBuckets.forEach(bucket => {
-                            statusRow.push(statusData[bucket] || 0);
-                        });
+                        ageingBuckets.forEach(bucket => statusRow.push(statusData[bucket] || 0));
                         statusRow.push(statusTotal);
                         aoa.push(statusRow);
                     });
@@ -1583,20 +1885,16 @@
             });
 
             const grandTotalRow = ["Grand Total"];
-            ageingBuckets.forEach(bucket => {
-                grandTotalRow.push(grandTotals[bucket]);
-            });
+            ageingBuckets.forEach(bucket => grandTotalRow.push(grandTotals[bucket]));
             grandTotalRow.push(overallTotal);
             aoa.push(grandTotalRow);
 
             return aoa;
         }
 
-        // Export Builder for 3rd Pivot: 3 Distinct Columns [Region | Station Code | Station Name] x Current Status Columns
+        // Export Builder for Station Pivot 2
         function buildStationPivotSheet(data) {
-            if (data.length === 0) {
-                return [["No matching data"]];
-            }
+            if (data.length === 0) return [["No matching data"]];
 
             const statusColumns = [...new Set(data.map(r => r["Current Status - Open Call"] || "Unknown"))].sort();
             const tree = {};
@@ -1644,7 +1942,6 @@
 
                 if (regionTotal === 0) return;
 
-                // Region Header Subtotal Row
                 const regionRow = [region, "", ""];
                 statusColumns.forEach(status => {
                     regionRow.push(regionTotals[status] || 0);
@@ -1666,9 +1963,7 @@
                         if (stationTotal === 0) return;
 
                         const detailRow = [region, stationCode, stationName];
-                        statusColumns.forEach(status => {
-                            detailRow.push(statusCounts[status] || 0);
-                        });
+                        statusColumns.forEach(status => detailRow.push(statusCounts[status] || 0));
                         detailRow.push(stationTotal);
                         aoa.push(detailRow);
                     });
@@ -1676,9 +1971,7 @@
             });
 
             const grandTotalRow = ["Grand Total", "", ""];
-            statusColumns.forEach(status => {
-                grandTotalRow.push(grandTotals[status]);
-            });
+            statusColumns.forEach(status => grandTotalRow.push(grandTotals[status]));
             grandTotalRow.push(overallTotal);
             aoa.push(grandTotalRow);
 
@@ -1723,19 +2016,19 @@
             setWorksheetWidths(reportWs, reportRows);
             XLSX.utils.book_append_sheet(workbook, reportWs, "Open_Calls_Report");
 
-            // Sheet 2: Consolidated Ageing Pivot (Actionable To x Current Status x Ageing Bucket)
+            // Sheet 2: Consolidated Ageing Pivot
             const ageingSheetRows = buildAgeingPivotSheet(filteredData);
             const ageingWs = XLSX.utils.aoa_to_sheet(ageingSheetRows);
             setWorksheetWidths(ageingWs, ageingSheetRows);
             XLSX.utils.book_append_sheet(workbook, ageingWs, "Pivot_Ageing");
 
-            // Sheet 3: Hierarchical Pivot 1 (Region x Actionable To x Current Status x Ageing Bucket)
+            // Sheet 3: Hierarchical Region Pivot
             const hierarchicalSheetRows = buildHierarchicalPivotSheet(filteredData);
             const pivotWs = XLSX.utils.aoa_to_sheet(hierarchicalSheetRows);
             setWorksheetWidths(pivotWs, hierarchicalSheetRows);
             XLSX.utils.book_append_sheet(workbook, pivotWs, "Pivot_Region_Ageing");
 
-            // Sheet 4: Station Pivot (Region | Station Code | Station Name x Current Status)
+            // Sheet 4: Station Pivot
             const stationSheetRows = buildStationPivotSheet(filteredData);
             const stationWs = XLSX.utils.aoa_to_sheet(stationSheetRows);
             setWorksheetWidths(stationWs, stationSheetRows);
