@@ -756,6 +756,9 @@
                 </div>
 
                 <div class="export-actions">
+                    <button id="captureMainSnapshotBtn" class="btn btn-secondary">
+                        <span class="material-symbols-outlined">photo_camera</span> Capture Snapshot (JPEG)
+                    </button>
                     <button id="exportFilteredXlsx" class="btn btn-secondary">
                         <span class="material-symbols-outlined">download</span> Export Filtered (Excel)
                     </button>
@@ -1177,7 +1180,8 @@
             exportPivotXlsx: document.getElementById('exportPivotXlsx'),
             exportMissedXlsx: document.getElementById('exportMissedXlsx'),
             exportReviewXlsx: document.getElementById('exportReviewXlsx'),
-            captureSnapshotBtn: document.getElementById('captureSnapshotBtn')
+            captureSnapshotBtn: document.getElementById('captureSnapshotBtn'),
+            captureMainSnapshotBtn: document.getElementById('captureMainSnapshotBtn')
         };
 
         function showError(msg) {
@@ -2447,6 +2451,185 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+            } catch (err) {
+                showError("Snapshot capture failed: " + err.message);
+            } finally {
+                document.body.removeChild(printDoc);
+            }
+        });
+
+        /* ==========================================================================
+           Performance Analytics Main Table Snapshot Engine (JPEG Export)
+           ========================================================================== */
+        function getMainKpiCellStyle(kpi, val) {
+            const targetInfo = findKPITarget(kpi);
+            if (!targetInfo || val === '' || val === null || val === undefined || val === '-') {
+                return 'background-color: #ffffff; color: #0f172a;';
+            }
+            const num = parseKpiNumericValue(val);
+            if (num === null) {
+                return 'background-color: #ffffff; color: #0f172a;';
+            }
+
+            const target = targetInfo.target;
+            const cleanKey = kpi.toLowerCase().replace(/%/g, '').trim();
+            const isHigherIsBetter = cleanKey.includes('cit') || cleanKey.includes('audit') || cleanKey.includes('fsb') || cleanKey.includes('focus') || cleanKey.includes('l-2.5') || cleanKey.includes('l2.5');
+
+            if (isHigherIsBetter) {
+                if (num >= 100) return 'background-color: #d1fae5; color: #065f46; font-weight: 600;';
+                else if (num >= 85) return 'background-color: #fef3c7; color: #92400e; font-weight: 600;';
+                else return 'background-color: #fee2e2; color: #991b1b; font-weight: 600;';
+            } else {
+                if (num <= target) return 'background-color: #d1fae5; color: #065f46; font-weight: 600;';
+                else if (num <= target * 1.5) return 'background-color: #fef3c7; color: #92400e; font-weight: 600;';
+                else return 'background-color: #fee2e2; color: #991b1b; font-weight: 600;';
+            }
+        }
+
+        DOM.captureMainSnapshotBtn.addEventListener('click', async () => {
+            if (!AppState.gridApi) {
+                alert("Table is not initialized.");
+                return;
+            }
+
+            const sortedData = [];
+            AppState.gridApi.forEachNodeAfterFilterAndSort(node => {
+                if (node.data) sortedData.push(node.data);
+            });
+
+            if (sortedData.length === 0) {
+                alert("No records available to capture.");
+                return;
+            }
+
+            showSuccess("Generating high-resolution JPEG snapshot for Performance Analytics...");
+
+            const selectedRegions = Array.from(AppState.selectedRegions);
+            const selectedPeriods = Array.from(AppState.selectedPeriods);
+            const regionSummary = selectedRegions.length === AppState.detectedRegions.length 
+                ? 'All Regions' 
+                : (selectedRegions.join(', ') || 'None');
+            const periodSummary = selectedPeriods.length === AppState.detectedPeriods.length 
+                ? 'All Periods' 
+                : (selectedPeriods.join(', ') || 'None');
+
+            const printDoc = document.createElement('div');
+            printDoc.style.position = 'absolute';
+            printDoc.style.left = '-9999px';
+            printDoc.style.top = '-9999px';
+            printDoc.style.minWidth = '1250px';
+            printDoc.style.width = 'max-content';
+            printDoc.style.backgroundColor = '#ffffff';
+            printDoc.style.fontFamily = "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif";
+            printDoc.style.padding = '24px';
+            printDoc.style.color = '#0f172a';
+            printDoc.style.boxSizing = 'border-box';
+
+            const kpis = AppState.dynamicKPIs;
+            const kpiHeadersHtml = kpis.map(kpi => {
+                const targetInfo = findKPITarget(kpi);
+                const targetLabel = targetInfo ? `<br><span style="font-size: 10px; font-weight: 500; opacity: 0.85;">(${targetInfo.label})</span>` : '';
+                return `<th style="padding: 9px 8px; font-weight: 700; text-align: center; border: 1px solid #cbd5e1; background-color: #f1f5f9; color: #1e293b; min-width: 90px; white-space: nowrap;">${kpi}${targetLabel}</th>`;
+            }).join('');
+
+            let rowsHtml = '';
+            sortedData.forEach((row, idx) => {
+                const zebraBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                let cellsHtml = `
+                    <td style="padding: 7px 10px; font-weight: 600; border: 1px solid #e2e8f0; background-color: ${zebraBg}; white-space: nowrap;">${row['Region'] || '-'}</td>
+                    <td style="padding: 7px 10px; border: 1px solid #e2e8f0; background-color: ${zebraBg}; white-space: nowrap;">${row['Period'] || '-'}</td>
+                    <td style="padding: 7px 10px; border: 1px solid #e2e8f0; background-color: ${zebraBg}; white-space: nowrap;">${row['Station Code'] || '-'}</td>
+                    <td style="padding: 7px 10px; font-weight: 500; border: 1px solid #e2e8f0; background-color: ${zebraBg}; white-space: nowrap;">${row['Station Name'] || '-'}</td>
+                `;
+
+                kpis.forEach(kpi => {
+                    const val = (row[kpi] !== undefined && row[kpi] !== null && row[kpi] !== '') ? row[kpi] : '-';
+                    const cellStyle = getMainKpiCellStyle(kpi, val);
+                    cellsHtml += `<td style="padding: 7px 8px; text-align: center; border: 1px solid #e2e8f0; white-space: nowrap; ${cellStyle}">${val}</td>`;
+                });
+
+                rowsHtml += `<tr style="line-height: 1.4;">${cellsHtml}</tr>`;
+            });
+
+            const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            printDoc.innerHTML = `
+                <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 16px;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="display: inline-block; width: 12px; height: 12px; background-color: #2563eb; border-radius: 3px;"></span>
+                                <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.02em;">
+                                    Technical KPI & Performance Analytics
+                                </h2>
+                            </div>
+                            <div style="display: flex; gap: 16px; margin-top: 6px; font-size: 12px; color: #475569;">
+                                <span><strong>Region:</strong> ${regionSummary}</span>
+                                <span>&bull;</span>
+                                <span><strong>Period:</strong> ${periodSummary}</span>
+                                <span>&bull;</span>
+                                <span><strong>Total Stations:</strong> ${sortedData.length}</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right; font-size: 11px; color: #64748b; line-height: 1.4;">
+                            <strong>Export Date:</strong> ${dateStr}<br>
+                            <strong>Generated:</strong> ${timeStr}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-bottom: 12px; font-size: 11px; color: #475569;">
+                        <span style="font-weight: 600; color: #334155;">Status Key:</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;">
+                            <span style="display: inline-block; width: 12px; height: 12px; background: #d1fae5; border: 1px solid #059669; border-radius: 2px;"></span> Meeting Target
+                        </span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;">
+                            <span style="display: inline-block; width: 12px; height: 12px; background: #fef3c7; border: 1px solid #d97706; border-radius: 2px;"></span> Near Target
+                        </span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;">
+                            <span style="display: inline-block; width: 12px; height: 12px; background: #fee2e2; border: 1px solid #dc2626; border-radius: 2px;"></span> Below Target
+                        </span>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #cbd5e1;">
+                                <th style="padding: 9px 8px; font-weight: 700; border: 1px solid #cbd5e1; background-color: #f1f5f9; color: #1e293b; min-width: 80px;">Region</th>
+                                <th style="padding: 9px 8px; font-weight: 700; border: 1px solid #cbd5e1; background-color: #f1f5f9; color: #1e293b; min-width: 80px;">Period</th>
+                                <th style="padding: 9px 8px; font-weight: 700; border: 1px solid #cbd5e1; background-color: #f1f5f9; color: #1e293b; min-width: 90px;">Station Code</th>
+                                <th style="padding: 9px 8px; font-weight: 700; border: 1px solid #cbd5e1; background-color: #f1f5f9; color: #1e293b; min-width: 150px;">Station Name</th>
+                                ${kpiHeadersHtml}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            document.body.appendChild(printDoc);
+
+            try {
+                const canvas = await html2canvas(printDoc, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imageUri = canvas.toDataURL('image/jpeg', 0.95);
+                const periodSlug = selectedPeriods.length === 1 ? selectedPeriods[0].replace(/[^a-zA-Z0-9_-]/g, '_') : 'Filtered';
+                const fileName = `Performance_Analytics_${periodSlug}_${new Date().toISOString().slice(0, 10)}.jpeg`;
+
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = imageUri;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showSuccess(`Snapshot exported successfully as ${fileName}`);
             } catch (err) {
                 showError("Snapshot capture failed: " + err.message);
             } finally {
